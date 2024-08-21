@@ -1,0 +1,8 @@
+{
+    "sketch": "apple2esp32.ino",
+    "output": "build",
+    "board": "esp32:esp32:esp32doit-devkit-v1",
+    "programmer": "esptool",
+    "configuration": "FlashFreq=80,UploadSpeed=921600,DebugLevel=none,EraseFlash=none",
+    "port": "COM10"
+}
