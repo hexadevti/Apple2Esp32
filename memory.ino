@@ -5,15 +5,20 @@ unsigned char read8(unsigned short address) {
   unsigned char page = address>>8;
   if(page < 0x02) {
     return zp[address];
-  } else if (page >= 0x02 && page < 0x04) {  
+  } 
+  else if (page >= 0x02 && page < 0x04) {  
     return ram[address];
-  } else if (page >= 0x04 && page < 0x08) {
+  } 
+  else if (page >= 0x04 && page < 0x08) {
     return videoread(address);
-  } else if (page >= 0x08 && page < 0xc0) {
+  } 
+  else if (page >= 0x08 && page < 0xc0) {
     return ram[address];
-  } else if (page >= 0xD0) {
+  } 
+  else if (page >= 0xD0) {
     return pgm_read_byte_near(rom+address-0xD000);
-  } else {
+  } 
+  else {
     // Keyboard Data
     if(address == 0xC000) return keyboard_read();
     // Keyboard Strobe
@@ -32,13 +37,17 @@ void write8(unsigned short address, unsigned char value) {
   unsigned char page = address>>8;
   if(page < 0x02) {
     zp[address] = value;
-  } else if(page >= 0x02 && page < 0x04) {
+  } 
+  else if(page >= 0x02 && page < 0x04) {
     ram[address] = value;
-  } else if(page >= 0x04 && page < 0x08) {
+  } 
+  else if(page >= 0x04 && page < 0x08) {
     videowrite(address, value);
-  } else if (page >= 0x08 && page < 0xc0) {
+  } 
+  else if (page >= 0x08 && page < 0xc0) {
     ram[address] = value;
-  } else {
+  } 
+  else { // Softswitched
     // Keyboard Strobe
     if(address == 0xC010) keyboard_strobe();
     // Speaker toggle

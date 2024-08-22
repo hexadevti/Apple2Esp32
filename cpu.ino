@@ -114,8 +114,6 @@ unsigned char pull8() {
 }
 
 void run() {
-
-
   // Load the reset vector
   PC = read16(0xFFFC);
   STP = 0xFD;
@@ -127,8 +125,6 @@ void run() {
     lastPC = PC;
     // Get opcode / addressing mode
     opcode = read8(PC++);
-
-
     opflags = pgm_read_byte_near(flags + opcode);
 
     // Addressing modes

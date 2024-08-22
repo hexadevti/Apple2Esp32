@@ -19,11 +19,18 @@ void setup()
 	sei();
 	Serial.print("Serial On");
   SDCardSetup();
-  //xTaskCreatePinnedToCore(loop2, "loop2", 4096, NULL, 1, NULL, 1);
+  xTaskCreatePinnedToCore(loop2, "loop2", 4096, NULL, 1, NULL, 1);
 }
 
-// void loop2(void *pvParameters) {  // Core 0 - Blink loop
-// }
+void loop2(void *pvParameters) {
+  bool inversed = false;
+  while (true)
+  {
+    videoRender(inversed);
+    delay(300);
+    inversed = !inversed;
+  }
+}
 
 void loop()
 {
