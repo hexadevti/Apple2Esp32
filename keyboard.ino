@@ -53,8 +53,8 @@ void keyboard_bit() {
   if (++keyboard_buf_indx == 11) {
     // Ignore parity checks for now
     keyboard_data[2] = (keyboard_data[2] >> 1) & 0xFF;
-    sprintf(buf, "initial keybdata: %02x", keyboard_data[2]);
-    Serial.println(buf);
+    // sprintf(buf, "initial keybdata: %02x", keyboard_data[2]);
+    // Serial.println(buf);
     // Serial.println(keyboard_data[2]);
     // extended keys
     if (keyboard_data[2] == 0xF0 || keyboard_data[2] == 0xE0) 
