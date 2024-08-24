@@ -1,7 +1,7 @@
 const int DataPin = 35;
 const int IRQpin = 34;
 
-const unsigned char scancode_to_apple[] PROGMEM = {
+const unsigned char scancode_to_apple[] = {
   //$0    $1    $2    $3    $4    $5    $6    $7    $8    $9    $A    $B    $C    $D    $E    $F
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  //$00
   0x00, 0x00, 0x00, 0x00, 0x00, 0xD1, 0xB1, 0x00, 0x00, 0x00, 0xDA, 0xD3, 0xC1, 0xD7, 0xB2, 0x00,  //$10
@@ -55,7 +55,6 @@ void keyboard_bit() {
     keyboard_data[2] = (keyboard_data[2] >> 1) & 0xFF;
     // sprintf(buf, "initial keybdata: %02x", keyboard_data[2]);
     // Serial.println(buf);
-    // Serial.println(keyboard_data[2]);
     // extended keys
     if (keyboard_data[2] == 0xF0 || keyboard_data[2] == 0xE0) 
       keyboard_mbyte = 1;
@@ -80,11 +79,30 @@ void keyboard_bit() {
           }
           else 
           {
-            keymem = pgm_read_byte_near(scancode_to_apple + keyboard_data[2] + ((shift_enabled) ? 0x80 : 0x00));
+            keymem = scancode_to_apple[keyboard_data[2] + ((shift_enabled) ? 0x80 : 0x00)];
             if (ctrl_enabled)
-              keymem -= 0x40; 
-            // Serial.print("keyboard_data:");
-            // Serial.println(keyboard_data[2]);
+            {
+              if (keyboard_data[2] == 0x07)
+              {
+                cpuReset();
+              }
+              else if (keyboard_data[2] == 0x04)
+              {
+                nextFile();
+              }
+              else if (keyboard_data[2] == 0x06)
+              {
+                prevFile();
+              }
+              else
+              {
+                keymem -= 0x40; 
+              }
+            }
+            
+            
+              // Serial.print("keyboard_data:");
+              // Serial.println(keyboard_data[2]);
             // Serial.print("shift:");
             // Serial.println((shift_enabled) ? "1" : "0");
             // Serial.print("ctrl:");
@@ -101,12 +119,7 @@ void keyboard_bit() {
           if (keyboard_data[2] == 0x74) 
             keymem = 0x95;  //forward key
           // Power management keys, hardware reset
-          if (keyboard_data[2] == 0x37) {
-            // enable watchdog with min timeout
-            // wait until reset
-            //wdt_enable(WDTO_15MS);
-            //for(;;);
-          }
+          
         } 
         else if (keyboard_data[1] == 0xF0 && (keyboard_data[2] == 0x12 || keyboard_data[2] == 0x59)) 
           shift_enabled = false;

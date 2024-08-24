@@ -43,7 +43,7 @@
 //volatile unsigned char keymem = 0;
 
 //high nibble SR flags, low nibble address mode
-const unsigned char flags[] PROGMEM = {
+const unsigned char flags[] = {
   AD_IMP, AD_INDX, UNDF, UNDF, UNDF, FL_ZN | AD_ZPG, FL_ZNC | AD_ZPG, UNDF, AD_IMP, FL_ZN | AD_IMM, FL_ZNC | AD_A, UNDF, UNDF, FL_ZN | AD_ABS, FL_ZNC | AD_ABS, UNDF,
   AD_REL, FL_ZN | AD_INDY, UNDF, UNDF, UNDF, FL_ZN | AD_ZPGX, FL_ZNC | AD_ZPGX, UNDF, AD_IMP, FL_ZN | AD_ABSY, UNDF, UNDF, UNDF, FL_ZN | AD_ABSX, FL_ZNC | AD_ABSX, UNDF,
   AD_ABS, FL_ZN | AD_INDX, UNDF, UNDF, FL_Z | AD_ZPG, FL_ZN | AD_ZPG, FL_ZNC | AD_ZPG, UNDF, AD_IMP, FL_ZN | AD_IMM, FL_ZNC | AD_A, UNDF, FL_Z | AD_ABS, FL_ZN | AD_ABS, FL_ZNC | AD_ABS, UNDF,
@@ -61,8 +61,6 @@ const unsigned char flags[] PROGMEM = {
   FL_ZNC | AD_IMM, FL_ALL | AD_INDX, UNDF, UNDF, FL_ZNC | AD_ZPG, FL_ALL | AD_ZPG, FL_ZN | AD_ZPG, UNDF, FL_ZN | AD_IMP, FL_ALL | AD_IMM, AD_IMP, UNDF, FL_ZNC | AD_ABS, FL_ALL | AD_ABS, FL_ZN | AD_ABS, UNDF,
   AD_REL, FL_ALL | AD_INDY, UNDF, UNDF, UNDF, FL_ALL | AD_ZPGX, FL_ZN | AD_ZPGX, UNDF, AD_IMP, FL_ALL | AD_ABSY, UNDF, UNDF, UNDF, FL_ALL | AD_ABSX, FL_ZN | AD_ABSX, UNDF
 };
-
-char buf[0xff];
 
 // CPU registers
 unsigned short PC;
@@ -113,6 +111,12 @@ unsigned char pull8() {
   return read8(STP_BASE + (++STP));
 }
 
+void cpuReset()
+{
+  PC = read16(0xFFFC);
+  STP = 0xFD;
+}
+
 void run() {
   // Load the reset vector
   PC = read16(0xFFFC);
@@ -121,11 +125,10 @@ void run() {
   for (;;) 
   {
     // Routines for hooking apple ][ monitor routines
-    //program_hooks(PC);
     lastPC = PC;
     // Get opcode / addressing mode
     opcode = read8(PC++);
-    opflags = pgm_read_byte_near(flags + opcode);
+    opflags = flags[opcode];
 
     // Addressing modes
     switch (opflags & 0x0F) {

@@ -1,35 +1,57 @@
 #include <ESP32Lib.h>
-#include <Ressources/CodePage437_8x8.h>
-#include <Ressources/Font6x8.h>
 #include "rom.h"
 #include "FS.h"
 #include "SD.h"
 #include "SPI.h"
+#include <string>
+#include <vector>
+#include <EEPROM.h>
 
-unsigned char videoram[1048];
-//VGA Device
+
 VGA6Bit vga;
+char buf[0xff];
+int logLineCount = 1;
+bool hdAttached = true;
+bool serialAttached = false;
+#define EEPROM_SIZE 12
+int selectedFileEEPROMaddress = 0;
+int selectedFile;
 
 
 void setup()
 {
+  EEPROM.begin(EEPROM_SIZE);
+  //EEPROM.write(selectedFileEEPROMaddress, 6);
+  //EEPROM.commit();
+  selectedFile = EEPROM.read(selectedFileEEPROMaddress); 
+  sprintf(buf, "EEPROM value: %x", selectedFile);
+  printlog(buf);
+	Serial.begin(500000);
+  SDCardSetup();
   videoSetup();
-	Serial.begin(115200);
+  serialVideoSetup();
 	keyboard_begin();
 	sei();
-	Serial.print("Serial On");
-  SDCardSetup();
-  xTaskCreatePinnedToCore(loop2, "loop2", 4096, NULL, 1, NULL, 1);
+  HDSetup();
+  printlog("Ready.");
 }
 
-void loop2(void *pvParameters) {
-  bool inversed = false;
-  while (true)
+void printlog(String txt)
+{
+  if (serialAttached)
   {
-    videoRender(inversed);
-    delay(300);
-    inversed = !inversed;
+    if (logLineCount > 24)
+      logLineCount = 1;
+      Serial.print("\e[");
+      Serial.print(logLineCount);
+      Serial.print(";");
+      Serial.print(41);
+      Serial.print("H");
+      Serial.print(txt.c_str());
+      logLineCount++;
   }
+  else
+    Serial.println(txt.c_str());
 }
 
 void loop()
