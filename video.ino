@@ -1,17 +1,3 @@
-#include <Ressources/CodePage437_8x8.h>
-#include <Ressources/Font6x8.h>
-
-//pin configuration
-const int hsyncPin = 32;
-const int vsyncPin = 33;
-const int red0pin = 12;
-const int red1pin = 13;
-const int green0pin = 27;
-const int green1pin = 14;
-const int blue0pin = 25;
-const int blue1pin = 26;
-
-
 void videoSetup()
 {
   printlog("Video Setup...");

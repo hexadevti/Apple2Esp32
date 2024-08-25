@@ -1,14 +1,3 @@
-
-//Uncomment and set up if you want to use custom pins for the SPI communication
-#define REASSIGN_PINS
-int sck = 18;
-int miso = 19;
-int mosi = 23;
-int cs = 5;
-
-
-
-
 void listDir(fs::FS &fs, const char *dirname, uint8_t levels) {
   // Serial.printf("Listing directory: %s\n", dirname);
 

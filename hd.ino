@@ -12,7 +12,6 @@
 // 	C0F9    (r)   LOW BYTE OF DISK IMAGE SIZE IN BLOCKS
 // 	C0FA    (r)   HIGHT BYTE OF DISK IMAGE SIZE IN BLOCKS
 
-
 unsigned char hdCommand;
 unsigned char hdStatus;
 bool hdUnitNumber1_2 = true;
@@ -21,14 +20,8 @@ unsigned short hdBlockNumber;
 size_t hdDiskImageSize ;
 ushort fileHeaderSize = 0;
 unsigned char actualBlock[512];
-//const char *path = "/prodos.2mg";
-
-
 std::vector<std::string> fileExtensions = { ".hdv", ".po", ".2mg" };
 std::vector<std::string> files;
-
-
-
 
 void HDSetup()
 {
