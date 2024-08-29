@@ -4,13 +4,14 @@
 #include "rom.h"
 #include "FS.h"
 #include "SD.h"
-#include "SPI.h"
 #include <string>
 #include <vector>
 #include <EEPROM.h>
 #include <bitset>
 #include <algorithm>
 #include <array>
+#include <cmath>
+#include <queue>
 
 // VGA Pins
 const int hsyncPin = 32;
@@ -37,11 +38,20 @@ VGA6Bit vga;
 char buf[0xff];
 int logLineCount = 1;
 bool hdAttached = true;
-bool serialAttached = false;
-bool diskAttached = true;
+bool serialVideoAttached = false;
+bool serialKeyboardAttached = true;
+bool diskAttached = false;
+bool videoColor = true;
 #define EEPROM_SIZE 12
 int selectedFileEEPROMaddress = 0;
 int selectedFile;
+
+bool Graphics_Text;
+bool Page1_Page2;
+bool DisplayFull_Split;
+bool LoRes_HiRes;
+bool Cols40_80;
+bool SoundClick;
 
 
 
@@ -50,10 +60,11 @@ void setup()
   EEPROM.begin(EEPROM_SIZE);
   //EEPROM.write(selectedFileEEPROMaddress, 6);
   //EEPROM.commit();
-  selectedFile = EEPROM.read(selectedFileEEPROMaddress); 
+  //selectedFile = EEPROM.read(selectedFileEEPROMaddress); 
+  selectedFile = 3;
   sprintf(buf, "EEPROM value: %x", selectedFile);
   printlog(buf);
-	Serial.begin(500000);
+	Serial.begin(115200);
   SDCardSetup();
   videoSetup();
   serialVideoSetup();
@@ -65,7 +76,7 @@ void setup()
 
 void printlog(String txt)
 {
-  if (serialAttached)
+  if (serialVideoAttached)
   {
     if (logLineCount > 24)
       logLineCount = 1;

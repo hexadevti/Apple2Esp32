@@ -1,5 +1,4 @@
-unsigned char zp[0x200];
-unsigned char ram[0xc000];
+#include "memory.h"
 
 unsigned char read8(unsigned short address) {
   unsigned char page = address >> 8;

@@ -1,14 +1,21 @@
 void serialVideoSetup() {
   //xTaskCreatePinnedToCore(flashSerialCharacters, "flashSerialCharacters", 4096, NULL, 1, NULL, 1);
-  if (serialAttached)
+  if (serialVideoAttached)
   {
-    printlog("Serial Video Setup...");
-    xTaskCreatePinnedToCore(serialKeyboard, "serialKeyboard", 4096, NULL, 1, NULL, 1);
+    printlog("Serial Video Setup...OK");
   }
   else
   {
     printlog("Serial Video Disabled...");
   }
+  if (serialKeyboardAttached)
+  {
+    printlog("Serial Keyboard Setup...OK");
+    xTaskCreatePinnedToCore(serialKeyboard, "serialKeyboard", 4096, NULL, 1, NULL, 1);
+  } 
+  else
+    printlog("Serial Keyboard Disabled...");
+
 }
 
 void flashSerialCharacters(void *pvParameters) {
@@ -22,14 +29,28 @@ void flashSerialCharacters(void *pvParameters) {
 
 void serialKeyboard(void *pvParameters) {
   bool inversed = false;
+  int prev_char = 0;
   while (true) {
+      
     if (Serial.available() > 0) {
+      int charRead = Serial.read(); 
+      if (charRead == 0x44)
+        keymem = 0x88;
+      else if (prev_char == 0x5b && charRead == 0x43)
+        keymem = 0x95;
+      else if (prev_char == 0x5b && charRead == 0x7f)
+        keymem = 0x88;
+      else if (charRead != 0x1b && charRead != 0x5b)
+        keymem = charRead + 0X80;
 
-      keymem = Serial.read() + 0X80;
-      sprintf(buf, "Ser: %02x", keymem);
-      printlog(buf);
+      Serial.print((char)charRead);
+      // sprintf(buf, "Ser: %02x, %02x", prev_char, charRead);
+      // printlog(buf);
+
+      prev_char = charRead;
     }
-    delay(10);
+    
+    delay(100);
   }
 }
 

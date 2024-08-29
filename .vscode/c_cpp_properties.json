@@ -1,0 +1,20 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "C:/Users/Luciano/Documents/Arduino/libraries/**",
+                "C:/Users/Luciano/AppData/Local/Arduino15/libraries/**",
+                "C:/Users/Luciano/AppData/Local/Arduino15/packages/**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "compileCommands": "${workspaceFolder}/build/compile_commands.json"
+        }
+    ],
+    "version": 4
+}
