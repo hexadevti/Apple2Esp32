@@ -92,6 +92,21 @@ void setflags() {
   if (opflags & 0x40) SR |= ((result ^ ((unsigned short)A)) & (result ^ value16) & 0x0080) >> 1;
 }
 
+void setflagsB() {
+  // Mask out affected flags
+  switch (opflags & 0xF0) {
+    case 0xA0: SR &= 0x7D; break;
+    case 0xB0: SR &= 0x7C; break;
+    case 0x30: SR &= 0xFC; break;
+    case 0xF0: SR &= 0x3C; break;
+    case 0x20: SR &= 0xFD; break;
+  }
+
+  // Set various status flags
+  if (opflags & 0x80) SR |= (result & 0x80) == 0x80;                    //negative
+  if (opflags & 0x20) SR |= ((result == 0) ? 0x02 : 0);  //zero
+}
+
 // Stack functions
 void push16(unsigned short pushval) {
   write8(STP_BASE + (STP--), (pushval >> 8) & 0xFF);
@@ -126,10 +141,12 @@ void run() {
   {
     // Routines for hooking apple ][ monitor routines
     lastPC = PC;
+    
     // Get opcode / addressing mode
     opcode = read8(PC++);
     opflags = flags[opcode];
 
+    
     // Addressing modes
     switch (opflags & 0x0F) {
       case AD_IMP:
@@ -180,7 +197,14 @@ void run() {
         argument_addr = ((unsigned short)read8(PC++) + (unsigned short)Y) & 0xFF;
         break;
     }
-
+    // if (lastPC >= 0x0800 && lastPC < 0x0900) {
+    //   sprintf(buf, "[PC]%04X: %02X,[Addr]%04X: A=%02X X=%02X Y=%02X", lastPC, opcode, argument_addr, A, X, Y);
+    //   printlog(buf);
+    // }
+    // if (lastPC >= 0x3600 && lastPC < 0x4000) {
+    //   sprintf(buf, "[PC]%04X: %02X,[Addr]%04X: A=%02X X=%02X Y=%02X", lastPC, opcode, argument_addr, A, X, Y);
+    //   printlog(buf);
+    // }
     //opcodes
     switch (opcode) {
       //ADC
@@ -449,9 +473,9 @@ void run() {
       case 0x01:
       case 0x11:
         value8 = read8(argument_addr);
-        result = A | value8;
+        result = value8 | A;
         setflags();
-        A = result & 0xFF;
+        A = result;
         break;
       //PHA
       case 0x48:

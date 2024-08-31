@@ -1,3 +1,5 @@
+int colors[] = {0b000000, 0b001100, 0b110011, 0b111111, 0b000000, 0b000011, 0b100000, 0b111111};
+
 void videoSetup()
 {
   printlog("Video Setup...");
@@ -75,7 +77,7 @@ void flashCharacters(void *pvParameters)
 
                 for (int id = 0; id < 7; id++)
                 {
-                  vga.dotFast(x, y, pixels[id]);
+                  vga.dotFast(x, y, colors[pixels[id]]);
                   x++;
                 }
                 std::copy(std::begin(blockline), std::end(blockline), std::begin(blocklineAnt));
@@ -106,7 +108,6 @@ void flashCharacters(void *pvParameters)
     }
     else
     {
-
       textLoResRender(inversed);
       delay(300);
       inversed = !inversed;
@@ -122,7 +123,6 @@ unsigned char textLoResRead(short address)
 void textLoResWrite(short address, unsigned char value)
 {
   short addr = convertVideo[address - 0x400];
-  ram[0x400 + addr] = value;
   int y = floor(addr / 0x28);
   int x = addr - y * 0x28;
   vga.setTextColor(vga.RGB(0xffffff), vga.RGB(0));
@@ -151,21 +151,27 @@ void textLoResWrite(short address, unsigned char value)
 
 void textLoResRender(bool inversed)
 {
-
-  for (int y = 0; y < 24; y++)
+  ushort textPage = 0x400; //Page1_Page2 ? 0x400 : 0x800;
+  int y = 0;
+  for (int b = 0; b < 3; b++)
   {
-    for (int x = 0; x < 40; x++)
+    for (int l = 0; l < 8; l++)
     {
-      char value = ram[0x400 + y * 40 + x];
-      if (value >= 0x40 && value < 0x80)
+      for (int c = 0; c < 0x28; c++)
       {
-        if (inversed)
-          vga.setTextColor(vga.RGB(0), vga.RGB(0xffffff));
-        else
-          vga.setTextColor(vga.RGB(0xffffff), vga.RGB(0));
-        vga.setCursor((x + 2) * 7, (y + 3) * 8);
-        vga.print((char)value);
+        char value = ram[(textPage + (b * 0x28) + (l * 0x80) + c)];
+        if (value >= 0x40 && value < 0x80)
+        {
+          if (inversed)
+            vga.setTextColor(vga.RGB(0), vga.RGB(0xffffff));
+          else
+            vga.setTextColor(vga.RGB(0xffffff), vga.RGB(0));
+          vga.setCursor((c + 2) * 7, (y + 3) * 8);
+          vga.print((char)value);
+        }
       }
+      y++;
     }
   }
+    
 }

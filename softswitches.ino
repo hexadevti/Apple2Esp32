@@ -26,6 +26,8 @@ char readSoftSwitches(ushort address)
     LoRes_HiRes = false;
   else if (address >= 0xc080 && address < 0xc090) // Slot 0 - LanguageCard
     return languagecardRead(address);
+  else if (address >= 0xc0e0 && address < 0xcf00) // Slot 7 - HD
+    return DiskSoftSwitchesRead(address);
   else if (address >= 0xc0f0 && address < 0xc100) // Slot 7 - HD
     return HDSoftSwitchesRead(address);
   return 0;

@@ -85,11 +85,17 @@ void keyboard_bit() {
               }
               else if (keyboard_data[2] == 0x04)
               {
-                nextFile();
+                if (diskAttached) 
+                  nextDiskFile();
+                else
+                  nextFile();
               }
               else if (keyboard_data[2] == 0x06)
               {
-                prevFile();
+                if (diskAttached) 
+                  prevDiskFile();
+                else
+                  prevFile();
               }
               else
               {

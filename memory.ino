@@ -1,15 +1,14 @@
-unsigned char zp[0x200];
-unsigned char ram[0xc000];
 
 unsigned char read8(unsigned short address) {
   unsigned char page = address >> 8;
   if (page < 0x02) {
-    return zp[address];
+    return ram[address];
   } else if (page >= 0x02 && page < 0x04) {
     return ram[address];
   } else if (page >= 0x04 && page < 0x08) {
-    if (!Graphics_Text)
-    return textLoResRead(address);
+    return ram[address];
+    // if (!Graphics_Text)
+    //   return textLoResRead(address);
   } else if (page >= 0x08 && page < 0xc0) {
     return ram[address];
   } else if (page >= 0xc0 && page < 0xc1) {  // Softswitches
@@ -31,14 +30,20 @@ unsigned char read8(unsigned short address) {
 void write8(unsigned short address, unsigned char value) {
   unsigned char page = address >> 8;
   if (page < 0x02) {
-    zp[address] = value;
+    ram[address] = value;
   } else if (page >= 0x02 && page < 0x04) { // Zero Page / Stack Page
     ram[address] = value;
   } else if (page >= 0x04 && page < 0x08) { // LoRes Pages
+    ram[address] = value;
     if (!Graphics_Text) 
       textLoResWrite(address, value);
   } else if (page >= 0x08 && page < 0xc0) { // 
     ram[address] = value;
+    // if (lastPC >= 0xc600 && lastPC < 0xc700)
+    // {
+    //   sprintf(buf, "%04x [W]%04X: %02X", lastPC, address, value);
+    //   printlog(buf);
+    // }
   } else if (page >= 0xc0 && page < 0xc1) {  // Softswitched
     writeSoftSwitches(address, value);
   } else if (page >= 0xd0) {

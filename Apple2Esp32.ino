@@ -37,10 +37,10 @@ int cs = 5;
 VGA6Bit vga;
 char buf[0xff];
 int logLineCount = 1;
-bool hdAttached = true;
+bool hdAttached = false;
 bool serialVideoAttached = false;
-bool serialKeyboardAttached = true;
-bool diskAttached = false;
+bool serialKeyboardAttached = false;
+bool diskAttached = true;
 bool videoColor = true;
 #define EEPROM_SIZE 12
 int selectedFileEEPROMaddress = 0;
@@ -53,6 +53,8 @@ bool LoRes_HiRes;
 bool Cols40_80;
 bool SoundClick;
 
+//unsigned char zp[0x200];
+unsigned char ram[0xc000];
 
 
 void setup()
@@ -60,8 +62,8 @@ void setup()
   EEPROM.begin(EEPROM_SIZE);
   //EEPROM.write(selectedFileEEPROMaddress, 6);
   //EEPROM.commit();
-  //selectedFile = EEPROM.read(selectedFileEEPROMaddress); 
-  selectedFile = 3;
+  selectedFile = EEPROM.read(selectedFileEEPROMaddress); 
+  //selectedFile = 3;
   sprintf(buf, "EEPROM value: %x", selectedFile);
   printlog(buf);
 	Serial.begin(115200);
@@ -71,6 +73,7 @@ void setup()
 	keyboard_begin();
 	sei();
   HDSetup();
+  DiskSetup();
   printlog("Ready.");
 }
 

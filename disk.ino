@@ -1,11 +1,12 @@
 bool diskUnitNumber1_2 = true;
 unsigned short diskTrackNumber;
-size_t diskImageSize;
 ushort diskFileHeaderSize = 0;
 const uint diskSize = 143360;
-const uint trackSize = 5856;
-unsigned char diskImage[diskSize];
-uint8_t diskRawData[35][trackSize];
+const uint trackEncodedSize = 5856;
+const uint trackRawSize = 4096;
+uint8_t trackRawData[trackRawSize];
+uint8_t trackEncodedData[trackEncodedSize];
+uint8_t diskVolume;
 std::vector<std::string> diskFileExtensions = {".dsk", ".po", ".do"};
 std::vector<std::string> diskFiles;
 
@@ -13,7 +14,7 @@ bool DrivePhase0ON_OFF;
 bool DrivePhase1ON_OFF;
 bool DrivePhase2ON_OFF;
 bool DrivePhase3ON_OFF;
-bool FlagDO_PO;
+bool FlagDO_PO = true;
 bool DriveQ6H_L;
 bool DriveQ7H_L;
 bool DriveMotorON_OFF;
@@ -22,7 +23,8 @@ bool Drive1_2 = true;
 
 int pointer = 0;
 
-int diskTrack = 0;
+int diskTrack = -1;
+int diskSector = 0;
 std::queue<uint8_t> phaseBuffer;
 
 std::array<uint8_t, 4> odd_even_asc = {0x31, 0x20, 0x01, 0x30};
@@ -52,20 +54,24 @@ void DiskSetup()
   if (diskAttached)
   {
     printlog("DiskII Setup...");
-    loadDir(SD, "/", 0);
+    loadDiskDir(SD, "/", 0);
     getDiskFileInfo(SD);
     phaseBuffer = std::queue<uint8_t>();
+    //getTrack(SD, 0);
   }
 }
 
-
-
 void AddPhase(uint8_t phase)
 {
+  int track = diskTrack;
   phaseBuffer.push(phase);
+  // sprintf(buf, "Add Phase: %02X, size: %d", phase, phaseBuffer.size());
+  // printlog(buf);
   if (phaseBuffer.size() > 4)
   {
     phaseBuffer.pop();
+    // sprintf(buf, "Buffer > 4");
+    // printlog(buf);
   }
 
   std::array<uint8_t, 4> currentBuffer;
@@ -74,32 +80,44 @@ void AddPhase(uint8_t phase)
     currentBuffer[i] = phaseBuffer.front();
     phaseBuffer.pop();
   }
+  // Serial.println("currentBuffer: ");
+  // for (int i = 0; i < currentBuffer.size(); i++)
+  // {
+  //   sprintf(buf, "%02X, ", currentBuffer[i]);
+  //   printlog(buf);
+  // }
+  // Serial.println("");
   for (const auto &val : currentBuffer)
   {
     phaseBuffer.push(val); // Restore the queue
   }
 
-  if (diskTrack % 2 == 0 && std::equal(currentBuffer.begin(), currentBuffer.end(), even_odd_asc.begin()))
+  if (track % 2 == 0 && std::equal(currentBuffer.begin(), currentBuffer.end(), even_odd_asc.begin()))
   {
-    diskTrack++;
+    track++;
   }
-  else if (diskTrack % 2 != 0 && std::equal(currentBuffer.begin(), currentBuffer.end(), odd_even_asc.begin()))
+  else if (track % 2 != 0 && std::equal(currentBuffer.begin(), currentBuffer.end(), odd_even_asc.begin()))
   {
-    diskTrack++;
+    track++;
   }
-  else if (diskTrack % 2 == 0 && std::equal(currentBuffer.begin(), currentBuffer.end(), even_odd_desc.begin()) && diskTrack > 0)
+  else if (track % 2 == 0 && std::equal(currentBuffer.begin(), currentBuffer.end(), even_odd_desc.begin()) && track > 0)
   {
-    diskTrack--;
+    track--;
   }
-  else if (diskTrack % 2 != 0 && std::equal(currentBuffer.begin(), currentBuffer.end(), odd_even_desc.begin()) && diskTrack > 0)
+  else if (diskTrack % 2 != 0 && std::equal(currentBuffer.begin(), currentBuffer.end(), odd_even_desc.begin()) && track > 0)
   {
-    diskTrack--;
+    track--;
   }
-  else if (diskTrack > 0 && (std::equal(currentBuffer.begin(), currentBuffer.end(), start_sequence_1.begin()) ||
+  else if (track > 0 && (std::equal(currentBuffer.begin(), currentBuffer.end(), start_sequence_1.begin()) ||
                              std::equal(currentBuffer.begin(), currentBuffer.end(), start_sequence_2.begin())))
   {
-    diskTrack--;
+    track--;
   }
+
+  // sprintf(buf, "Track Change: %d", track);
+  // printlog(buf);
+  getTrack(SD, track);
+
 }
 
 void getDiskFileInfo(fs::FS &fs)
@@ -107,16 +125,52 @@ void getDiskFileInfo(fs::FS &fs)
   File file = fs.open(diskFiles[selectedFile].c_str());
   sprintf(buf, "APPLE2ESP32 - %s", diskFiles[selectedFile].c_str());
   printMsg(buf);
+  printlog(buf);
   size_t len = file.size();
-  Serial.print("File Size: "); // // // Serial.println(len);
-  diskImageSize = len;
-  if (len % 512 > 0)
-  {
-    diskFileHeaderSize = len - floor(len / 512) * 512;
-  }
+  sprintf(buf, "File Size: %d", len);
+  printlog(buf);
   file.close();
-  Serial.print("File Header Size: ");
-  Serial.println(diskFileHeaderSize);
+  getTrack(SD, 17);
+  diskVolume = trackRawData[0x06];
+  sprintf(buf, "Disk Volume: %d", diskVolume);
+  printlog(buf);
+}
+
+void getTrack(fs::FS &fs, int track) 
+{
+  if (track != diskTrack)
+  {
+    size_t positionToRead = GetOffset(track, 0);
+    File file = fs.open(diskFiles[selectedFile].c_str());
+    size_t len = file.size();;
+    uint32_t start = millis();
+    uint32_t end = start;
+    if (file) {
+      if (file.seek(positionToRead))
+      {
+        file.read(trackRawData, trackRawSize);
+        diskTrack = track;
+        TrackRawData(diskTrack);
+      }
+      // sprintf(buf, "GetTrack: %d, Size: %d", track, trackRawSize);
+      // printlog(buf);
+      // for (int i = 0; i < 50;i++)
+      // {
+      //   sprintf(buf, "d[%d]: %02X", i, trackRawData[i]);
+      //   printlog(buf);
+      // }
+      end = millis() - start;
+      file.close();
+
+
+    } else {
+      printlog("Failed to open file for reading");
+    }
+  }
+  else{
+    // sprintf(buf, "GetTrack: %d, Already loaded", track);
+    // printlog(buf);
+  }
 }
 
 void nextDiskFile()
@@ -135,29 +189,6 @@ void prevDiskFile()
   printMsg(buf);
   EEPROM.write(selectedFileEEPROMaddress, selectedFile);
   EEPROM.commit();
-}
-
-void loadDisk(fs::FS &fs)
-{
-  size_t positionToRead = diskFileHeaderSize;
-  File file = fs.open(diskFiles[selectedFile].c_str());
-  size_t len = file.size();
-  ;
-  uint32_t start = millis();
-  uint32_t end = start;
-  if (file)
-  {
-    if (file.seek(positionToRead))
-    {
-      file.read(diskImage, diskSize);
-    }
-    end = millis() - start;
-    file.close();
-  }
-  else
-  {
-    printlog("Failed to open file for reading");
-  }
 }
 
 void loadDiskDir(fs::FS &fs, const char *dirname, uint8_t levels)
@@ -223,16 +254,21 @@ int GetOffset(int track, int sector)
   return diskFileHeaderSize + (sector * 256) + (track * (256 * 16));
 }
 
-std::vector<uint8_t> GetSectorData(int track, int sector)
+int GetSectorOffset(int sector)
+{
+  return (sector * 256);
+}
+
+std::vector<uint8_t> GetSectorData(int sector)
 {
   std::vector<uint8_t> output(256);
-  if (track < 35 && sector < 16)
+  if (sector < 16)
   {
-    int offset = GetOffset(track, sector);
+    int offset = GetSectorOffset(sector);
 
     for (int i = 0; i < 256; i++)
     {
-      output[i] = diskImage[offset + i];
+      output[i] = trackRawData[offset + i];
     }
   }
   else
@@ -243,10 +279,6 @@ std::vector<uint8_t> GetSectorData(int track, int sector)
   return output;
 }
 
-uint8_t GetVolume()
-{
-  return diskImage[GetOffset(17, 0) + 0x06];
-}
 
 std::vector<uint8_t> EncodeByte(uint8_t data)
 {
@@ -307,9 +339,11 @@ std::vector<uint8_t> Checksum(uint8_t volume, uint8_t sector, uint8_t track)
 }
 
 
-std::vector<uint8_t> Encode6_2(int track, int sector)
+std::vector<uint8_t> Encode6_2(uint8_t sector)
 {
-  std::vector<uint8_t> input = GetSectorData(track, sector);
+  std::vector<uint8_t> input = GetSectorData(sector);
+
+
   std::vector<uint8_t> outputData(256);
   std::vector<uint8_t> outputlast2(0x56);
   std::vector<uint8_t> outputlast2Encoded(0x56);
@@ -360,50 +394,68 @@ std::vector<uint8_t> Encode6_2(int track, int sector)
   return agregate;
 }
 
-void TrackRawData(int track, bool update = false)
+void TrackRawData(int track)
 {
-  if (diskRawData[track] == nullptr || update)
+  std::vector<uint8_t> selectedSector;
+  std::array<uint8_t, 16> sectors = {0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9}; // DOS
+  for (uint8_t isec : sectors)
   {
-    std::vector<uint8_t> selectedSector;
-
-    std::array<uint8_t, 16> sectors = {0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9}; // DOS
-
-    for (uint8_t isec : sectors)
-    {
-      std::vector<uint8_t> b;
-      selectedSector.insert(selectedSector.end(), {0xff, 0xff, 0xff});
-      selectedSector.insert(selectedSector.end(), {0xd5, 0xaa, 0x96}); // Prologue address
-      auto volume = GetVolume();
-      b = EncodeByte(volume);
-      selectedSector.insert(selectedSector.end(), b.begin(), b.end()); // Volume
-      b = EncodeByte(static_cast<uint8_t>(track));
-      selectedSector.insert(selectedSector.end(), b.begin(), b.end()); // Track
-      b = EncodeByte(isec);
-      selectedSector.insert(selectedSector.end(), b.begin(), b.end()); // Sector
-      b = Checksum(volume, static_cast<uint8_t>(track), isec);
-      selectedSector.insert(selectedSector.end(), b.begin(), b.end()); // Checksum
-      selectedSector.insert(selectedSector.end(), {0xde, 0xaa, 0xeb}); // Epilogue address
-      selectedSector.insert(selectedSector.end(), {0xd5, 0xaa, 0xad}); // Prologue data
-      b = Encode6_2(track, FlagDO_PO ? translateDOTrack[isec] : translatePOTrack[isec]);
-      selectedSector.insert(selectedSector.end(), b.begin(), b.end()); // Data field + checksum
-      selectedSector.insert(selectedSector.end(), {0xde, 0xaa, 0xeb}); // Epilogue
-    }
-    //diskRawData[track] = new uint8_t[selectedSector.size()];
-    std::copy(selectedSector.begin(), selectedSector.end(), diskRawData[track]);
+    
+    std::vector<uint8_t> b;
+    selectedSector.insert(selectedSector.end(), {0xff, 0xff, 0xff});
+    selectedSector.insert(selectedSector.end(), {0xd5, 0xaa, 0x96}); // Prologue address
+    b = EncodeByte(diskVolume);
+    selectedSector.insert(selectedSector.end(), b.begin(), b.end()); // Volume
+    b = EncodeByte(static_cast<uint8_t>(track));
+    selectedSector.insert(selectedSector.end(), b.begin(), b.end()); // Track
+    b = EncodeByte(isec);
+    selectedSector.insert(selectedSector.end(), b.begin(), b.end()); // Sector
+    b = Checksum(diskVolume, static_cast<uint8_t>(track), isec);
+    selectedSector.insert(selectedSector.end(), b.begin(), b.end()); // Checksum
+    selectedSector.insert(selectedSector.end(), {0xde, 0xaa, 0xeb}); // Epilogue address
+    selectedSector.insert(selectedSector.end(), {0xd5, 0xaa, 0xad}); // Prologue data
+    b = Encode6_2(FlagDO_PO ? translateDOTrack[isec] : translatePOTrack[isec]);
+    selectedSector.insert(selectedSector.end(), b.begin(), b.end()); // Data field + checksum
+    selectedSector.insert(selectedSector.end(), {0xde, 0xaa, 0xeb}); // Epilogue
   }
+
+  
+  std::copy(selectedSector.begin(), selectedSector.end(), trackEncodedData);
+  // printlog("Raw Data");
+  // PrintHex(trackRawData, trackRawSize);
+  // printlog("Raw Encoded");
+  // PrintHex(trackEncodedData,trackEncodedSize);
+  
+}
+
+void PrintHex(uint8_t data[], int length) {
+  for (int i = 0; i < length; i++)
+  {
+    if (i % 16 == 0) {
+      Serial.println();
+      sprintf(buf, "%04X: ", i);
+      Serial.print(buf);  
+    }
+    sprintf(buf, "%02X ", data[i]);
+    Serial.print(buf);
+  }
+  Serial.println();
 }
 
 char DiskSoftSwitchesRead(ushort address)
 {
-  int trackSize = 5856;
+  diskSector = read8(0x2d);
   if (address == 0xc0ec)
   {
     if (DriveQ6H_L == false && DriveQ7H_L == false)
     {
-      if (pointer > trackSize - 1)
+      if (pointer > trackEncodedSize - 1)
         pointer = 0;
-      TrackRawData(diskTrack);
-      return diskRawData[diskTrack][pointer++];
+      // sprintf(buf, "Disk Track: %d, Disk Read: %04X, Pointer: %d, Data: %02X", diskTrack, address, pointer, trackEncodedData[pointer]);
+      // printlog(buf);
+      // sprintf(buf, "(%04x)[R]%04X: %02X", PC, address, trackEncodedData[pointer]);
+      // printlog(buf);
+      return trackEncodedData[pointer++];
     }
   }
 
@@ -412,6 +464,7 @@ char DiskSoftSwitchesRead(ushort address)
 
 void DiskSoftSwitchesWrite(ushort address, char value)
 {
+  ProcessSwitchc0e0(address, value);
 }
 
 char ProcessSwitchc0e0(ushort address, char value)
