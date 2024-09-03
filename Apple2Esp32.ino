@@ -12,6 +12,8 @@
 #include <array>
 #include <cmath>
 #include <queue>
+#include <mutex>
+
 
 // VGA Pins
 const int hsyncPin = 32;
@@ -37,10 +39,10 @@ int cs = 5;
 VGA6Bit vga;
 char buf[0xff];
 int logLineCount = 1;
+bool diskAttached = true;
 bool hdAttached = false;
 bool serialVideoAttached = false;
 bool serialKeyboardAttached = false;
-bool diskAttached = true;
 bool videoColor = true;
 #define EEPROM_SIZE 12
 int selectedFileEEPROMaddress = 0;
@@ -52,6 +54,11 @@ bool DisplayFull_Split;
 bool LoRes_HiRes;
 bool Cols40_80;
 bool SoundClick;
+bool lock_video = false;
+
+
+std::mutex page_lock;
+
 
 //unsigned char zp[0x200];
 unsigned char ram[0xc000];
@@ -74,7 +81,9 @@ void setup()
 	sei();
   HDSetup();
   DiskSetup();
+  speaker_begin();
   printlog("Ready.");
+  setCpuFrequencyMhz(160);
 }
 
 void printlog(String txt)

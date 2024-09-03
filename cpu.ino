@@ -39,8 +39,7 @@
 
 //Stack pointer base address
 #define STP_BASE 0x100
-
-//volatile unsigned char keymem = 0;
+long count = 0;
 
 //high nibble SR flags, low nibble address mode
 const unsigned char flags[] = {
@@ -92,21 +91,6 @@ void setflags() {
   if (opflags & 0x40) SR |= ((result ^ ((unsigned short)A)) & (result ^ value16) & 0x0080) >> 1;
 }
 
-void setflagsB() {
-  // Mask out affected flags
-  switch (opflags & 0xF0) {
-    case 0xA0: SR &= 0x7D; break;
-    case 0xB0: SR &= 0x7C; break;
-    case 0x30: SR &= 0xFC; break;
-    case 0xF0: SR &= 0x3C; break;
-    case 0x20: SR &= 0xFD; break;
-  }
-
-  // Set various status flags
-  if (opflags & 0x80) SR |= (result & 0x80) == 0x80;                    //negative
-  if (opflags & 0x20) SR |= ((result == 0) ? 0x02 : 0);  //zero
-}
-
 // Stack functions
 void push16(unsigned short pushval) {
   write8(STP_BASE + (STP--), (pushval >> 8) & 0xFF);
@@ -136,9 +120,13 @@ void run() {
   // Load the reset vector
   PC = read16(0xFFFC);
   STP = 0xFD;
+  
 
   for (;;) 
   {
+    // for(long i = 0; i < 1000000000; i++) {
+    //   count = i;
+    // }    
     // Routines for hooking apple ][ monitor routines
     lastPC = PC;
     
@@ -625,6 +613,7 @@ void run() {
         setflags();
         break;
     }
+    
     
   }
 }

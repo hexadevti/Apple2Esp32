@@ -35,6 +35,8 @@ void HDSetup()
 
 char HDSoftSwitchesRead(ushort address)
 {
+  // sprintf(buf,"HDSoftSwitchesRead %04X", address);
+  // printlog(buf);
   if (address == 0xc0f0) { 
     switch (hdCommand) {
       case 0x01:
@@ -131,6 +133,8 @@ char LoadBlock(unsigned short address, unsigned short block)
     {
       for (int i = 0; i < 512; i++)
       {
+        // sprintf(buf,"Load block %04X:%02X", (address + i), actualBlock[i]);
+        // printlog(buf);
         write8((address + i), actualBlock[i]);
       }
       return 0;

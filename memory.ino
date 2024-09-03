@@ -36,7 +36,7 @@ void write8(unsigned short address, unsigned char value) {
   } else if (page >= 0x04 && page < 0x08) { // LoRes Pages
     ram[address] = value;
     if (!Graphics_Text) 
-      textLoResWrite(address, value);
+      textLoResWrite(address, value, 0x400);
   } else if (page >= 0x08 && page < 0xc0) { // 
     ram[address] = value;
     // if (lastPC >= 0xc600 && lastPC < 0xc700)

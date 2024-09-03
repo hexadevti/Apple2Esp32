@@ -9,7 +9,7 @@ void videoSetup()
   vga.setTextColor(vga.RGB(0xffffff), vga.RGB(0));
   printMsg("APPLE2ESP32");
   textLoResRender(false);
-  xTaskCreatePinnedToCore(flashCharacters, "flashCharacters", 4096, NULL, 1, NULL, 1);
+  xTaskCreatePinnedToCore(graphicFlashCharacters, "graphicFlashCharacters", 4096, NULL, 1, NULL, 1);
 }
 
 void printMsg(char msg[]) {
@@ -23,14 +23,14 @@ void printMsg(char msg[]) {
   vga.setTextColor(vga.RGB(0xffffff), vga.RGB(0));
 }
 
-void flashCharacters(void *pvParameters)
+void graphicFlashCharacters(void *pvParameters)
 {
   bool inversed = false;
   while (true)
   {
     if (Graphics_Text)
     {
-
+      std::lock_guard<std::mutex> lock(page_lock);
       int margin_x = 14;
       int margin_y = 24;
       int x = margin_x;
@@ -105,6 +105,7 @@ void flashCharacters(void *pvParameters)
           }
         }
       }
+      
     }
     else
     {
@@ -120,9 +121,9 @@ unsigned char textLoResRead(short address)
   return ram[0x400 + convertVideo[address - 0x400]];
 }
 
-void textLoResWrite(short address, unsigned char value)
+void textLoResWrite(short address, unsigned char value, ushort pageAdress)
 {
-  short addr = convertVideo[address - 0x400];
+  short addr = convertVideo[address - pageAdress];
   int y = floor(addr / 0x28);
   int x = addr - y * 0x28;
   vga.setTextColor(vga.RGB(0xffffff), vga.RGB(0));
@@ -151,7 +152,7 @@ void textLoResWrite(short address, unsigned char value)
 
 void textLoResRender(bool inversed)
 {
-  ushort textPage = 0x400; //Page1_Page2 ? 0x400 : 0x800;
+  ushort textPage = Page1_Page2 ? 0x400 : 0x800;
   int y = 0;
   for (int b = 0; b < 3; b++)
   {
