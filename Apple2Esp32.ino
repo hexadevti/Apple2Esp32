@@ -47,6 +47,7 @@ bool videoColor = true;
 #define EEPROM_SIZE 12
 int selectedFileEEPROMaddress = 0;
 int selectedFile;
+int shownFile;
 
 bool Graphics_Text;
 bool Page1_Page2;
@@ -67,15 +68,16 @@ unsigned char ram[0xc000];
 void setup()
 {
   EEPROM.begin(EEPROM_SIZE);
-  //EEPROM.write(selectedFileEEPROMaddress, 6);
-  //EEPROM.commit();
+  // EEPROM.write(selectedFileEEPROMaddress, 0);
+  // EEPROM.commit();
   selectedFile = EEPROM.read(selectedFileEEPROMaddress); 
-  //selectedFile = 3;
-  sprintf(buf, "EEPROM value: %x", selectedFile);
+  
+  shownFile = selectedFile;
+  videoSetup();
+  sprintf(buf, "EEPROM value: %x", shownFile);
   printlog(buf);
 	Serial.begin(115200);
   SDCardSetup();
-  videoSetup();
   serialVideoSetup();
 	keyboard_begin();
 	sei();

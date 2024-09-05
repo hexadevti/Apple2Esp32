@@ -7,14 +7,14 @@ void videoSetup()
   vga.init(myMode, red0pin, red1pin, green0pin, green1pin, blue0pin, blue1pin, hsyncPin, vsyncPin);
   vga.setFont(AppleFont_7x8);
   vga.setTextColor(vga.RGB(0xffffff), vga.RGB(0));
-  printMsg("APPLE2ESP32");
+  printMsg("APPLE2ESP32", 0xff0000);
   textLoResRender(false);
   xTaskCreatePinnedToCore(graphicFlashCharacters, "graphicFlashCharacters", 4096, NULL, 1, NULL, 1);
 }
 
-void printMsg(char msg[]) {
+void printMsg(char msg[], int color) {
   vga.setFont(Font6x8);
-  vga.setTextColor(vga.RGB(0xff0000), vga.RGB(0));
+  vga.setTextColor(vga.RGB(color), vga.RGB(0));
   vga.setCursor(5, 10);
   vga.print("                                                  ");
   vga.setCursor(5, 10);

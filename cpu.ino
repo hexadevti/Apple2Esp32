@@ -61,6 +61,23 @@ const unsigned char flags[] = {
   AD_REL, FL_ALL | AD_INDY, UNDF, UNDF, UNDF, FL_ALL | AD_ZPGX, FL_ZN | AD_ZPGX, UNDF, AD_IMP, FL_ALL | AD_ABSY, UNDF, UNDF, UNDF, FL_ALL | AD_ABSX, FL_ZN | AD_ABSX, UNDF
 };
 
+const int cycles[] = { 7, 6, 1, 0, 0, 3, 5, 0, 3, 2, 2, 0, 0, 4, 6, 0, 
+                       2, 5, 1, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0, 
+                       6, 6, 1, 0, 3, 3, 5, 0, 4, 2, 2, 0, 4, 4, 6, 0, 
+                       2, 5, 1, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0, 
+                       6, 6, 1, 0, 0, 3, 5, 0, 3, 2, 2, 0, 3, 4, 6, 0, 
+                       2, 5, 1, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0, 
+                       6, 6, 1, 0, 0, 3, 5, 0, 4, 2, 2, 0, 5, 4, 6, 0, 
+                       2, 5, 1, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0, 
+                       0, 6, 0, 0, 3, 3, 3, 0, 2, 0, 2, 0, 4, 4, 4, 0, 
+                       2, 6, 1, 0, 4, 4, 4, 0, 2, 5, 2, 0, 0, 5, 0, 0, 
+                       2, 6, 2, 0, 3, 3, 3, 0, 2, 2, 2, 0, 4, 4, 4, 0, 
+                       2, 5, 1, 0, 4, 4, 4, 0, 2, 4, 2, 0, 4, 4, 4, 0, 
+                       2, 6, 0, 0, 3, 3, 5, 0, 2, 2, 2, 0, 4, 4, 6, 0, 
+                       2, 5, 1, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0, 
+                       2, 6, 0, 0, 3, 3, 5, 0, 2, 2, 2, 0, 4, 4, 6, 0, 
+                       2, 5, 1, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0 };
+
 // CPU registers
 unsigned short PC;
 unsigned short lastPC;
@@ -83,9 +100,14 @@ void setflags() {
     case 0xF0: SR &= 0x3C; break;
     case 0x20: SR &= 0xFD; break;
   }
-
+  
+  // if (lastPC >= 0x5d00 && lastPC < 0x5e00) {
+  //   sprintf(buf, "setflag: opflag=%02X result=%02X opflags & 0x80=%02X result & 0x80=%02X", opflags, result, opflags & 0x80, result & 0x80);
+  //   printlog(buf);
+  // }
+  
   // Set various status flags
-  if (opflags & 0x80) SR |= (result & 0x0080);                    //negative
+  if (opflags & 0x80) SR |= (result & 0x80);                    //negative
   if (opflags & 0x20) SR |= (((result & 0xFF) == 0) ? 0x02 : 0);  //zero
   if (opflags & 0x10) SR |= ((result & 0xFF00) ? 0x01 : 0);       //carry
   if (opflags & 0x40) SR |= ((result ^ ((unsigned short)A)) & (result ^ value16) & 0x0080) >> 1;
@@ -116,6 +138,7 @@ void cpuReset()
   STP = 0xFD;
 }
 
+
 void run() {
   // Load the reset vector
   PC = read16(0xFFFC);
@@ -124,14 +147,14 @@ void run() {
 
   for (;;) 
   {
-    // for(long i = 0; i < 1000000000; i++) {
-    //   count = i;
-    // }    
+
+    
     // Routines for hooking apple ][ monitor routines
     lastPC = PC;
     
     // Get opcode / addressing mode
     opcode = read8(PC++);
+    int cyclesCount = cycles[opcode]-1;
     opflags = flags[opcode];
 
     
@@ -185,14 +208,18 @@ void run() {
         argument_addr = ((unsigned short)read8(PC++) + (unsigned short)Y) & 0xFF;
         break;
     }
-    // if (lastPC >= 0x0800 && lastPC < 0x0900) {
-    //   sprintf(buf, "[PC]%04X: %02X,[Addr]%04X: A=%02X X=%02X Y=%02X", lastPC, opcode, argument_addr, A, X, Y);
+
+    
+
+    // if (lastPC >= 0x6000 && lastPC < 0x6100) {
+    //   char sFlags[8]; 
+    //   for (int f = 0;f<8;f++) {
+    //     sFlags[7-f] = (SR & (1 << f)) != 0 ? '1' : '0';
+    //   }
+    //   sprintf(buf, "[PC]%04X: %02X ,[Addr]%04X(%02X): A=%02X X=%02X Y=%02X FL=%02X(%s) OPFlag=%02X", lastPC, opcode, argument_addr, read8(argument_addr), A, X, Y, SR, sFlags, opflags);
     //   printlog(buf);
     // }
-    // if (lastPC >= 0x3600 && lastPC < 0x4000) {
-    //   sprintf(buf, "[PC]%04X: %02X,[Addr]%04X: A=%02X X=%02X Y=%02X", lastPC, opcode, argument_addr, A, X, Y);
-    //   printlog(buf);
-    // }
+    
     //opcodes
     switch (opcode) {
       //ADC
@@ -205,7 +232,42 @@ void run() {
       case 0x61:
       case 0x71:
         value16 = (unsigned short)read8(argument_addr);
-        result = (unsigned short)A + value16 + (unsigned short)(SR & SR_CARRY);
+        if (SR & SR_DEC) { // Decimal
+          result = (unsigned short)(A & 0x0F) + (unsigned short)(value16 & 0x0f) + (SR & 0x01 > 0);
+          if (result > 0x09)
+            result += 0x06;
+          if (result <= 0x0F)
+            result = (unsigned short)(result & 0x0F) + (unsigned short)(A & 0xF0) + (unsigned short)(value16 & 0xF0);
+          else
+            result = (unsigned short)(result & 0x0F) + (unsigned short)(A & 0xF0) + (unsigned short)(value16 & 0xF0) + 0x10;
+          
+          if (result == 0) // Zero Flag
+            SR |= 0x02;
+          else
+            SR &= 0xfd;
+          
+          if (result < 0x80) // Negative
+            SR |= 0x80;
+          else
+            SR &= 0x7f;
+          
+          if ((((A ^ result) & 0x80) > 0) && !(((A ^ result) & 0x80) > 0)) // Overflow
+            SR |= 0x40;
+          else
+            SR &= 0xbf;
+
+          if ((result & 0x1F0) > 0x90)
+            result += 0x60;
+
+          if ((result & 0xFF0) > 0xF0) // Carry
+            SR |= 0x01;
+          else
+            SR &= 0xfe;
+        }
+        else
+        { // Binary
+          result = (unsigned short)A + value16 + (unsigned short)(SR & SR_CARRY);
+        }
         setflags();
         A = result & 0xFF;
         break;
@@ -463,6 +525,14 @@ void run() {
         value8 = read8(argument_addr);
         result = value8 | A;
         setflags();
+        if ((result & 0x80) == 0x80)
+          SR |= 0x80;
+        else
+          SR &= 0x7f;
+        if ((result & 0xFF) == 0)
+          SR |= 0x02;
+        else
+          SR &= 0xfd;
         A = result;
         break;
       //PHA
@@ -537,9 +607,50 @@ void run() {
       case 0xF9:
       case 0xE1:
       case 0xF1:
-        value16 = ((unsigned short)read8(argument_addr)) ^ 0x00FF;
-        result = (unsigned short)A + value16 + (unsigned short)(SR & SR_CARRY);
-        setflags();
+
+        if (SR & SR_DEC) { // Decimal
+          value16 = (unsigned short)read8(argument_addr);
+          unsigned short value2 = (unsigned short)(A - value16 - (!(SR & 0x01 > 0)));
+          //sprintf(buf,"value2: %04X", result); Serial.println(buf);
+          result = (unsigned short)((unsigned short)(A & 0x0F) - (unsigned short)(value16 & 0x0F) - (unsigned short)(!(SR & 0x01 > 0)));
+          //sprintf(buf,"result1: %04X A:%02X value16:%04X C:%02X", result, A, value16, (!(SR & 0x01 > 0))); Serial.println(buf);
+          if ((result & 0x10) > 0) {
+              result = ((result - 0x06) & 0x0F) | ((A & 0xF0) - (value16 & 0xF0) - 0x10);
+              //sprintf(buf,"result2a: %04X", result); Serial.println(buf);
+          }
+          else
+          {
+              result = (result & 0x0F) | ((A & 0xF0) - (value16 & 0xF0));
+              //sprintf(buf,"result2b: %04X", result); Serial.println(buf);
+          }
+          if ((result & 0x100) > 0)
+          {
+              result -= 0x60;
+              //sprintf(buf,"result3: %04X", result); Serial.println(buf);
+          }
+
+          if ((unsigned short)value2 < (unsigned short)0x0100) // carry
+            SR |= 0x01;
+          else
+            SR &= 0xfe;
+          if (((value2 & 0xFF) & 0x80) > 0) // Negative
+            SR |= 0x80;
+          else
+            SR &= 0x7f;
+          if (!(((value2 & 0xFF) & 0xFF) > 0)) // Zero
+            SR |= 0x02;
+          else
+            SR &= 0xfd;
+          if ((((A ^ value2) & 0x80) > 0) && (((A ^ value16) & 0x80) > 0)) // overflow
+            SR |= 0x40;
+          else
+            SR &= 0xbf;
+        }
+        else {
+          value16 = ((unsigned short)read8(argument_addr)) ^ 0x00FF;
+          result = (unsigned short)A + value16 + (unsigned short)(SR & SR_CARRY);
+          setflags();
+        }
         A = result & 0xFF;
         break;
       //SEC
@@ -614,6 +725,11 @@ void run() {
         break;
     }
     
+    // for (cyclesCount; cyclesCount < 0; cyclesCount--) {
+    //   for(long i = 0; i < 1000000000; i++) {
+    //     count = i;
+    //   }      
+    // } 
     
   }
 }

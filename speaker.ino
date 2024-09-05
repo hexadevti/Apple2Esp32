@@ -9,5 +9,5 @@ void speaker_begin() {
 
 void speaker_toggle() {
   speaker_state = !speaker_state;
-  digitalWrite(SPEAKER_PIN, speaker_state);
+  digitalWrite(SPEAKER_PIN, speaker_state ? HIGH : LOW);
 }

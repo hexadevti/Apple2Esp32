@@ -97,6 +97,11 @@ void keyboard_bit() {
                 else
                   prevFile();
               }
+              else if (keyboard_data[2] == 0x05)
+              {
+                if (diskAttached) 
+                  setDiskFile();
+              }
               else
               {
                 keymem -= 0x40; 

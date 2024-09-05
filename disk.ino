@@ -124,7 +124,7 @@ void getDiskFileInfo(fs::FS &fs)
 {
   File file = fs.open(diskFiles[selectedFile].c_str());
   sprintf(buf, "APPLE2ESP32 - %s", diskFiles[selectedFile].c_str());
-  printMsg(buf);
+  printMsg(buf, 0xff0000);
   printlog(buf);
   size_t len = file.size();
   sprintf(buf, "File Size: %d", len);
@@ -175,19 +175,27 @@ void getTrack(fs::FS &fs, int track)
 
 void nextDiskFile()
 {
-  selectedFile++;
-  sprintf(buf, "APPLE2ESP32 - %s", diskFiles[selectedFile].c_str());
-  printMsg(buf);
-  EEPROM.write(selectedFileEEPROMaddress, selectedFile);
-  EEPROM.commit();
+  if (shownFile < (int)((diskFiles.size())-1)) {
+    shownFile++;
+    sprintf(buf, "APPLE2ESP32 - %s",diskFiles[shownFile].c_str());
+    printMsg(buf, 0x0000ff);
+  }
 }
 
 void prevDiskFile()
 {
-  selectedFile--;
-  sprintf(buf, "APPLE2ESP32 - %s", diskFiles[selectedFile].c_str());
-  printMsg(buf);
-  EEPROM.write(selectedFileEEPROMaddress, selectedFile);
+  if (shownFile > 0) {
+    shownFile--;
+    sprintf(buf, "APPLE2ESP32 - %s", diskFiles[shownFile].c_str());
+    printMsg(buf, 0x0000ff);
+  }
+}
+
+void setDiskFile()
+{
+  sprintf(buf, "APPLE2ESP32 - %s", diskFiles[shownFile].c_str());
+  printMsg(buf, 0xff0000);
+  EEPROM.write(selectedFileEEPROMaddress, shownFile);
   EEPROM.commit();
 }
 

@@ -94,7 +94,7 @@ void getFileInfo(fs::FS &fs)
 {
   File file = fs.open(files[selectedFile].c_str());
   sprintf(buf, "APPLE2ESP32 - %s", files[selectedFile].c_str());
-  printMsg(buf);
+  printMsg(buf, 0xff0000);
   size_t len = file.size();
   Serial.print("File Size: ");// // // Serial.println(len);
   hdDiskImageSize = len;
@@ -110,7 +110,7 @@ void nextFile()
 {
   selectedFile++;
   sprintf(buf, "APPLE2ESP32 - %s", files[selectedFile].c_str());
-  printMsg(buf);
+  printMsg(buf, 0xff0000);
   EEPROM.write(selectedFileEEPROMaddress, selectedFile);
   EEPROM.commit();
   
@@ -120,7 +120,7 @@ void prevFile()
 {
   selectedFile--;
   sprintf(buf, "APPLE2ESP32 - %s", files[selectedFile].c_str());
-  printMsg(buf);
+  printMsg(buf, 0xff0000);
   EEPROM.write(selectedFileEEPROMaddress, selectedFile);
   EEPROM.commit();
   
