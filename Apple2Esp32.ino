@@ -44,10 +44,19 @@ bool hdAttached = false;
 bool serialVideoAttached = false;
 bool serialKeyboardAttached = false;
 bool videoColor = true;
-#define EEPROM_SIZE 12
-int selectedFileEEPROMaddress = 0;
-int selectedFile;
+#define EEPROM_SIZE 512
+int selectedDiskFileEEPROMaddress = 0;
+int selectedHdFileEEPROMaddress = 1;
+int HdDiskEEPROMaddress = 10;
+byte selectedDiskFile;
+byte selectedHdFile;
+bool HdDisk;
 int shownFile;
+
+int margin_x = 14;
+int margin_y = 24;
+int text_margin_x = 2;
+int text_margin_y = 3;
 
 bool Graphics_Text;
 bool Page1_Page2;
@@ -67,16 +76,23 @@ unsigned char ram[0xc000];
 
 void setup()
 {
-  EEPROM.begin(EEPROM_SIZE);
-  // EEPROM.write(selectedFileEEPROMaddress, 0);
-  // EEPROM.commit();
-  selectedFile = EEPROM.read(selectedFileEEPROMaddress); 
-  
-  shownFile = selectedFile;
-  videoSetup();
-  sprintf(buf, "EEPROM value: %x", shownFile);
-  printlog(buf);
 	Serial.begin(115200);
+  EEPROM.begin(EEPROM_SIZE);
+  selectedDiskFile = EEPROM.readByte(selectedDiskFileEEPROMaddress); 
+  selectedHdFile = EEPROM.readByte(selectedHdFileEEPROMaddress); 
+  HdDisk = EEPROM.readBool(HdDiskEEPROMaddress); 
+  
+  sprintf(buf, "EEPROM HdDisk value: %x", HdDisk);
+  printlog(buf);
+  sprintf(buf, "EEPROM selectedDiskFile value: %x", selectedDiskFile);
+  printlog(buf);
+  sprintf(buf, "EEPROM selectedHdFile value: %x", selectedHdFile);
+  printlog(buf);
+  diskAttached = (HdDisk == 0);
+  hdAttached = !diskAttached;
+  shownFile = selectedDiskFile;
+  videoSetup();
+  
   SDCardSetup();
   serialVideoSetup();
 	keyboard_begin();
@@ -86,6 +102,8 @@ void setup()
   speaker_begin();
   printlog("Ready.");
   setCpuFrequencyMhz(160);
+  sprintf(buf, "%s", HdDisk ? "HD" : "DISK");
+  printStatus(buf, 0xff0000);
 }
 
 void printlog(String txt)
@@ -104,6 +122,17 @@ void printlog(String txt)
   }
   else
     Serial.println(txt.c_str());
+}
+
+void setHdDisk() {
+  HdDisk = !HdDisk;
+  sprintf(buf, "%s", HdDisk ? "HD" : "DISK");
+  printStatus(buf, 0xff0000);
+  EEPROM.writeBool(HdDiskEEPROMaddress, HdDisk);
+  portDISABLE_INTERRUPTS();
+  EEPROM.commit();
+  portENABLE_INTERRUPTS();
+
 }
 
 void loop()

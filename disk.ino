@@ -122,8 +122,8 @@ void AddPhase(uint8_t phase)
 
 void getDiskFileInfo(fs::FS &fs)
 {
-  File file = fs.open(diskFiles[selectedFile].c_str());
-  sprintf(buf, "APPLE2ESP32 - %s", diskFiles[selectedFile].c_str());
+  File file = fs.open(diskFiles[selectedDiskFile].c_str());
+  sprintf(buf, "APPLE2ESP32 - %s", diskFiles[selectedDiskFile].c_str());
   printMsg(buf, 0xff0000);
   printlog(buf);
   size_t len = file.size();
@@ -141,7 +141,7 @@ void getTrack(fs::FS &fs, int track)
   if (track != diskTrack)
   {
     size_t positionToRead = GetOffset(track, 0);
-    File file = fs.open(diskFiles[selectedFile].c_str());
+    File file = fs.open(diskFiles[selectedDiskFile].c_str());
     size_t len = file.size();;
     uint32_t start = millis();
     uint32_t end = start;
@@ -195,7 +195,7 @@ void setDiskFile()
 {
   sprintf(buf, "APPLE2ESP32 - %s", diskFiles[shownFile].c_str());
   printMsg(buf, 0xff0000);
-  EEPROM.write(selectedFileEEPROMaddress, shownFile);
+  EEPROM.writeByte(selectedDiskFileEEPROMaddress, shownFile);
   EEPROM.commit();
 }
 

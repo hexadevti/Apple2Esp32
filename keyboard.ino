@@ -88,19 +88,25 @@ void keyboard_bit() {
                 if (diskAttached) 
                   nextDiskFile();
                 else
-                  nextFile();
+                  nextHdFile();
               }
               else if (keyboard_data[2] == 0x06)
               {
                 if (diskAttached) 
                   prevDiskFile();
                 else
-                  prevFile();
+                  prevHdFile();
               }
               else if (keyboard_data[2] == 0x05)
               {
                 if (diskAttached) 
                   setDiskFile();
+                else
+                  setHdFile();
+              }
+              else if (keyboard_data[2] == 0x0c)
+              {
+                setHdDisk();
               }
               else
               {
