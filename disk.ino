@@ -167,10 +167,6 @@ void getTrack(fs::FS &fs, int track)
       printlog("Failed to open file for reading");
     }
   }
-  else{
-    // sprintf(buf, "GetTrack: %d, Already loaded", track);
-    // printlog(buf);
-  }
 }
 
 void nextDiskFile()

@@ -4,9 +4,7 @@ int colors16[] = {0x000000, 0x3300dd, 0x990000, 0xdd22dd, 0x227700, 0x444444, 0x
 void videoSetup()
 {
   printlog("Video Setup...");
-  Mode myMode = vga.MODE320x240; //.custom(3280,190);
-  //vga.setFrameBufferCount(2);
-  //myMode.print<HardwareSerial>(Serial);
+  Mode myMode = vga.MODE320x240; //.custom(320,190);
   vga.init(myMode, red0pin, red1pin, green0pin, green1pin, blue0pin, blue1pin, hsyncPin, vsyncPin);
   vga.setFont(AppleFont_7x8);
   vga.setTextColor(vga.RGB(0xffffff), vga.RGB(0));
@@ -195,23 +193,6 @@ void textLoResWrite(short address, unsigned char value, ushort pageAdress)
   vga.print((char)value);
   if (serialVideoAttached)
     textLoResSerialWrite(address, value);
-
-  // ram[0x400 + convertVideo[address-0x400]] = value;
-  // sprintf(buf, "%03x: %02x, ", convertVideo[address-0x400], value);
-  // log("x=");
-  // log(x);
-  // log(", y=");
-  // log(y);
-  // log(" > ");
-  // log(value);
-  // log("'");
-  // log((char)value);
-  // log("'");
-  // log(",");
-  // log(value2);
-  // log("'");
-  // log((char)value2);
-  // log("'");
 }
 
 void textLoResRender(bool inversed)
