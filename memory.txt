@@ -1,0 +1,155 @@
+
+unsigned char read8(unsigned short address) {
+  unsigned char page = address >> 8;
+  if (page < 0x02) {
+    if (AltZPOn_Off)
+      return auxzp[address];
+    else
+      return ram[address];
+  } else if (page >= 0x02 && page < 0xc0) {
+    if (!Store80On_Off)
+    {
+      if (RAMReadOn_Off)
+        return auxram[address];
+      else
+        return ram[address];
+    }
+    else // Store80On_Off
+    {
+      if (page >= 0x04 && page < 0x08)
+      {
+        if (!Page1_Page2) // Page 2
+          return auxram[address];
+        else // Page 1
+          return ram[address];
+      } // Text Pages
+      else if (page >= 0x20 && page < 0x40) // Graphics Pages
+      {
+        if (LoRes_HiRes)
+        {
+          if (RAMReadOn_Off)
+            return auxram[address];
+          else
+            return ram[address];
+        }
+        else
+        {
+          if (!Page1_Page2) // Page 2
+            return auxram[address];
+          else // Page 1
+            return ram[address];
+        }
+      }
+      else
+      {
+        if (RAMReadOn_Off)
+          return auxram[address];
+        else
+          return ram[address];
+      }
+    }
+
+    
+  } else if (page >= 0xc0 && page < 0xc1) {  // Softswitches
+    return readSoftSwitches(address);
+  } else if (page >= 0xc1 && page < 0xc8) {
+    if (IntCXRomOn_Off) {
+      return appleiieenhancedc0ff[address - 0xc000];
+    }
+    else {
+      if (page >= 0xc3 && page < 0xc4) {
+        return appleiieenhancedc0ff[address - 0xc000];
+      }
+      else if (page >= 0xc6 && page < 0xc7) {
+        return diskAttached ? diskiicardrom[address - 0xc600] : 0;
+      } else if (page >= 0xc7 && page < 0xc8) {
+        return hdAttached ? hdrom[address - 0xc700] : 0;
+      }
+
+    }
+  } else if (page >= 0xc8 && page < 0xcf) {
+    if (IntC8RomOn_Off)
+    {
+        return appleiieenhancedc0ff[address - 0xc000];
+    }
+  } else if (page >= 0xd0) {
+    if (MemoryBankReadRAM_ROM) {
+      return languagecardRead(address);
+    } else
+      return appleiieenhancedc0ff[address - 0xc000];
+  } else {
+    return 0;
+  }
+}
+
+void write8(unsigned short address, unsigned char value) {
+  unsigned char page = address >> 8;
+  if (page < 0x02) {
+    if (AltZPOn_Off)
+      auxzp[address] = value;
+    else
+      ram[address] = value;
+  } else if (page >= 0x02 && page < 0xc0) {
+    if (!Store80On_Off)
+    {
+      if (RAMWriteOn_Off)
+        auxram[address] = value;
+      else
+        ram[address] = value;
+    }
+    else // softswitches.Store80On_Off
+    {
+      if (page >= 0x04 && page < 0x08) // Text Pages
+      {
+        if (!Page1_Page2)
+          auxram[address] = value;
+        else
+          ram[address] = value;
+      }
+      else if (page >= 0x20 && page < 0x40) // Graphics Pages
+      {
+        if (LoRes_HiRes)
+        {
+          if (RAMWriteOn_Off)
+            auxram[address] = value;
+          else
+            ram[address] = value;
+        }
+        else
+        {
+          if (!Page1_Page2) // Page 2
+            auxram[address] = value;
+          else // Page 1
+            ram[address] = value;
+        }
+      }
+      else
+      {
+        if (RAMWriteOn_Off)
+          auxram[address] = value;
+        else
+          ram[address] = value;
+      }
+    }
+
+    if (page >= 0x04 && page < 0x08) { // LoRes Pages
+      if (!Graphics_Text) 
+        textLoResWrite(address, value, 0x400);
+    }    
+    ram[address] = value;
+  } else if (page >= 0xc0 && page < 0xc1) {  // Softswitched
+    writeSoftSwitches(address, value);
+  } else if (page >= 0xd0) {
+    if (MemoryBankWriteRAM_NoWrite)
+      languagecardWrite(address, value);
+  }
+}
+
+unsigned short read16(unsigned short address) {
+  return (unsigned short)read8(address) | (((unsigned short)read8(address + 1)) << 8);
+}
+
+void write16(unsigned short address, unsigned short value) {
+  write8(address, value & 0x00FF);
+  write8(address + 1, (value >> 8) & 0x00FF);
+}

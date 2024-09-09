@@ -65,13 +65,30 @@ bool LoRes_HiRes;
 bool Cols40_80;
 bool SoundClick;
 bool lock_video = false;
+bool AppleIIe = true;
 
-
+bool IntCXRomOn_Off = false;
+bool IntC8RomOn_Off = false;
+bool AltCharSetOn_Off = false;
+bool SlotC3RomOn_Off = false;
+bool Store80On_Off = false;
+bool Vertical_blankingOn_Off = false;
+bool RAMReadOn_Off = false;
+bool RAMWriteOn_Off = false;
+bool AltZPOn_Off = false;
+bool IOUDisOn_Off = false;
+bool DHiResOn_Off = false;
+int IIeExpansionCardBank = 0;
 std::mutex page_lock;
-
-
 //unsigned char zp[0x200];
 unsigned char ram[0xc000];
+static unsigned char auxram[0xc000];
+static unsigned char auxzp[0x200];
+
+static unsigned char IIEAuxBankSwitchedRAM1[0x2000];
+static unsigned char IIEAuxBankSwitchedRAM2_1[0x1000];
+static unsigned char IIEAuxBankSwitchedRAM2_2[0x1000];
+
 
 
 void setup()
@@ -104,6 +121,25 @@ void setup()
   setCpuFrequencyMhz(160);
   sprintf(buf, "%s", HdDisk ? "HD" : "DISK");
   printStatus(buf, 0xff0000);
+  char a;
+  for (int i = 0; i < 0x200;i++) {
+    auxzp[i] = 0;
+    a = auxzp[i];
+  }
+  for (int i = 0; i < 0xc000;i++) {
+    auxram[i] = 0;
+    a = auxram[i];
+  }
+  for (int i = 0; i < 0x1000;i++) {
+    IIEAuxBankSwitchedRAM2_1[i] = 0;
+    IIEAuxBankSwitchedRAM2_2[i] = 0;
+    a = IIEAuxBankSwitchedRAM2_1[i];
+    a = IIEAuxBankSwitchedRAM2_2[i];
+  }
+  for (int i = 0; i < 0x2000;i++) {
+    IIEAuxBankSwitchedRAM1[i] = 0;
+    a = IIEAuxBankSwitchedRAM1[i];
+  }
 }
 
 void printlog(String txt)

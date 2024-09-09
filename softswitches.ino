@@ -1,15 +1,81 @@
-char readSoftSwitches(ushort address)
-{
-  // sprintf(buf,"readSoftSwitches %04X", address);
-  // printlog(buf);
+char processSoftSwitches(ushort address, char value, bool Read_Write = true) {
   // Keyboard Data
   if (address == 0xC000)
-    return keyboard_read();
-  // Keyboard Strobe
+  {
+    if (Read_Write)
+      return keyboard_read();
+    else
+      Store80On_Off = false;
+  }
+  else if (address == 0xc001)
+  {
+    if (!Read_Write)
+      Store80On_Off = true;
+  }
+  else if (address == 0xc002)
+    RAMReadOn_Off = false;
+  else if (address == 0xc003)
+    RAMReadOn_Off = true;
+  else if (address == 0xc004)
+    RAMWriteOn_Off = false;
+  else if (address == 0xc005)
+    RAMWriteOn_Off = true;
+  else if (address == 0xc006) 
+    IntCXRomOn_Off = false;
+  else if (address == 0xc007)
+    IntCXRomOn_Off = true;
+  else if (address == 0xc008)
+    AltZPOn_Off = false;
+  else if (address == 0xc009)
+    AltZPOn_Off = true;
+  else if (address == 0xc00a)
+    SlotC3RomOn_Off = false;
+  else if (address == 0xc00b)
+    SlotC3RomOn_Off = true;
+  else if (address == 0xc00c)
+  {
+    if (!Read_Write)
+      Cols40_80 = true; // Apple IIc IIe
+  }
+  else if (address == 0xc00d)
+  {
+    if (!Read_Write)
+      Cols40_80 = false; // Apple IIc IIe
+  }
+  else if (address == 0xc00e)
+    AltCharSetOn_Off = false;
+  else if (address == 0xc00f)
+    AltCharSetOn_Off = true;
   else if (address == 0xC010)
     keyboard_strobe();
-  // Speaker toggle
-  else if(address == 0xC030) speaker_toggle();
+  else if (address == 0xc011)
+      return (byte)(RAMReadOn_Off ? 0xff : 0x00);
+  else if (address == 0xc014)
+      return (byte)(RAMWriteOn_Off ? 0xff : 0x00);
+  else if (address == 0xc015)
+    return (char)(IntCXRomOn_Off ? 0xff : 0x00);
+  else if (address == 0xc016)
+      return (char)(AltZPOn_Off ? 0xff : 0x00);
+  else if (address == 0xc017)
+      return (char)(SlotC3RomOn_Off ? 0xff : 0x00);
+  else if (address == 0xc018)
+      return (char)(Store80On_Off ? 0xff : 0x00);
+  else if (address == 0xc019)
+      return (char)(Vertical_blankingOn_Off ? 0xff : 0x00);
+  else if (address == 0xc01a)
+      return (char)(Graphics_Text ? 0x00 : 0xff);
+  else if (address == 0xc01b)
+      return (char)(DisplayFull_Split ? 0x00 : 0xff);
+  else if (address == 0xc01c)
+      return (char)(Page1_Page2 ? 0x00 : 0xff);
+  else if (address == 0xc01d)
+      return (char)(LoRes_HiRes ? 0x00 : 0xff);
+  else if (address == 0xc01e)
+      return (char)(AltCharSetOn_Off ? 0xff : 0x00);
+  else if (address == 0xc01f)
+      return (char)(Cols40_80 ? 0x00 : 0xff);
+  else if(address == 0xC030)
+    speaker_toggle();
   else if (address == 0xc050)
     Graphics_Text = true;
   else if (address == 0xc051)
@@ -31,44 +97,46 @@ char readSoftSwitches(ushort address)
     LoRes_HiRes = true;
   else if (address == 0xc057)
     LoRes_HiRes = false;
+  else if (address == 0xc058)
+    Cols40_80 = true;
+  else if (address == 0xc059)
+    Cols40_80 = false;
+  else if (address == 0xc05e)
+  {
+    if (IOUDisOn_Off)
+      DHiResOn_Off = true;
+  }
+  else if (address == 0xc05f)
+  {
+    if (IOUDisOn_Off)
+      DHiResOn_Off = false;
+  }
   else if (address >= 0xc080 && address < 0xc090) // Slot 0 - LanguageCard
-    return languagecardRead(address);
+  {
+    if (Read_Write)
+      return languagecardRead(address);
+    else
+      languagecardWrite(address, value);
+  }
   else if (address >= 0xc0e0 && address < 0xc0f0) // Slot 6 - Disk
     return diskAttached ? DiskSoftSwitchesRead(address) : 0;
   else if (address >= 0xc0f0 && address < 0xc100) // Slot 7 - HD
-    return hdAttached ? HDSoftSwitchesRead(address) : 0;
+  {
+    if (Read_Write)
+      return hdAttached ? HDSoftSwitchesRead(address) : 0;
+    else
+      HDSoftSwitchesWrite(address, value);
+  }
   return 0;
+}
+
+char readSoftSwitches(ushort address)
+{
+  return processSoftSwitches(address, 0, true);
 }
 
 void writeSoftSwitches(ushort address, char value)
 {
-  // Keyboard Strobe
-  if (address == 0xC010)
-    keyboard_strobe();
-  // Speaker toggle
-  // if(address == 0xC030) speaker_toggle();
-  else if (address == 0xc050)
-    Graphics_Text = true;
-  else if (address == 0xc051)
-    Graphics_Text = false;
-  else if (address == 0xc052)
-    DisplayFull_Split = true;
-  else if (address == 0xc053)
-    DisplayFull_Split = false;
-  else if (address == 0xc054) {
-   std::lock_guard<std::mutex> lock(page_lock); 
-    Page1_Page2 = true;
-  }
-  else if (address == 0xc055) {
-    std::lock_guard<std::mutex> lock(page_lock);
-    Page1_Page2 = false;
-  }
-  else if (address == 0xc056)
-    LoRes_HiRes = true;
-  else if (address == 0xc057)
-    LoRes_HiRes = false;
-  else if (address >= 0xc080 && address < 0xc090) // Slot 0 - LanguageCard
-    languagecardWrite(address, value);
-  else if (address >= 0xc0f0 && address < 0xc100) // Slot 7 - HD
-    HDSoftSwitchesWrite(address, value);
+  processSoftSwitches(address, value, false);
 }
+

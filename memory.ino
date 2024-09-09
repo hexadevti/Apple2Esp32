@@ -1,19 +1,46 @@
 
 unsigned char read8(unsigned short address) {
   unsigned char page = address >> 8;
-  if (page < 0xc0) {
-    return ram[address];
+  if (page < 0x02) {
+      return ram[address];
+  } else if (page >= 0x02 && page < 0xc0) {
+    if (AppleIIe) {
+      if (!RAMReadOn_Off)
+        return ram[address];
+    } else {
+      return ram[address];
+    }
   } else if (page >= 0xc0 && page < 0xc1) {  // Softswitches
     return readSoftSwitches(address);
-  } else if (page >= 0xc6 && page < 0xc7) {
-    return diskAttached ? diskiicardrom[address - 0xc600] : 0;
-  } else if (page >= 0xc7 && page < 0xc8) {
-    return hdAttached ? hdrom[address - 0xc700] : 0;
+  } else if (page >= 0xc1 && page < 0xc8) {
+    if (IntCXRomOn_Off) {
+      return appleiieenhancedc0ff[address - 0xc000];
+    }
+    else {
+      if (page >= 0xc3 && page < 0xc4) {
+        return appleiieenhancedc0ff[address - 0xc000];
+      }
+      else if (page >= 0xc6 && page < 0xc7) {
+        return diskAttached ? diskiicardrom[address - 0xc600] : 0;
+      } else if (page >= 0xc7 && page < 0xc8) {
+        return hdAttached ? hdrom[address - 0xc700] : 0;
+      }
+
+    }
+  } else if (page >= 0xc8 && page < 0xcf) {
+    if (AppleIIe) {
+      if (IntC8RomOn_Off)
+        return appleiieenhancedc0ff[address - 0xc000];
+    }
   } else if (page >= 0xd0) {
     if (MemoryBankReadRAM_ROM) {
       return languagecardRead(address);
-    } else
-      return rom[address - 0xD000];
+    } else {
+      if (AppleIIe)
+        return appleiieenhancedc0ff[address - 0xc000];
+      else
+        return rom[address - 0xd000];
+    }
   } else {
     return 0;
   }
@@ -21,14 +48,15 @@ unsigned char read8(unsigned short address) {
 
 void write8(unsigned short address, unsigned char value) {
   unsigned char page = address >> 8;
-  if (page < 0x04) {
-    ram[address] = value;
-  } else if (page >= 0x04 && page < 0x08) { // LoRes Pages
-    ram[address] = value;
-    if (!Graphics_Text) 
-      textLoResWrite(address, value, 0x400);
-  } else if (page >= 0x08 && page < 0xc0) { // 
-    ram[address] = value;
+  if (page < 0x02) {
+      ram[address] = value;
+  } else if (page >= 0x02 && page < 0xc0) {
+    if (!RAMWriteOn_Off)
+      ram[address] = value;
+    if (page >= 0x04 && page < 0x08) { // LoRes Pages
+      if (!Graphics_Text) 
+        textLoResWrite(address, value, 0x400);
+    }    
   } else if (page >= 0xc0 && page < 0xc1) {  // Softswitched
     writeSoftSwitches(address, value);
   } else if (page >= 0xd0) {

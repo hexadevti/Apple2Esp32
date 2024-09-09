@@ -1,6 +1,6 @@
-unsigned char memoryBankSwitchedRAM1[1][0x2000];
-unsigned char memoryBankSwitchedRAM2_1[1][0x1000];
-unsigned char memoryBankSwitchedRAM2_2[1][0x1000];
+static unsigned char memoryBankSwitchedRAM1[1][0x2000];
+static unsigned char memoryBankSwitchedRAM2_1[1][0x1000];
+static unsigned char memoryBankSwitchedRAM2_2[1][0x1000];
 bool MemoryBankBankSelect1_2 = true;
 bool MemoryBankReadRAM_ROM = false;
 bool MemoryBankWriteRAM_NoWrite = false;
