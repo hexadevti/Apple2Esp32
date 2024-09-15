@@ -13,12 +13,13 @@ unsigned char read8(unsigned short address) {
   } else if (page >= 0xc0 && page < 0xc1) {  // Softswitches
     return readSoftSwitches(address);
   } else if (page >= 0xc1 && page < 0xc8) {
-    if (IntCXRomOn_Off) {
+    if (AppleIIe && IntCXRomOn_Off) {
       return appleiieenhancedc0ff[address - 0xc000];
     }
     else {
       if (page >= 0xc3 && page < 0xc4) {
-        return appleiieenhancedc0ff[address - 0xc000];
+        if (AppleIIe)
+          return appleiieenhancedc0ff[address - 0xc000];
       }
       else if (page >= 0xc6 && page < 0xc7) {
         return diskAttached ? diskiicardrom[address - 0xc600] : 0;

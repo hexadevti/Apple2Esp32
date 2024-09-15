@@ -8,7 +8,8 @@ void videoSetup()
   //vga.init(myMode, red0pin, green0pin, blue0pin, hsyncPin, vsyncPin);
   vga.init(myMode, red0pin, red1pin, green0pin, green1pin, blue0pin, blue1pin, hsyncPin, vsyncPin);
   //vga.setFrameBufferCount(1);
-  vga.setFont(AppleIIeFont_7x8);
+  
+  vga.setFont(AppleIIe ? AppleIIeFont_7x8 : AppleFont_7x8);
   vga.setTextColor(vga.RGB(0xffffff), vga.RGB(0));
   printMsg("APPLE2ESP32", 0xff0000);
   textLoResRender(false);
@@ -23,7 +24,7 @@ void printMsg(char msg[], int color)
   vga.print("                                                                   ");
   vga.setCursor(5, 8);
   vga.print(msg);
-  vga.setFont(AppleIIeFont_7x8);
+  vga.setFont(AppleIIe ? AppleIIeFont_7x8 : AppleFont_7x8);
   vga.setTextColor(vga.RGB(0xffffff), vga.RGB(0));
 }
 
@@ -35,7 +36,7 @@ void printStatus(char msg[], int color)
   vga.print("                                                                   ");
   vga.setCursor(5, 224);
   vga.print(msg);
-  vga.setFont(AppleIIeFont_7x8);
+  vga.setFont(AppleIIe ? AppleIIeFont_7x8 : AppleFont_7x8);
   vga.setTextColor(vga.RGB(0xffffff), vga.RGB(0));
 }
 

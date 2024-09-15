@@ -65,7 +65,7 @@ bool LoRes_HiRes;
 bool Cols40_80;
 bool SoundClick;
 bool lock_video = false;
-bool AppleIIe = true;
+bool AppleIIe = false;
 
 bool IntCXRomOn_Off = false;
 bool IntC8RomOn_Off = false;
@@ -127,8 +127,17 @@ void setup()
     a = auxzp[i];
   }
   for (int i = 0; i < 0xc000;i++) {
-    auxram[i] = 0;
-    a = auxram[i];
+
+    auxram[i] = rand() % 0x100;
+    
+  }
+  for (int i = 0; i < 0xc000;i++) {
+
+    // sprintf(buf, "%02x ", auxram[i]);
+    // Serial.print(buf);
+    // if (i % 0xf == 0)
+    //   Serial.println();
+    
   }
   for (int i = 0; i < 0x1000;i++) {
     IIEAuxBankSwitchedRAM2_1[i] = 0;
