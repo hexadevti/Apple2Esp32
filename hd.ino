@@ -92,6 +92,12 @@ void HDSoftSwitchesWrite(ushort address, char value) {
 
 void getFileInfo(fs::FS &fs)
 {
+  if (selectedHdFile > (int)((hdFiles.size())-1)) {
+    selectedHdFile = 0;
+    shownFile = selectedHdFile;
+    EEPROM.writeByte(selectedHdFileEEPROMaddress, selectedHdFile);
+    EEPROM.commit();
+  }
   File file = fs.open(hdFiles[selectedHdFile].c_str());
   sprintf(buf, "APPLE2ESP32 - %s", hdFiles[selectedHdFile].c_str());
   printMsg(buf, 0xff0000);

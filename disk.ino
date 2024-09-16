@@ -122,6 +122,12 @@ void AddPhase(uint8_t phase)
 
 void getDiskFileInfo(fs::FS &fs)
 {
+  if (selectedDiskFile > (int)((diskFiles.size())-1)) {
+    selectedDiskFile = 0;
+    shownFile = selectedDiskFile;
+    EEPROM.writeByte(selectedDiskFileEEPROMaddress, selectedDiskFile);
+    EEPROM.commit();
+  }
   File file = fs.open(diskFiles[selectedDiskFile].c_str());
   sprintf(buf, "APPLE2ESP32 - %s", diskFiles[selectedDiskFile].c_str());
   printMsg(buf, 0xff0000);

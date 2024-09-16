@@ -156,12 +156,23 @@ void testFileIO(fs::FS &fs, const char *path) {
 
 void SDCardSetup()
 {
-  printlog("SD CArd Setup");
+  printlog("SD Card Setup");
   SPI.begin(sck, miso, mosi, cs);
-  if (!SD.begin(cs)) {
+  delay(500);
+  int sdMountRetry = 0;
+  while (!SD.begin(cs) && sdMountRetry < 10) {
     printlog("Card Mount Failed");
+    delay(100);
+    sdMountRetry++;
+  }
+
+  if (sdMountRetry == 10) {
+    hdAttached = false;
+    diskAttached = false;
     return;
   }
+  
+
   uint8_t cardType = SD.cardType();
 
   if (cardType == CARD_NONE) {
@@ -183,19 +194,4 @@ void SDCardSetup()
   uint64_t cardSize = SD.cardSize() / (1024 * 1024);
   sprintf(buf,"SD Card Size: %lluMB\n", cardSize);
   printlog(buf);
-
-  //listDir(SD, "/", 0);
-  // createDir(SD, "/mydir");
-  // removeDir(SD, "/mydir");
-  // listDir(SD, "/", 2);
-  // writeFile(SD, "/hello.txt", "Hello ");
-  // appendFile(SD, "/hello.txt", "World!\n");
-  // readFile(SD, "/hello.txt");
-  // deleteFile(SD, "/foo.txt");
-  // renameFile(SD, "/hello.txt", "/foo.txt");
-  // readFile(SD, "/foo.txt");
-  // testFileIO(SD, "/test.txt");
-  
-  // Serial.printf("Total space: %lluMB\n", SD.totalBytes() / (1024 * 1024));
-  // Serial.printf("Used space: %lluMB\n", SD.usedBytes() / (1024 * 1024));
 }

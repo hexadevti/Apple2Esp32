@@ -1,10 +1,9 @@
-static unsigned char memoryBankSwitchedRAM1[1][0x2000];
-static unsigned char memoryBankSwitchedRAM2_1[1][0x1000];
-static unsigned char memoryBankSwitchedRAM2_2[1][0x1000];
+static unsigned char memoryBankSwitchedRAM1[0x2000];
+static unsigned char memoryBankSwitchedRAM2_1[0x1000];
+static unsigned char memoryBankSwitchedRAM2_2[0x1000];
 bool MemoryBankBankSelect1_2 = true;
 bool MemoryBankReadRAM_ROM = false;
 bool MemoryBankWriteRAM_NoWrite = false;
-int selectedBank = 0;
 
 void languagecardWrite(ushort address, byte b)
 {
@@ -13,12 +12,12 @@ void languagecardWrite(ushort address, byte b)
         if (address >= 0xd000 && address < 0xe000)
         {
             if (MemoryBankBankSelect1_2)
-                memoryBankSwitchedRAM2_1[selectedBank][address - 0xd000] = b;
+                memoryBankSwitchedRAM2_1[address - 0xd000] = b;
             else
-                memoryBankSwitchedRAM2_2[selectedBank][address - 0xd000] = b;
+                memoryBankSwitchedRAM2_2[address - 0xd000] = b;
         }
         else
-            memoryBankSwitchedRAM1[selectedBank][address - 0xe000] = b;
+            memoryBankSwitchedRAM1[address - 0xe000] = b;
     }
     ProcessSwitch(address, b);
 }
@@ -29,12 +28,12 @@ char languagecardRead(ushort address)
     if (address >= 0xd000 && address < 0xe000)
     {
         if (MemoryBankBankSelect1_2)
-            ret = memoryBankSwitchedRAM2_1[selectedBank][address - 0xd000];
+            ret = memoryBankSwitchedRAM2_1[address - 0xd000];
         else
-            ret = memoryBankSwitchedRAM2_2[selectedBank][address - 0xd000];
+            ret = memoryBankSwitchedRAM2_2[address - 0xd000];
     }
     else if (address >= 0xd000)
-        ret = memoryBankSwitchedRAM1[selectedBank][address - 0xe000];
+        ret = memoryBankSwitchedRAM1[address - 0xe000];
 
     return ProcessSwitch(address, ret);
 }

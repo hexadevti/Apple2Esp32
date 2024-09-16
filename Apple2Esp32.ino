@@ -81,9 +81,9 @@ bool DHiResOn_Off = false;
 int IIeExpansionCardBank = 0;
 std::mutex page_lock;
 //unsigned char zp[0x200];
-unsigned char ram[0xc000];
+static unsigned char ram[0xc000];
 static unsigned char auxram[0xc000];
-static unsigned char auxzp[0x200];
+//static unsigned char auxzp[0x200];
 
 static unsigned char IIEAuxBankSwitchedRAM1[0x2000];
 static unsigned char IIEAuxBankSwitchedRAM2_1[0x1000];
@@ -91,29 +91,32 @@ static unsigned char IIEAuxBankSwitchedRAM2_2[0x1000];
 
 
 
-void setup()
-{
-	Serial.begin(115200);
+void setup() {
+  Serial.begin(115200);
   EEPROM.begin(EEPROM_SIZE);
-  selectedDiskFile = EEPROM.readByte(selectedDiskFileEEPROMaddress); 
-  selectedHdFile = EEPROM.readByte(selectedHdFileEEPROMaddress); 
-  HdDisk = EEPROM.readBool(HdDiskEEPROMaddress); 
-  
+  HdDisk = EEPROM.readBool(HdDiskEEPROMaddress);
+  if (HdDisk) {
+    selectedHdFile = EEPROM.readByte(selectedHdFileEEPROMaddress);
+    shownFile = selectedHdFile;
+    sprintf(buf, "EEPROM selectedHdFile value: %x", selectedHdFile);
+    printlog(buf);
+  } else {
+    selectedDiskFile = EEPROM.readByte(selectedDiskFileEEPROMaddress);
+    shownFile = selectedDiskFile;
+    sprintf(buf, "EEPROM selectedDiskFile value: %x", selectedDiskFile);
+    printlog(buf);
+  }
+
   sprintf(buf, "EEPROM HdDisk value: %x", HdDisk);
-  printlog(buf);
-  sprintf(buf, "EEPROM selectedDiskFile value: %x", selectedDiskFile);
-  printlog(buf);
-  sprintf(buf, "EEPROM selectedHdFile value: %x", selectedHdFile);
   printlog(buf);
   diskAttached = (HdDisk == 0);
   hdAttached = !diskAttached;
-  shownFile = selectedDiskFile;
   videoSetup();
-  
+
   SDCardSetup();
   serialVideoSetup();
-	keyboard_begin();
-	sei();
+  keyboard_begin();
+  sei();
   HDSetup();
   DiskSetup();
   speaker_begin();
@@ -122,50 +125,45 @@ void setup()
   sprintf(buf, "%s", HdDisk ? "HD" : "DISK");
   printStatus(buf, 0xff0000);
   char a;
-  for (int i = 0; i < 0x200;i++) {
-    auxzp[i] = 0;
-    a = auxzp[i];
-  }
-  for (int i = 0; i < 0xc000;i++) {
+  // for (int i = 0; i < 0x200; i++) {
+  //   auxzp[i] = 0;
+  //   a = auxzp[i];
+  // }
+  for (int i = 0; i < 0xc000; i++) {
 
     auxram[i] = rand() % 0x100;
-    
   }
-  for (int i = 0; i < 0xc000;i++) {
+  for (int i = 0; i < 0xc000; i++) {
 
-    // sprintf(buf, "%02x ", auxram[i]);
-    // Serial.print(buf);
-    // if (i % 0xf == 0)
-    //   Serial.println();
-    
+    sprintf(buf, "%02x ", auxram[i]);
+    Serial.print(buf);
+    if (i % 0xf == 0)
+      Serial.println();
   }
-  for (int i = 0; i < 0x1000;i++) {
+  for (int i = 0; i < 0x1000; i++) {
     IIEAuxBankSwitchedRAM2_1[i] = 0;
     IIEAuxBankSwitchedRAM2_2[i] = 0;
     a = IIEAuxBankSwitchedRAM2_1[i];
     a = IIEAuxBankSwitchedRAM2_2[i];
   }
-  for (int i = 0; i < 0x2000;i++) {
+  for (int i = 0; i < 0x2000; i++) {
     IIEAuxBankSwitchedRAM1[i] = 0;
     a = IIEAuxBankSwitchedRAM1[i];
   }
 }
 
-void printlog(String txt)
-{
-  if (serialVideoAttached)
-  {
+void printlog(String txt) {
+  if (serialVideoAttached) {
     if (logLineCount > 24)
       logLineCount = 1;
-      Serial.print("\e[");
-      Serial.print(logLineCount);
-      Serial.print(";");
-      Serial.print(41);
-      Serial.print("H");
-      Serial.print(txt.c_str());
-      logLineCount++;
-  }
-  else
+    Serial.print("\e[");
+    Serial.print(logLineCount);
+    Serial.print(";");
+    Serial.print(41);
+    Serial.print("H");
+    Serial.print(txt.c_str());
+    logLineCount++;
+  } else
     Serial.println(txt.c_str());
 }
 
@@ -177,10 +175,8 @@ void setHdDisk() {
   portDISABLE_INTERRUPTS();
   EEPROM.commit();
   portENABLE_INTERRUPTS();
-
 }
 
-void loop()
-{
-	run();
+void loop() {
+  run();
 }

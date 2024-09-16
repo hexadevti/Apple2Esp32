@@ -3,7 +3,7 @@ unsigned char read8(unsigned short address) {
   unsigned char page = address >> 8;
   if (page < 0x02) {
     if (AltZPOn_Off)
-      return auxzp[address];
+      return auxram[address];
     else
       return ram[address];
   } else if (page >= 0x02 && page < 0xc0) {
@@ -86,7 +86,7 @@ void write8(unsigned short address, unsigned char value) {
   unsigned char page = address >> 8;
   if (page < 0x02) {
     if (AltZPOn_Off)
-      auxzp[address] = value;
+      auxram[address] = value;
     else
       ram[address] = value;
   } else if (page >= 0x02 && page < 0xc0) {
