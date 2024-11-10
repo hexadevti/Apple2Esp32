@@ -1,9 +1,5 @@
 // μ6502 - Barebones 6502 Emulator By Damian Peckett
 // dpeckett.com, <damian@pecke.tt>
-#include "freertos/FreeRTOS.h" 
-#include "freertos/task.h" 
-#include "esp_system.h" 
-#include "esp_log.h"
 
 // Address Modes
 #define AD_IMP  0x01
@@ -186,7 +182,7 @@ void run() {
     opcode = read8(PC++);
     int cycleCount = cycles[opcode];
     cpuCycleCount = ESP.getCycleCount();
-    uint32_t expectedDiff = 200;
+    uint32_t expectedDiff = 300;
 
     diffCpuCycleCount = cpuCycleCount - lastCpuCycleCount;
     while (diffCpuCycleCount < expectedDiff * cycleCount)  

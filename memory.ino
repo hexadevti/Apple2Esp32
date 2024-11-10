@@ -55,10 +55,6 @@ void write8(unsigned short address, unsigned char value) {
   } else if (page >= 0x02 && page < 0xc0) {
     if (!RAMWriteOn_Off)
       ram[address] = value;
-    if (page >= 0x04 && page < 0x08) { // LoRes Pages
-      if (!Graphics_Text) 
-        textLoResWrite(address, value, 0x400);
-    }    
   } else if (page >= 0xc0 && page < 0xc1) {  // Softswitched
     writeSoftSwitches(address, value);
   } else if (page >= 0xd0) {
