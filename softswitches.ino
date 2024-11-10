@@ -86,12 +86,14 @@ char processSoftSwitches(ushort address, char value, bool Read_Write = true) {
     DisplayFull_Split = false;
   else if (address == 0xc054)
   {
-    std::lock_guard<std::mutex> lock(page_lock);
+    page_lock.lock();
     Page1_Page2 = true;
+    page_lock.unlock();
   }
   else if (address == 0xc055) {
-  std::lock_guard<std::mutex> lock(page_lock);
+    page_lock.lock();
     Page1_Page2 = false;
+    page_lock.unlock();
   }
   else if (address == 0xc056)
     LoRes_HiRes = true;

@@ -2,6 +2,7 @@
 unsigned char read8(unsigned short address) {
   unsigned char page = address >> 8;
   if (page < 0x02) {
+    
       return ram[address];
   } else if (page >= 0x02 && page < 0xc0) {
     if (AppleIIe) {

@@ -1,5 +1,9 @@
 // μ6502 - Barebones 6502 Emulator By Damian Peckett
 // dpeckett.com, <damian@pecke.tt>
+#include "freertos/FreeRTOS.h" 
+#include "freertos/task.h" 
+#include "esp_system.h" 
+#include "esp_log.h"
 
 // Address Modes
 #define AD_IMP  0x01
@@ -45,6 +49,11 @@
 //Stack pointer base address
 #define STP_BASE 0x100
 long count = 0;
+long cycleCount = 0;
+uint32_t cpuCycleCount = 0;
+uint32_t lastCpuCycleCount = 0;
+uint32_t diffCpuCycleCount = 0;
+
 
 //high nibble SR flags, low nibble address mode
 const unsigned char flags[] PROGMEM = {
@@ -171,17 +180,25 @@ void run() {
   PC = read16(0xFFFC);
   STP = 0xFD;
   
-
+  
   for (;;) 
   {
-
-    
-    // Routines for hooking apple ][ monitor routines
-    lastPC = PC;
-    
-    // Get opcode / addressing mode
     opcode = read8(PC++);
-    int cyclesCount = cycles[opcode]-1;
+    int cycleCount = cycles[opcode];
+    cpuCycleCount = ESP.getCycleCount();
+    uint32_t expectedDiff = 200;
+
+    diffCpuCycleCount = cpuCycleCount - lastCpuCycleCount;
+    while (diffCpuCycleCount < expectedDiff * cycleCount)  
+    {
+      cpuCycleCount = ESP.getCycleCount();
+      diffCpuCycleCount = cpuCycleCount - lastCpuCycleCount;
+    }
+
+    lastCpuCycleCount = cpuCycleCount;
+
+    lastPC = PC;
+
     opflags = flags[opcode];
 
     
@@ -803,12 +820,6 @@ void run() {
         break;
     }
     
-    // for (cyclesCount; cyclesCount < 0; cyclesCount--) {
-    //   for(long i = 0; i < 1000000000; i++) {
-    //     count = i;
-    //   }      
-    // } 
-    
   }
 }
 
@@ -817,6 +828,6 @@ void printCPUStatus() {
       for (int f = 0;f<8;f++) {
         sFlags[7-f] = (SR & (1 << f)) != 0 ? '1' : '0';
       }
-      sprintf(buf, "[PC]%04X: %02X ,[Addr]%04X(%02X): A=%02X X=%02X Y=%02X FL=%02X(%s) OPFlag=%02X", lastPC, opcode, argument_addr, read8(argument_addr), A, X, Y, SR, sFlags, opflags);
+      sprintf(buf, "[PC]%04X: %02X ,[Addr]%04X(%02X): A=%02X X=%02X Y=%02X FL=%02X(%s) OPFlag=%02X, cycleCount=%d, diffCycleCount=%d", lastPC, opcode, argument_addr, read8(argument_addr), A, X, Y, SR, sFlags, opflags, cycleCount, diffCpuCycleCount);
       printlog(buf);
 }

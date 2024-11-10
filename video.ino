@@ -45,9 +45,10 @@ void graphicFlashCharacters(void *pvParameters)
   bool inversed = false;
   while (true)
   {
+    
     if (Graphics_Text)
     {
-      std::lock_guard<std::mutex> lock(page_lock);
+      page_lock.lock();
       int x = margin_x;
       int y = margin_y;
       int ytext=0;
@@ -171,13 +172,15 @@ void graphicFlashCharacters(void *pvParameters)
           }
         }
       }
+      page_lock.unlock();
     }
     else
     {
       textLoResRender(inversed);
-      delay(300);
+      vTaskDelay(230);
       inversed = !inversed;
     }
+    vTaskDelay(20);
   }
 }
 

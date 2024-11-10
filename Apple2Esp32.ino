@@ -13,7 +13,7 @@
 #include <cmath>
 #include <queue>
 #include <mutex>
-
+#include <thread>
 
 // VGA Pins
 const int hsyncPin = 32;
@@ -121,7 +121,7 @@ void setup() {
   DiskSetup();
   speaker_begin();
   printlog("Ready.");
-  setCpuFrequencyMhz(160);
+  setCpuFrequencyMhz(240);
   sprintf(buf, "%s", HdDisk ? "HD" : "DISK");
   printStatus(buf, 0xff0000);
   char a;
@@ -129,27 +129,27 @@ void setup() {
   //   auxzp[i] = 0;
   //   a = auxzp[i];
   // }
-  for (int i = 0; i < 0xc000; i++) {
+  // for (int i = 0; i < 0xc000; i++) {
 
-    auxram[i] = rand() % 0x100;
-  }
-  for (int i = 0; i < 0xc000; i++) {
+  //   auxram[i] = rand() % 0x100;
+  // }
+  // for (int i = 0; i < 0xc000; i++) {
 
-    sprintf(buf, "%02x ", auxram[i]);
-    Serial.print(buf);
-    if (i % 0xf == 0)
-      Serial.println();
-  }
-  for (int i = 0; i < 0x1000; i++) {
-    IIEAuxBankSwitchedRAM2_1[i] = 0;
-    IIEAuxBankSwitchedRAM2_2[i] = 0;
-    a = IIEAuxBankSwitchedRAM2_1[i];
-    a = IIEAuxBankSwitchedRAM2_2[i];
-  }
-  for (int i = 0; i < 0x2000; i++) {
-    IIEAuxBankSwitchedRAM1[i] = 0;
-    a = IIEAuxBankSwitchedRAM1[i];
-  }
+  //   sprintf(buf, "%02x ", auxram[i]);
+  //   Serial.print(buf);
+  //   if (i % 0xf == 0)
+  //     Serial.println();
+  // }
+  // for (int i = 0; i < 0x1000; i++) {
+  //   IIEAuxBankSwitchedRAM2_1[i] = 0;
+  //   IIEAuxBankSwitchedRAM2_2[i] = 0;
+  //   a = IIEAuxBankSwitchedRAM2_1[i];
+  //   a = IIEAuxBankSwitchedRAM2_2[i];
+  // }
+  // for (int i = 0; i < 0x2000; i++) {
+  //   IIEAuxBankSwitchedRAM1[i] = 0;
+  //   a = IIEAuxBankSwitchedRAM1[i];
+  // }
 }
 
 void printlog(String txt) {

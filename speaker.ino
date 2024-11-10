@@ -9,5 +9,6 @@ void speaker_begin() {
 
 void speaker_toggle() {
   speaker_state = !speaker_state;
-  digitalWrite(SPEAKER_PIN, speaker_state ? HIGH : LOW);
+  REG_WRITE(speaker_state ? GPIO_OUT_W1TS_REG : GPIO_OUT_W1TC_REG, BIT4);
+  //digitalWrite(SPEAKER_PIN, speaker_state ? HIGH : LOW);
 }
