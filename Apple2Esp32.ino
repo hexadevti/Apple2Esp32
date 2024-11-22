@@ -28,11 +28,12 @@ const int blue1pin = 26;
 const int DataPin = 35;
 const int IRQpin = 34;
 // SD Pins
-#define REASSIGN_PINS
 int sck = 18;
 int miso = 19;
 int mosi = 23;
 int cs = 5;
+
+#define LED_PIN 2
 
 
 
@@ -93,6 +94,7 @@ static unsigned char IIEAuxBankSwitchedRAM2_2[0x1000];
 
 void setup() {
   Serial.begin(115200);
+  pinMode(LED_PIN,OUTPUT);
   EEPROM.begin(EEPROM_SIZE);
   HdDisk = EEPROM.readBool(HdDiskEEPROMaddress);
   if (HdDisk) {

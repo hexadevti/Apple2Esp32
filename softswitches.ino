@@ -121,7 +121,10 @@ char processSoftSwitches(ushort address, char value, bool Read_Write = true) {
       languagecardWrite(address, value);
   }
   else if (address >= 0xc0e0 && address < 0xc0f0) // Slot 6 - Disk
-    return diskAttached ? DiskSoftSwitchesRead(address) : 0;
+    if (Read_Write)
+      return diskAttached ? DiskSoftSwitchesRead(address) : 0;
+    else 
+      DiskSoftSwitchesWrite(address, value);
   else if (address >= 0xc0f0 && address < 0xc100) // Slot 7 - HD
   {
     if (Read_Write)

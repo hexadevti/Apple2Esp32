@@ -14,7 +14,7 @@ bool DrivePhase0ON_OFF;
 bool DrivePhase1ON_OFF;
 bool DrivePhase2ON_OFF;
 bool DrivePhase3ON_OFF;
-bool FlagDO_PO = true;
+bool FlagDO_PO;
 bool DriveQ6H_L;
 bool DriveQ7H_L;
 bool DriveMotorON_OFF;
@@ -26,6 +26,7 @@ int pointer = 0;
 int diskTrack = -1;
 int diskSector = 0;
 std::queue<uint8_t> phaseBuffer;
+std::vector<uint8_t> outputSectorData;
 
 const std::array<uint8_t, 4> odd_even_asc PROGMEM = {0x31, 0x20, 0x01, 0x30};
 const std::array<uint8_t, 4> even_odd_asc PROGMEM = {0x11, 0x00, 0x21, 0x10};
@@ -120,6 +121,16 @@ void AddPhase(uint8_t phase)
 
 }
 
+bool identifyDosProdos()
+{
+    std::array<uint8_t, 6> prodosstr;
+    for (int i = 0; i < 6; i++)
+    {
+        prodosstr[i] = trackRawData[0xe03 + i];
+    }
+    return !std::equal(prodosstr.begin(), prodosstr.end(), std::begin(std::array<uint8_t, 6>{0x50, 0x52, 0x4f, 0x44, 0x4f, 0x53}));
+}
+
 void getDiskFileInfo(fs::FS &fs)
 {
   if (selectedDiskFile > (int)((diskFiles.size())-1)) {
@@ -148,7 +159,7 @@ void getTrack(fs::FS &fs, int track)
   {
     size_t positionToRead = GetOffset(track, 0);
     File file = fs.open(diskFiles[selectedDiskFile].c_str());
-    size_t len = file.size();;
+    size_t len = file.size();
     uint32_t start = millis();
     uint32_t end = start;
     if (file) {
@@ -156,6 +167,12 @@ void getTrack(fs::FS &fs, int track)
       {
         file.read(trackRawData, trackRawSize);
         diskTrack = track;
+        if (track == 0)
+        {
+          FlagDO_PO = identifyDosProdos();
+          sprintf(buf, "Disk format: %s", FlagDO_PO ? "DOS" : "PRODOS");
+          printlog(buf);
+        }
         TrackRawData(diskTrack);
       }
       // sprintf(buf, "GetTrack: %d, Size: %d", track, trackRawSize);
@@ -173,6 +190,16 @@ void getTrack(fs::FS &fs, int track)
       printlog("Failed to open file for reading");
     }
   }
+}
+
+void SaveImage(fs::FS &fs) {
+  File file = fs.open(diskFiles[selectedDiskFile].c_str(), FILE_WRITE);
+  size_t len = file.size();;
+  size_t positionToWrite = GetOffset(diskTrack, 0);
+  file.seek(positionToWrite);
+  file.write(trackRawData, sizeof(trackRawData));
+  file.seek(len);
+  file.close();
 }
 
 void nextDiskFile()
@@ -258,6 +285,8 @@ void loadDiskDir(fs::FS &fs, const char *dirname, uint8_t levels)
   file.close();
   root.close();
 }
+
+
 
 int GetOffset(int track, int sector)
 {
@@ -424,7 +453,7 @@ void TrackRawData(int track)
     selectedSector.insert(selectedSector.end(), b.begin(), b.end()); // Checksum
     selectedSector.insert(selectedSector.end(), {0xde, 0xaa, 0xeb}); // Epilogue address
     selectedSector.insert(selectedSector.end(), {0xd5, 0xaa, 0xad}); // Prologue data
-    b = Encode6_2(FlagDO_PO ? translateDOTrack[isec] : translatePOTrack[isec]);
+    b = Encode6_2(translateDOTrack[isec]);
     selectedSector.insert(selectedSector.end(), b.begin(), b.end()); // Data field + checksum
     selectedSector.insert(selectedSector.end(), {0xde, 0xaa, 0xeb}); // Epilogue
   }
@@ -436,6 +465,82 @@ void TrackRawData(int track)
   // printlog("Raw Encoded");
   // PrintHex(trackEncodedData,trackEncodedSize);
   
+}
+
+unsigned char detranlateTable(unsigned char data) {
+    
+    for (size_t j = 0; j < translateTable.size(); j++) {
+        if (translateTable[j] == data) {
+            return static_cast<unsigned char>(j);
+        }
+    }
+    return 0;
+}
+
+std::vector<uint8_t> Decode6_2(const std::vector<uint8_t>& diskData) {
+    std::vector<uint8_t> dataTranslated(343);
+    std::vector<uint8_t> bufferData(343);
+
+    std::vector<uint8_t> inputlast2Encoded(0x56);
+    std::vector<uint8_t> inputDataEncoded(256);
+    std::vector<uint8_t> inputDataDecoded(256);
+    std::vector<uint8_t> outputlast2(0x56);
+    std::vector<uint8_t> outputData(256);
+
+    uint8_t prevByte = 0;
+    for (size_t i = 0; i < diskData.size(); i++) {
+        dataTranslated[i] = detranlateTable(diskData[i]);
+        bufferData[i] = dataTranslated[i] ^ prevByte;
+        prevByte = bufferData[i];
+    }
+
+    for (size_t i = 0; i < bufferData.size() - 1; i++) {
+        if (i < 86)
+            inputlast2Encoded[i] = bufferData[i];
+        else
+            inputDataEncoded[i - 86] = bufferData[i];
+    }
+
+    for (size_t i = 0; i < inputDataEncoded.size(); i++) {
+        outputData[i] = inputDataEncoded[i] << 2;
+    }
+
+    for (size_t i = 0; i < outputData.size(); i++) {
+        if (i < 86) {
+            std::bitset<8> bitsVolume(inputlast2Encoded[i]);
+            inputDataDecoded[i] = outputData[i] + (bitsVolume[0] ? 2 : 0) + (bitsVolume[1] ? 1 : 0);
+        }
+        else if (i < 172) {
+            std::bitset<8> bitsVolume(inputlast2Encoded[i - 86]);
+            inputDataDecoded[i] = outputData[i] + (bitsVolume[2] ? 2 : 0) + (bitsVolume[3] ? 1 : 0);
+        }
+        else {
+            std::bitset<8> bitsVolume(inputlast2Encoded[i - 172]);
+            inputDataDecoded[i] = outputData[i] + (bitsVolume[4] ? 2 : 0) + (bitsVolume[5] ? 1 : 0);
+        }
+    }
+
+    return inputDataDecoded;
+}
+
+void SetSectorData(uint8_t sector, const std::vector<uint8_t>& data) {
+    if (sector < 16) {
+        auto offset = GetSectorOffset(sector);
+
+        for (int i = 0; i < 256; i++) {
+            trackRawData[offset + i] = data[i];
+        }
+    }
+}
+
+void SetBlockData(int sector, const std::vector<uint8_t>& data) {
+    if (sector < 16) {
+        auto offset = secoffset[sector];
+
+        for (int i = 0; i < 256; i++) {
+            trackRawData[offset + i] = data[i];
+        }
+    }
 }
 
 void PrintHex(uint8_t data[], int length) {
@@ -454,7 +559,7 @@ void PrintHex(uint8_t data[], int length) {
 
 char DiskSoftSwitchesRead(ushort address)
 {
-  diskSector = read8(0x2d);
+  
   if (address == 0xc0ec)
   {
     if (DriveQ6H_L == false && DriveQ7H_L == false)
@@ -474,6 +579,37 @@ char DiskSoftSwitchesRead(ushort address)
 
 void DiskSoftSwitchesWrite(ushort address, char value)
 {
+  int sec = FlagDO_PO ? read8(0x2d) : read8(0xd357);
+
+  if (address == 0xc0ed)
+  {
+    if (DriveQ6H_L == false && DriveQ7H_L == true)
+    {
+        outputSectorData.push_back(value);
+
+        if (outputSectorData.size() == 354)
+        {
+          sprintf(buf, "Disk Track: %d, Sector: %d", diskTrack, sec);
+          printlog(buf);
+      
+            std::vector<uint8_t> cleanData(outputSectorData.begin() + 7, outputSectorData.begin() + 350);
+            std::vector<uint8_t> decsecData = Decode6_2(cleanData);
+            if (FlagDO_PO)
+            {
+                SetSectorData(translateDOTrack[sec], decsecData);
+            }
+            else
+            {
+                SetBlockData(sec, decsecData);
+            }
+            SaveImage(SD);
+            getTrack(SD, diskTrack);
+            outputSectorData.clear();
+        }
+    }
+}
+
+
   ProcessSwitchc0e0(address, value);
 }
 
@@ -524,10 +660,12 @@ char ProcessSwitchc0e0(ushort address, char value)
   else if (address == 0xc0e8)
   {
     DriveMotorON_OFF = false;
+    digitalWrite(LED_PIN,LOW);
   }
   else if (address == 0xc0e9)
   {
     DriveMotorON_OFF = true;
+    digitalWrite(LED_PIN,HIGH);
   }
   else if (address == 0xc0ea)
     Drive1_2 = true;
