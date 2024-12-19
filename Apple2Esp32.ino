@@ -35,7 +35,8 @@ int cs = 5;
 
 #define LED_PIN 2
 
-
+bool running = true;
+bool paused = false;
 
 VGA6Bit vga;
 char buf[0xff];
@@ -67,6 +68,7 @@ bool Cols40_80;
 bool SoundClick;
 bool lock_video = false;
 bool AppleIIe = false;
+bool OptionsWindow = false;
 
 bool IntCXRomOn_Off = false;
 bool IntC8RomOn_Off = false;
@@ -177,6 +179,12 @@ void setHdDisk() {
   portDISABLE_INTERRUPTS();
   EEPROM.commit();
   portENABLE_INTERRUPTS();
+}
+
+void setOptions() {
+  OptionsWindow = !OptionsWindow;
+  if (OptionsWindow)
+    printOptionsMsg("Ola!", 0xff0000);
 }
 
 void loop() {

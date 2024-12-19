@@ -50,8 +50,8 @@ void keyboard_bit() {
   if (++keyboard_buf_indx == 11) {
     // Ignore parity checks for now
     keyboard_data[2] = (keyboard_data[2] >> 1) & 0xFF;
-    // sprintf(buf, "initial keybdata: %02x", keyboard_data[2]);
-    // Serial.println(buf);
+    sprintf(buf, "initial keybdata: %02x", keyboard_data[2]);
+    Serial.println(buf);
     // extended keys
     if (keyboard_data[2] == 0xF0 || keyboard_data[2] == 0xE0) 
       keyboard_mbyte = 1;
@@ -108,6 +108,10 @@ void keyboard_bit() {
               {
                 setHdDisk();
               }
+              else if (keyboard_data[2] == 0x76)
+              {
+                setOptions();
+              }
               else
               {
                 keymem -= 0x40; 
@@ -115,14 +119,14 @@ void keyboard_bit() {
             }
             
             
-              // Serial.print("keyboard_data:");
-              // Serial.println(keyboard_data[2]);
-            // Serial.print("shift:");
-            // Serial.println((shift_enabled) ? "1" : "0");
-            // Serial.print("ctrl:");
-            // Serial.println((ctrl_enabled) ? "1" : "0");
-            // Serial.print("key:");
-            // Serial.println(keymem);
+            Serial.print("keyboard_data:");
+            Serial.println(keyboard_data[2]);
+            Serial.print("shift:");
+            Serial.println((shift_enabled) ? "1" : "0");
+            Serial.print("ctrl:");
+            Serial.println((ctrl_enabled) ? "1" : "0");
+            Serial.print("key:");
+            Serial.println(keymem);
           }
         } 
         else if (keyboard_data[0] != 0xF0 && keyboard_data[1] == 0xE0) 

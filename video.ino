@@ -13,8 +13,11 @@ void videoSetup()
   vga.setFont(AppleIIe ? AppleIIeFont_7x8 : AppleFont_7x8);
   vga.setTextColor(vga.RGB(0xffffff), vga.RGB(0));
   printMsg("APPLE2ESP32", 0xff0000);
+  printOptionsMsg("Test Message", 0xff0000);
   xTaskCreate(graphicFlashCharacters, "graphicFlashCharacters", 2048, NULL, 1, NULL);
 }
+
+
 
 void printMsg(char msg[], int color)
 {
@@ -71,11 +74,13 @@ void graphicFlashCharacters(void *pvParameters)
                   int secondColor = value & 0b00001111;
                   if (j < 4)
                   {
-                    vga.dotFast(x, y, vga.RGB(colors16[secondColor]));
+                    if (!optionsScreenWindow(x,y))
+                      vga.dotFast(x, y, vga.RGB(colors16[secondColor]));
                   }
                   else
                   {
-                    vga.dotFast(x, y, vga.RGB(colors16[firstColor]));
+                    if (!optionsScreenWindow(x,y))
+                      vga.dotFast(x, y, vga.RGB(colors16[firstColor]));
                   }
                   x++;
                 }
@@ -122,7 +127,8 @@ void graphicFlashCharacters(void *pvParameters)
 
                   for (int id = 0; id < 7; id++)
                   {
-                    vga.dotFast(x, y, colors[pixels[id]]);
+                    if (!optionsScreenWindow(x,y))
+                      vga.dotFast(x, y, colors[pixels[id]]);
                     x++;
                   }
                   std::copy(std::begin(blockline), std::end(blockline), std::begin(blocklineAnt));
@@ -137,7 +143,9 @@ void graphicFlashCharacters(void *pvParameters)
                       color = 0b111111;
                     else
                       color = 0;
-                    vga.dotFast(x, y, color);
+
+                    if (!optionsScreenWindow(x,y))
+                      vga.dotFast(x, y, color);
 
                     // sprintf(buf, "%04x: %02x",,chr);
                     // printlog(buf);
@@ -166,7 +174,8 @@ void graphicFlashCharacters(void *pvParameters)
                 bool inverted = false; 
                 if (!AppleIIe)
                   inverted = chr >= 0x40 && chr < 0x80 && inversed;
-                vga.dotFast(x, y, bpixel ? (inverted ? vga.RGB(0) : vga.RGB(0xffffff)) : (inverted ? vga.RGB(0xffffff) : vga.RGB(0)) );
+                if (!optionsScreenWindow(x,y))
+                  vga.dotFast(x, y, bpixel ? (inverted ? vga.RGB(0) : vga.RGB(0xffffff)) : (inverted ? vga.RGB(0xffffff) : vga.RGB(0)) );
                 x++;
               }
             }
@@ -179,11 +188,31 @@ void graphicFlashCharacters(void *pvParameters)
     page_lock.unlock();
     vTaskDelay(pdMS_TO_TICKS(20));
     flashCount++;
-    if (flashCount > 7)
+    if (flashCount > 7)  
     {
       inversed = !inversed;
       flashCount = 0;
     }
 
   }
+}
+
+bool optionsScreenWindow(int x, int y) {
+  if (OptionsWindow) {
+    if (x >= 80 && x <= 160 && y >= 70 && y <= 180)
+      return true;
+    else
+      return false;
+  }
+  else
+    return false;
+}
+
+void printOptionsMsg(char msg[], int color)
+{
+  vga.fillRect(80, 70, 80, 110, 0);
+  vga.setFont(Font6x8);
+  vga.setTextColor(vga.RGB(color), vga.RGB(0));
+  vga.setCursor(80, 70);
+  vga.print(msg);
 }

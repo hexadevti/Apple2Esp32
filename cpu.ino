@@ -177,8 +177,13 @@ void run() {
   STP = 0xFD;
   
   
-  for (;;) 
+  while (running) 
   {
+    while (paused) 
+    {
+      delay(100);
+    }
+
     opcode = read8(PC++);
     int cycleCount = cycles[opcode];
     cpuCycleCount = ESP.getCycleCount();

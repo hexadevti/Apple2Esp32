@@ -117,7 +117,7 @@ void AddPhase(uint8_t phase)
 
   // sprintf(buf, "Track Change: %d", track);
   // printlog(buf);
-  getTrack(SD, track);
+  getTrack(SD, track, false);
 
 }
 
@@ -147,15 +147,15 @@ void getDiskFileInfo(fs::FS &fs)
   sprintf(buf, "File Size: %d", len);
   printlog(buf);
   file.close();
-  getTrack(SD, 17);
+  getTrack(SD, 17, false);
   diskVolume = trackRawData[0x06];
   sprintf(buf, "Disk Volume: %d", diskVolume);
   printlog(buf);
 }
 
-void getTrack(fs::FS &fs, int track) 
+void getTrack(fs::FS &fs, int track, bool force) 
 {
-  if (track != diskTrack)
+  if (track != diskTrack || force)
   {
     size_t positionToRead = GetOffset(track, 0);
     File file = fs.open(diskFiles[selectedDiskFile].c_str());
@@ -222,10 +222,12 @@ void prevDiskFile()
 
 void setDiskFile()
 {
+  paused = true;
   sprintf(buf, "APPLE2ESP32 - %s", diskFiles[shownFile].c_str());
   printMsg(buf, 0xff0000);
   EEPROM.writeByte(selectedDiskFileEEPROMaddress, shownFile);
   EEPROM.commit();
+  paused = false;
 }
 
 void loadDiskDir(fs::FS &fs, const char *dirname, uint8_t levels)
@@ -603,7 +605,7 @@ void DiskSoftSwitchesWrite(ushort address, char value)
                 SetBlockData(sec, decsecData);
             }
             SaveImage(SD);
-            getTrack(SD, diskTrack);
+            getTrack(SD, diskTrack, true);
             outputSectorData.clear();
         }
     }
