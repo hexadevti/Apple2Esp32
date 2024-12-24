@@ -8,7 +8,7 @@ uint8_t trackRawData[trackRawSize];
 uint8_t trackEncodedData[trackEncodedSize];
 uint8_t diskVolume;
 std::vector<std::string> diskFileExtensions = {".dsk", ".po", ".do"};
-std::vector<std::string> diskFiles;
+
 
 bool DrivePhase0ON_OFF;
 bool DrivePhase1ON_OFF;

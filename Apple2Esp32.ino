@@ -1,5 +1,5 @@
 #include <ESP32Lib.h>
-#include <Ressources/CodePage437_8x8.h>
+#include <Ressources/Font8x8.h>
 #include <Ressources/Font6x8.h>
 #include "rom.h"
 #include "FS.h"
@@ -50,6 +50,7 @@ bool videoColor = true;
 int selectedDiskFileEEPROMaddress = 0;
 int selectedHdFileEEPROMaddress = 1;
 int HdDiskEEPROMaddress = 10;
+int IIpIIeEEPROMaddress = 11;
 byte selectedDiskFile;
 byte selectedHdFile;
 bool HdDisk;
@@ -82,6 +83,8 @@ bool AltZPOn_Off = false;
 bool IOUDisOn_Off = false;
 bool DHiResOn_Off = false;
 int IIeExpansionCardBank = 0;
+std::vector<std::string> hdFiles;
+std::vector<std::string> diskFiles;
 std::mutex page_lock;
 //unsigned char zp[0x200];
 static unsigned char ram[0xc000];
@@ -99,6 +102,7 @@ void setup() {
   pinMode(LED_PIN,OUTPUT);
   EEPROM.begin(EEPROM_SIZE);
   HdDisk = EEPROM.readBool(HdDiskEEPROMaddress);
+  AppleIIe = EEPROM.readBool(IIpIIeEEPROMaddress);
   if (HdDisk) {
     selectedHdFile = EEPROM.readByte(selectedHdFileEEPROMaddress);
     shownFile = selectedHdFile;
@@ -126,8 +130,7 @@ void setup() {
   speaker_begin();
   printlog("Ready.");
   setCpuFrequencyMhz(240);
-  sprintf(buf, "%s", HdDisk ? "HD" : "DISK");
-  printStatus(buf, 0xff0000);
+  
   char a;
   // for (int i = 0; i < 0x200; i++) {
   //   auxzp[i] = 0;
@@ -171,22 +174,66 @@ void printlog(String txt) {
     Serial.println(txt.c_str());
 }
 
-void setHdDisk() {
-  HdDisk = !HdDisk;
-  sprintf(buf, "%s", HdDisk ? "HD" : "DISK");
-  printStatus(buf, 0xff0000);
+void saveEEPROM() {
+  paused = true;
   EEPROM.writeBool(HdDiskEEPROMaddress, HdDisk);
-  portDISABLE_INTERRUPTS();
+  EEPROM.writeBool(IIpIIeEEPROMaddress, AppleIIe);
   EEPROM.commit();
-  portENABLE_INTERRUPTS();
+  paused = false;
 }
 
-void setOptions() {
+void changeHdDisk() {
+  HdDisk = !HdDisk;
+}
+
+void changeIIpIIe() {
+  AppleIIe = !AppleIIe;
+}
+
+void showHideOptionsWindow() {
   OptionsWindow = !OptionsWindow;
-  if (OptionsWindow)
-    printOptionsMsg("Ola!", 0xff0000);
+  updateOptions();
 }
 
+void updateOptions() {
+  if (OptionsWindow) {
+    printOptionsBackground(0xff0000);
+    std::string result = "";
+    int sel = 0;
+    int skip = 0;
+    vga.fillRect(42, 42, 236, 147, 0);
+    vga.setCursor(44, 44);
+    std::vector<std::string> files;
+    if (diskAttached)
+      files = diskFiles;
+    if (hdAttached)
+      files = hdFiles;
+    if (shownFile > 17)
+      skip = shownFile - 18;
+    int skiped = 0;
+    int shown = 0;
+    for (auto &&i : files)
+    {
+      if (skiped <= skip)
+      {
+        skiped++;
+        continue;
+      }
+      if (shown > 17)
+        break;        
+      if (sel == shownFile)
+        vga.setTextColor(vga.RGB(0), vga.RGB(0xffffff));
+      else
+        vga.setTextColor(vga.RGB(0xffffff), vga.RGB(0));
+      if (i.size() > 39)
+        i = i.substr(0, 33) + "..." + i.substr(i.size()-3,3);  
+      vga.println(i.c_str());
+      
+      sel++;
+      shown++;
+    }
+  }
+}
 void loop() {
   run();
 }

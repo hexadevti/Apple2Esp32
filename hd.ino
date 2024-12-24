@@ -21,7 +21,7 @@ size_t hdDiskImageSize ;
 ushort fileHeaderSize = 0;
 unsigned char actualBlock[512];
 std::vector<std::string> fileExtensions = { ".hdv", ".po", ".2mg" };
-std::vector<std::string> hdFiles;
+
 
 void HDSetup()
 {

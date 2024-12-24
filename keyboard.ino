@@ -89,6 +89,7 @@ void keyboard_bit() {
                   nextDiskFile();
                 else
                   nextHdFile();
+                updateOptions();
               }
               else if (keyboard_data[2] == 0x06)
               {
@@ -96,6 +97,7 @@ void keyboard_bit() {
                   prevDiskFile();
                 else
                   prevHdFile();
+                updateOptions();
               }
               else if (keyboard_data[2] == 0x05)
               {
@@ -103,21 +105,38 @@ void keyboard_bit() {
                   setDiskFile();
                 else
                   setHdFile();
+                saveEEPROM();
+                ESP.restart();
               }
               else if (keyboard_data[2] == 0x0c)
               {
-                setHdDisk();
+                changeHdDisk();
+                updateOptions();
+              }
+              else if (keyboard_data[2] == 0x03)
+              {
+                changeIIpIIe();
+                updateOptions();
               }
               else if (keyboard_data[2] == 0x76)
               {
-                setOptions();
+                showHideOptionsWindow();
               }
               else
               {
                 keymem -= 0x40; 
               }
             }
-            
+            else
+            {
+              if (OptionsWindow)
+              {
+                if (keyboard_data[2] == 0x76)
+                {
+                  showHideOptionsWindow();
+                }   
+              }
+            }
             
             Serial.print("keyboard_data:");
             Serial.println(keyboard_data[2]);
@@ -137,7 +156,26 @@ void keyboard_bit() {
           if (keyboard_data[2] == 0x74) 
             keymem = 0x95;  //forward key
           // Power management keys, hardware reset
-          
+          if (OptionsWindow)
+          {
+            if (keyboard_data[2] == 0x72)
+            {
+                if (diskAttached) 
+                  nextDiskFile();
+                else
+                  nextHdFile();
+            }
+            if (keyboard_data[2] == 0x75)
+            {
+              if (diskAttached) 
+                prevDiskFile();
+              else
+                prevHdFile();
+            }
+            
+            updateOptions();
+          }
+ 
         } 
         else if (keyboard_data[1] == 0xF0 && (keyboard_data[2] == 0x12 || keyboard_data[2] == 0x59)) 
           shift_enabled = false;
