@@ -89,7 +89,7 @@ void keyboard_bit() {
                   nextDiskFile();
                 else
                   nextHdFile();
-                updateOptions();
+                updateOptions(true);
               }
               else if (keyboard_data[2] == 0x06)
               {
@@ -97,7 +97,7 @@ void keyboard_bit() {
                   prevDiskFile();
                 else
                   prevHdFile();
-                updateOptions();
+                updateOptions(false);
               }
               else if (keyboard_data[2] == 0x05)
               {
@@ -111,12 +111,12 @@ void keyboard_bit() {
               else if (keyboard_data[2] == 0x0c)
               {
                 changeHdDisk();
-                updateOptions();
+                updateOptions(true);
               }
               else if (keyboard_data[2] == 0x03)
               {
                 changeIIpIIe();
-                updateOptions();
+                updateOptions(true);
               }
               else if (keyboard_data[2] == 0x76)
               {
@@ -135,17 +135,26 @@ void keyboard_bit() {
                 {
                   showHideOptionsWindow();
                 }   
+                if (keyboard_data[2] == 0x5a) // enter
+                {
+                  saveEEPROM();
+                  ESP.restart();
+                }
+                if (keyboard_data[2] == 0x29) // space
+                {
+                  setDiskFile();
+                }
               }
             }
             
-            Serial.print("keyboard_data:");
-            Serial.println(keyboard_data[2]);
-            Serial.print("shift:");
-            Serial.println((shift_enabled) ? "1" : "0");
-            Serial.print("ctrl:");
-            Serial.println((ctrl_enabled) ? "1" : "0");
-            Serial.print("key:");
-            Serial.println(keymem);
+             //Serial.print("keyboard_data:");
+             //Serial.println(keyboard_data[2]);
+            // Serial.print("shift:");
+            // Serial.println((shift_enabled) ? "1" : "0");
+            // Serial.print("ctrl:");
+            // Serial.println((ctrl_enabled) ? "1" : "0");
+            // Serial.print("key:");
+            // Serial.println(keymem);
           }
         } 
         else if (keyboard_data[0] != 0xF0 && keyboard_data[1] == 0xE0) 
@@ -164,6 +173,7 @@ void keyboard_bit() {
                   nextDiskFile();
                 else
                   nextHdFile();
+                updateOptions(true);
             }
             if (keyboard_data[2] == 0x75)
             {
@@ -171,9 +181,10 @@ void keyboard_bit() {
                 prevDiskFile();
               else
                 prevHdFile();
+              updateOptions(false);
             }
             
-            updateOptions();
+            
           }
  
         } 

@@ -54,6 +54,7 @@ int IIpIIeEEPROMaddress = 11;
 byte selectedDiskFile;
 byte selectedHdFile;
 bool HdDisk;
+int firstShowFile = 0;
 int shownFile;
 
 int margin_x = 14;
@@ -192,10 +193,10 @@ void changeIIpIIe() {
 
 void showHideOptionsWindow() {
   OptionsWindow = !OptionsWindow;
-  updateOptions();
+  updateOptions(true);
 }
 
-void updateOptions() {
+void updateOptions(bool downDirection) {
   if (OptionsWindow) {
     printOptionsBackground(0xff0000);
     std::string result = "";
@@ -208,20 +209,31 @@ void updateOptions() {
       files = diskFiles;
     if (hdAttached)
       files = hdFiles;
-    if (shownFile > 17)
-      skip = shownFile - 18;
-    int skiped = 0;
+    if (downDirection) {
+      if (shownFile >= firstShowFile + 17) {
+        firstShowFile = shownFile - 17;
+      }
+    }
+    else
+    {
+      if (shownFile < firstShowFile && firstShowFile > 0)
+        firstShowFile--;
+    }
+    
     int shown = 0;
+    // sprintf(buf, "sel: %d, firstShowFile: %d, shownFile: %d", sel, firstShowFile, shownFile);
+    // Serial.println(buf);
+    int id = 0;
     for (auto &&i : files)
     {
-      if (skiped <= skip)
+      if (id < firstShowFile)
       {
-        skiped++;
+        id++;
         continue;
       }
       if (shown > 17)
         break;        
-      if (sel == shownFile)
+      if (id == shownFile)
         vga.setTextColor(vga.RGB(0), vga.RGB(0xffffff));
       else
         vga.setTextColor(vga.RGB(0xffffff), vga.RGB(0));
@@ -229,9 +241,12 @@ void updateOptions() {
         i = i.substr(0, 33) + "..." + i.substr(i.size()-3,3);  
       vga.println(i.c_str());
       
-      sel++;
       shown++;
+      id++;
+      
     }
+    // sprintf(buf, "sel: %d, skip: %d, skiped: %d, shownFile: %d", sel, skip, skiped, shownFile);
+    // Serial.println(buf);
   }
 }
 void loop() {

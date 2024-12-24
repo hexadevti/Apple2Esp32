@@ -7,7 +7,7 @@ const uint trackRawSize = 4096;
 uint8_t trackRawData[trackRawSize];
 uint8_t trackEncodedData[trackEncodedSize];
 uint8_t diskVolume;
-std::vector<std::string> diskFileExtensions = {".dsk", ".po", ".do"};
+std::vector<std::string> diskFileExtensions = {".dsk", ".DSK", ".po", ".PO", ".do", ".DO"};
 
 
 bool DrivePhase0ON_OFF;
@@ -115,8 +115,8 @@ void AddPhase(uint8_t phase)
     track--;
   }
 
-  // sprintf(buf, "Track Change: %d", track);
-  // printlog(buf);
+  //sprintf(buf, "Track Change: %d", track);
+  //printlog(buf);
   getTrack(SD, track, false);
 
 }
@@ -155,9 +155,12 @@ void getDiskFileInfo(fs::FS &fs)
 
 void getTrack(fs::FS &fs, int track, bool force) 
 {
+  //sprintf(buf, "track %d - %s", track, diskFiles[selectedDiskFile].c_str());
+  //Serial.println(buf);
   if (track != diskTrack || force)
   {
     size_t positionToRead = GetOffset(track, 0);
+
     File file = fs.open(diskFiles[selectedDiskFile].c_str());
     size_t len = file.size();
     uint32_t start = millis();
@@ -220,7 +223,7 @@ void prevDiskFile()
   }
 }
 
-void setDiskFile()
+void setRebootDiskFile()
 {
   paused = true;
   sprintf(buf, "APPLE2ESP32 - %s", diskFiles[shownFile].c_str());
@@ -229,6 +232,14 @@ void setDiskFile()
   EEPROM.commit();
   paused = false;
 }
+
+void setDiskFile()
+{
+  paused = true;
+  selectedDiskFile = shownFile;
+  paused = false;
+}
+
 
 void loadDiskDir(fs::FS &fs, const char *dirname, uint8_t levels)
 {
