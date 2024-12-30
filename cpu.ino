@@ -185,18 +185,24 @@ void run() {
     }
 
     opcode = read8(PC++);
-    int cycleCount = cycles[opcode];
-    cpuCycleCount = ESP.getCycleCount();
-    uint32_t expectedDiff = 300;
 
-    diffCpuCycleCount = cpuCycleCount - lastCpuCycleCount;
-    while (diffCpuCycleCount < expectedDiff * cycleCount)  
+    if (!Fast1MhzSpeed)
     {
+      int cycleCount = cycles[opcode];
       cpuCycleCount = ESP.getCycleCount();
+      uint32_t expectedDiff = 300;
+
       diffCpuCycleCount = cpuCycleCount - lastCpuCycleCount;
+      while (diffCpuCycleCount < expectedDiff * cycleCount)  
+      {
+        cpuCycleCount = ESP.getCycleCount();
+        diffCpuCycleCount = cpuCycleCount - lastCpuCycleCount;
+      }
+
+      lastCpuCycleCount = cpuCycleCount;
     }
 
-    lastCpuCycleCount = cpuCycleCount;
+    if (joystick) processJoystick(0.4);
 
     lastPC = PC;
 

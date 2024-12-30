@@ -113,6 +113,33 @@ char processSoftSwitches(ushort address, char value, bool Read_Write = true) {
     if (IOUDisOn_Off)
       DHiResOn_Off = false;
   }
+  else if (address == 0xc061)
+    return (char)(Pb0 ? 0x80 : 0x00);
+  else if (address == 0xc062)
+    return (char)(Pb1 ? 0x80 : 0x00);
+  else if (address == 0xc063)
+    return (char)(Pb2 ? 0x80 : 0x00);
+      //else if (address == 0xc063)
+      //    return 0x80; // Apple II+ default. For Apple IIe it is defined by shift key pressed
+  else if (address == 0xc064)
+    return (char)(Cg0 ? 0x80 : 0x00);
+  else if (address == 0xc065)
+    return (char)(Cg1 ? 0x80 : 0x00);
+  else if (address == 0xc066)
+    return (char)(Cg2 ? 0x80 : 0x00);
+  else if (address == 0xc067)
+    return (char)(Cg3 ? 0x80 : 0x00);
+  else if (address == 0xc070)
+  {
+      CgReset0 = true;
+      CgReset1 = true;
+      CgReset2 = true;
+      CgReset3 = true;
+      Cg0 = true;
+      Cg1 = true;
+      Cg2 = true;
+      Cg3 = true;
+  }
   else if (address >= 0xc080 && address < 0xc090) // Slot 0 - LanguageCard
   {
     if (Read_Write)

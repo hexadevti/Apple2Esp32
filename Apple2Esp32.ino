@@ -34,9 +34,19 @@ int mosi = 23;
 int cs = 5;
 
 #define LED_PIN 2
+#define JOY_MAX 20000
+#define JOY_MID 1230
+#define JOY_MIN 10
 
 bool running = true;
 bool paused = false;
+bool AppleIIe = false;
+bool OptionsWindow = false;
+bool HdDisk = false;
+bool Fast1MhzSpeed = false;
+bool joystick = true;
+
+
 
 VGA6Bit vga;
 char buf[0xff];
@@ -46,14 +56,18 @@ bool hdAttached = false;
 bool serialVideoAttached = false;
 bool serialKeyboardAttached = false;
 bool videoColor = true;
-#define EEPROM_SIZE 512
+#define EEPROM_SIZE 1024
 int selectedDiskFileEEPROMaddress = 0;
 int selectedHdFileEEPROMaddress = 1;
 int HdDiskEEPROMaddress = 10;
 int IIpIIeEEPROMaddress = 11;
+int Fast1MhzSpeedEEPROMaddress = 12;
+int JoystickEEPROMaddress = 13;
+int DiskFileNameEEPROMaddress = 512;
+int HdFileNameEEPROMaddress = 768;
 byte selectedDiskFile;
+char selectedDiskFileName;
 byte selectedHdFile;
-bool HdDisk;
 int firstShowFile = 0;
 int shownFile;
 
@@ -69,8 +83,6 @@ bool LoRes_HiRes;
 bool Cols40_80;
 bool SoundClick;
 bool lock_video = false;
-bool AppleIIe = false;
-bool OptionsWindow = false;
 
 bool IntCXRomOn_Off = false;
 bool IntC8RomOn_Off = false;
@@ -92,25 +104,47 @@ static unsigned char ram[0xc000];
 static unsigned char auxram[0xc000];
 //static unsigned char auxzp[0x200];
 
-static unsigned char IIEAuxBankSwitchedRAM1[0x2000];
+unsigned char IIEAuxBankSwitchedRAM1[0x2000];
 static unsigned char IIEAuxBankSwitchedRAM2_1[0x1000];
 static unsigned char IIEAuxBankSwitchedRAM2_2[0x1000];
 
-
+static bool CgReset0 = false;
+static bool CgReset1 = false;
+static bool CgReset2 = false;
+static bool CgReset3 = false;
+static bool Cg0 = false;
+static bool Cg1 = false;
+static bool Cg2 = false;
+static bool Cg3 = false;
+static float timerpdl0 = 0;
+static float timerpdl1 = 0;
+static float timerpdl2 = 0;
+static float timerpdl3 = 0;
+static bool Pb0 = false;
+static bool Pb1 = false;
+static bool Pb2 = false;
 
 void setup() {
   Serial.begin(115200);
   pinMode(LED_PIN,OUTPUT);
   EEPROM.begin(EEPROM_SIZE);
+
   HdDisk = EEPROM.readBool(HdDiskEEPROMaddress);
   AppleIIe = EEPROM.readBool(IIpIIeEEPROMaddress);
+  Fast1MhzSpeed = EEPROM.readBool(Fast1MhzSpeedEEPROMaddress);
+  joystick = EEPROM.readBool(JoystickEEPROMaddress);
+  
   if (HdDisk) {
     selectedHdFile = EEPROM.readByte(selectedHdFileEEPROMaddress);
     shownFile = selectedHdFile;
     sprintf(buf, "EEPROM selectedHdFile value: %x", selectedHdFile);
     printlog(buf);
   } else {
+
     selectedDiskFile = EEPROM.readByte(selectedDiskFileEEPROMaddress);
+    //size_t filenameSize = EEPROM.readString(DiskFileNameEEPROMaddress, &selectedDiskFileName, 256);
+    //sprintf(buf, "EEPROM selectedHdFile value: %s", selectedDiskFileName);
+    //printlog(buf);
     shownFile = selectedDiskFile;
     sprintf(buf, "EEPROM selectedDiskFile value: %x", selectedDiskFile);
     printlog(buf);
@@ -131,6 +165,18 @@ void setup() {
   speaker_begin();
   printlog("Ready.");
   setCpuFrequencyMhz(240);
+
+  if (joystick)
+  {
+    timerpdl0 = JOY_MID;
+    timerpdl1 = JOY_MID;
+  }
+  else
+  {
+    timerpdl0 = JOY_MAX;
+    timerpdl1 = JOY_MAX;
+  }
+  
   
   char a;
   // for (int i = 0; i < 0x200; i++) {
@@ -179,6 +225,9 @@ void saveEEPROM() {
   paused = true;
   EEPROM.writeBool(HdDiskEEPROMaddress, HdDisk);
   EEPROM.writeBool(IIpIIeEEPROMaddress, AppleIIe);
+  EEPROM.writeBool(Fast1MhzSpeedEEPROMaddress, Fast1MhzSpeed);
+  EEPROM.writeBool(JoystickEEPROMaddress, joystick);
+
   EEPROM.commit();
   paused = false;
 }
@@ -189,6 +238,18 @@ void changeHdDisk() {
 
 void changeIIpIIe() {
   AppleIIe = !AppleIIe;
+}
+
+void fast1MhzSpeed() {
+  Fast1MhzSpeed = !Fast1MhzSpeed;
+}
+
+void pauseRunning() {
+  paused = !paused;
+}
+
+void joystickOnOff() {
+  joystick = !joystick;
 }
 
 void showHideOptionsWindow() {

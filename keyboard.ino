@@ -50,8 +50,8 @@ void keyboard_bit() {
   if (++keyboard_buf_indx == 11) {
     // Ignore parity checks for now
     keyboard_data[2] = (keyboard_data[2] >> 1) & 0xFF;
-    sprintf(buf, "initial keybdata: %02x", keyboard_data[2]);
-    Serial.println(buf);
+    //sprintf(buf, "initial keybdata: %02x", keyboard_data[2]);
+    //Serial.println(buf);
     // extended keys
     if (keyboard_data[2] == 0xF0 || keyboard_data[2] == 0xE0) 
       keyboard_mbyte = 1;
@@ -69,58 +69,39 @@ void keyboard_bit() {
           if (keyboard_data[2] == 0x12 || keyboard_data[2] == 0x59) 
           {
             shift_enabled = true;  //shift modifiers
+            Pb1 = true;
           }
           else if (keyboard_data[2] == 0x14) 
           {
             ctrl_enabled = true;
+            Pb0 = true;
           }
           else 
           {
             keymem = scancode_to_apple[keyboard_data[2] + ((shift_enabled) ? 0x80 : 0x00)];
             if (ctrl_enabled)
             {
-              if (keyboard_data[2] == 0x07)
+              if (keyboard_data[2] == 0x07)  // CTRL-F12
               {
                 cpuReset();
               }
-              else if (keyboard_data[2] == 0x04)
+              else if (keyboard_data[2] == 0x03) // CTRL-F5
               {
-                if (diskAttached) 
-                  nextDiskFile();
-                else
-                  nextHdFile();
-                updateOptions(true);
-              }
-              else if (keyboard_data[2] == 0x06)
-              {
-                if (diskAttached) 
-                  prevDiskFile();
-                else
-                  prevHdFile();
-                updateOptions(false);
-              }
-              else if (keyboard_data[2] == 0x05)
-              {
-                if (diskAttached) 
-                  setDiskFile();
-                else
-                  setHdFile();
-                saveEEPROM();
                 ESP.restart();
               }
-              else if (keyboard_data[2] == 0x0c)
-              {
-                changeHdDisk();
-                updateOptions(true);
-              }
-              else if (keyboard_data[2] == 0x03)
-              {
-                changeIIpIIe();
-                updateOptions(true);
-              }
-              else if (keyboard_data[2] == 0x76)
+              else if (keyboard_data[2] == 0x76) // CTRL-ESC
               {
                 showHideOptionsWindow();
+                keymem = 0;
+              }
+              else if (keyboard_data[2] == 0x5a) // CTRL-ENTER
+              {
+                setDiskFile();
+                diskChanged = true;
+                showHideOptionsWindow();
+                saveEEPROM();
+                setRebootDiskFile();
+                ESP.restart();
               }
               else
               {
@@ -129,69 +110,140 @@ void keyboard_bit() {
             }
             else
             {
-              if (OptionsWindow)
+              if (OptionsWindow) // Option Window Opened
               {
-                if (keyboard_data[2] == 0x76)
+                if (keyboard_data[2] == 0x76) // ESC
                 {
                   showHideOptionsWindow();
                 }   
-                if (keyboard_data[2] == 0x5a) // enter
-                {
-                  saveEEPROM();
-                  ESP.restart();
-                }
-                if (keyboard_data[2] == 0x29) // space
+                else if (keyboard_data[2] == 0x5a) // enter
                 {
                   setDiskFile();
+                  diskChanged = true;
+                  showHideOptionsWindow();
+
                 }
+                else if (keyboard_data[2] == 0x05) // F1
+                {
+                  changeHdDisk();
+                  updateOptions(true);
+                  //Serial.println("f1");
+                }
+                else if (keyboard_data[2] == 0x06) // F2
+                {
+                  changeIIpIIe();
+                  updateOptions(true);
+                  //Serial.println("f2");
+                }
+                else if (keyboard_data[2] == 0x04) // F3
+                {
+                  fast1MhzSpeed();
+                  updateOptions(true);
+                }
+                else if (keyboard_data[2] == 0x0c) // F4
+                {
+                  pauseRunning();
+                  updateOptions(true);
+                }
+                else if (keyboard_data[2] == 0x03) // F5
+                {
+                  joystickOnOff();
+                  updateOptions(true);
+                }
+                
+                keymem = 0;
+
               }
             }
             
-             //Serial.print("keyboard_data:");
-             //Serial.println(keyboard_data[2]);
-            // Serial.print("shift:");
-            // Serial.println((shift_enabled) ? "1" : "0");
-            // Serial.print("ctrl:");
-            // Serial.println((ctrl_enabled) ? "1" : "0");
-            // Serial.print("key:");
-            // Serial.println(keymem);
+            //  Serial.print("keyboard_data:");
+            //  Serial.println(keyboard_data[2]);
+            //  Serial.print("shift:");
+            //  Serial.println((shift_enabled) ? "1" : "0");
+            //  Serial.print("ctrl:");
+            //  Serial.println((ctrl_enabled) ? "1" : "0");
+            //  Serial.print("key:");
+            //  Serial.println(keymem);
           }
         } 
         else if (keyboard_data[0] != 0xF0 && keyboard_data[1] == 0xE0) 
         {
           //Extended keys
-          if (keyboard_data[2] == 0x6B) 
+          if (keyboard_data[2] == 0x6B) // LEFT ARROW
+          {
             keymem = 0x88;  //back key
-          if (keyboard_data[2] == 0x74) 
+            if (joystick) timerpdl0 = JOY_MIN;
+          } 
+          else if (keyboard_data[2] == 0x74) // RIGHT ARROW
+          {
             keymem = 0x95;  //forward key
+            if (joystick) timerpdl0 = JOY_MAX;
+          }
+          else if (keyboard_data[2] == 0x75) // UP ARROW 
+          {
+            keymem = 0x8b;
+            if (joystick) timerpdl1 = JOY_MIN;
+          }
+          else if (keyboard_data[2] == 0x72) // DOWN ARROW
+          {
+            keymem = 0x8a;
+            if (joystick) timerpdl1 = JOY_MAX;
+          }
+          
           // Power management keys, hardware reset
           if (OptionsWindow)
           {
-            if (keyboard_data[2] == 0x72)
+            if (keyboard_data[2] == 0x72) // Down Arrow
             {
                 if (diskAttached) 
                   nextDiskFile();
                 else
                   nextHdFile();
                 updateOptions(true);
+              
+              //Serial.println("down");
             }
-            if (keyboard_data[2] == 0x75)
+            else if (keyboard_data[2] == 0x75) // Up Arrow
             {
               if (diskAttached) 
                 prevDiskFile();
               else
                 prevHdFile();
               updateOptions(false);
+              //Serial.println("up");
             }
+            keymem = 0;
             
             
           }
  
         } 
         else if (keyboard_data[1] == 0xF0 && (keyboard_data[2] == 0x12 || keyboard_data[2] == 0x59)) 
+        {
           shift_enabled = false;
+          if (joystick) Pb1 = false;
+        }
         else if (keyboard_data[1] == 0xF0 && keyboard_data[2] == 0x14) 
+        {
           ctrl_enabled = false;
+          if (joystick) Pb0 = false;
+        }
+        else if (keyboard_data[1] == 0xF0 && (keyboard_data[2] == 0x75 || keyboard_data[2] == 0x72)) 
+        {
+          if (joystick) timerpdl1 = JOY_MID;
+        }
+        else if (keyboard_data[1] == 0xF0 && (keyboard_data[2] == 0x6b || keyboard_data[2] == 0x74)) 
+        {
+          if (joystick) timerpdl0 = JOY_MID;
+        }
+        else
+        {
+          if (joystick)
+          {
+            timerpdl0 = JOY_MID;
+            timerpdl1 = JOY_MID;
+          }
+        }
       }
     }
 

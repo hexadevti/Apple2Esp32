@@ -214,7 +214,7 @@ void printOptionsBackground(int color)
   vga.setFont(Font6x8);
   vga.setTextColor(vga.RGB(color), vga.RGB(0));
   vga.setCursor(44, 188);
-  sprintf(buf, "%s      %s                    ", HdDisk ? "HD" : "DISK", AppleIIe ? "Apple IIe" : "Apple II+");
+  sprintf(buf, " %s | %s | %s | %s | %s", HdDisk ? " HD " : "DISK", AppleIIe ? "IIe" : "II+", Fast1MhzSpeed ? "Fast" : "1Mhz", paused ? "Paused " : "Running", joystick ? "Joy On " : "Joy Off");
   vga.print(buf);
 }
 

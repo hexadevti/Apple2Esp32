@@ -140,21 +140,24 @@ void setHdFile()
 
 char LoadBlock(unsigned short address, unsigned short block)
 {
-    getBlock(SD, block);
-    try
+  digitalWrite(LED_PIN,HIGH);
+  getBlock(SD, block);
+  try
+  {
+    for (int i = 0; i < 512; i++)
     {
-      for (int i = 0; i < 512; i++)
-      {
-        // sprintf(buf,"Load block %04X:%02X", (address + i), actualBlock[i]);
-        // printlog(buf);
-        write8((address + i), actualBlock[i]);
-      }
-      return 0;
+      // sprintf(buf,"Load block %04X:%02X", (address + i), actualBlock[i]);
+      // printlog(buf);
+      write8((address + i), actualBlock[i]);
     }
-    catch(std::exception ex)
-    {
-        return 0xb0;
-    }
+    digitalWrite(LED_PIN,LOW);
+    return 0;
+  }
+  catch(std::exception ex)
+  {
+    digitalWrite(LED_PIN,LOW);
+    return 0xb0;
+  }
 }
 
 ushort getBlockQty()
