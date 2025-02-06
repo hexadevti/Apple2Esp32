@@ -96,11 +96,14 @@ void keyboard_bit() {
               }
               else if (keyboard_data[2] == 0x5a) // CTRL-ENTER
               {
-                setDiskFile();
-                diskChanged = true;
-                showHideOptionsWindow();
-                saveEEPROM();
-                setRebootDiskFile();
+                if (HdDisk)
+                  setHdFile();
+                else
+                  setDiskFile();
+                if (HdDisk)
+                  saveHdFile();
+                else
+                  saveDiskFile();
                 ESP.restart();
               }
               else
@@ -118,7 +121,10 @@ void keyboard_bit() {
                 }   
                 else if (keyboard_data[2] == 0x5a) // enter
                 {
-                  setDiskFile();
+                  if (HdDisk)
+                    setHdFile();
+                  else
+                    setDiskFile();
                   diskChanged = true;
                   showHideOptionsWindow();
 
@@ -195,7 +201,7 @@ void keyboard_bit() {
           {
             if (keyboard_data[2] == 0x72) // Down Arrow
             {
-                if (diskAttached) 
+                if (!HdDisk) 
                   nextDiskFile();
                 else
                   nextHdFile();
@@ -205,7 +211,7 @@ void keyboard_bit() {
             }
             else if (keyboard_data[2] == 0x75) // Up Arrow
             {
-              if (diskAttached) 
+              if (!HdDisk) 
                 prevDiskFile();
               else
                 prevHdFile();

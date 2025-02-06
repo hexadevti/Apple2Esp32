@@ -13,7 +13,7 @@ void videoSetup()
   vga.setFont(AppleIIe ? AppleIIeFont_7x8 : AppleFont_7x8);
   vga.setTextColor(vga.RGB(0xffffff), vga.RGB(0));
   printMsg("APPLE2ESP32", 0xff0000);
-  xTaskCreate(graphicFlashCharacters, "graphicFlashCharacters", 2048, NULL, 1, NULL);
+  xTaskCreate(graphicFlashCharacters, "graphicFlashCharacters", 1024, NULL, 1, NULL);
 }
 
 

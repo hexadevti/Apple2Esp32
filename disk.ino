@@ -51,13 +51,16 @@ const ushort secoffset[] PROGMEM = {0, 0x700, 0xe00, 0x600, 0xd00, 0x500, 0xc00,
 
 void DiskSetup()
 {
-  if (diskAttached)
-  {
-    printlog("DiskII Setup...");
-    loadDiskDir(SD, "/", 0);
+  printlog("DiskII Setup...");
+  LoadDisk();
+  if (!HdDisk)
     getDiskFileInfo(SD);
-    phaseBuffer = std::queue<uint8_t>();
-  }
+  phaseBuffer = std::queue<uint8_t>();
+}
+
+void LoadDisk()
+{
+  loadDiskDir(SD, "/", 0);
 }
 
 void AddPhase(uint8_t phase)
@@ -136,15 +139,12 @@ bool identifyDosProdos()
 
 void getDiskFileInfo(fs::FS &fs)
 {
-  if (selectedDiskFile > (int)((diskFiles.size()) - 1))
+  if (!fs.exists(selectedDiskFileName.c_str())) 
   {
-    selectedDiskFile = 0;
-    shownFile = selectedDiskFile;
-    EEPROM.writeByte(selectedDiskFileEEPROMaddress, selectedDiskFile);
-    EEPROM.commit();
+    selectedDiskFileName = "";
   }
-  File file = fs.open(diskFiles[selectedDiskFile].c_str());
-  sprintf(buf, "APPLE2ESP32 - %s", diskFiles[selectedDiskFile].c_str());
+  File file = fs.open(selectedDiskFileName.c_str());
+  sprintf(buf, "APPLE2ESP32 - %s", selectedDiskFileName.c_str());
   printMsg(buf, 0xff0000);
   printlog(buf);
   size_t len = file.size();
@@ -166,9 +166,9 @@ void getTrack(fs::FS &fs, int track, bool force)
   if (track != diskTrack || force)
   {
     size_t positionToRead = GetOffset(track, 0);
-    sprintf(buf, "track %d - %s", track, diskFiles[selectedDiskFile].c_str());
+    sprintf(buf, "track %d - %s", track, selectedDiskFileName.c_str());
     printlog(buf);
-    File file = fs.open(diskFiles[selectedDiskFile].c_str(), FILE_READ);
+    File file = fs.open(selectedDiskFileName.c_str(), FILE_READ);
 
     if (file)
     {
@@ -190,7 +190,7 @@ void getTrack(fs::FS &fs, int track, bool force)
 
 void SaveImage(fs::FS &fs)
 {
-  File file = fs.open(diskFiles[selectedDiskFile].c_str(), FILE_WRITE);
+  File file = fs.open(selectedDiskFileName.c_str(), FILE_WRITE);
   size_t len = file.size();
   ;
   size_t positionToWrite = GetOffset(diskTrack, 0);
@@ -220,10 +220,11 @@ void prevDiskFile()
   }
 }
 
-void setRebootDiskFile()
+void saveDiskFile()
 {
   paused = true;
-  EEPROM.writeByte(selectedDiskFileEEPROMaddress, shownFile);
+  writeStringToEEPROM(DiskFileNameEEPROMaddress, selectedDiskFileName.c_str());
+  saveEEPROM();
   EEPROM.commit();
   paused = false;
 }
@@ -231,16 +232,16 @@ void setRebootDiskFile()
 void setDiskFile()
 {
   paused = true;
-  selectedDiskFile = shownFile;
-  sprintf(buf, "APPLE2ESP32 - %s", diskFiles[selectedDiskFile].c_str());
+  selectedDiskFileName = diskFiles[shownFile].c_str();
+  sprintf(buf, "APPLE2ESP32 - %s", selectedDiskFileName.c_str());
   printMsg(buf, 0xff0000);
   paused = false;
 }
 
 void loadDiskDir(fs::FS &fs, const char *dirname, uint8_t levels)
 {
-  sprintf(buf, "Loading directory: %s\n", dirname);
-  printlog(buf);
+  // sprintf(buf, "Loading directory: %s\n", dirname);
+  // printlog(buf);
 
   File root = fs.open(dirname);
   if (!root)
@@ -260,11 +261,11 @@ void loadDiskDir(fs::FS &fs, const char *dirname, uint8_t levels)
   {
     if (file.isDirectory())
     {
-      printlog("  DIR : ");
-      printlog(file.name());
+      // printlog("  DIR : ");
+      // printlog(file.name());
       if (levels)
       {
-        loadDir(fs, file.path(), levels - 1);
+        loadDiskDir(fs, file.path(), levels - 1);
       }
     }
     else
@@ -282,8 +283,8 @@ void loadDiskDir(fs::FS &fs, const char *dirname, uint8_t levels)
 
       if (acepted)
       {
-        sprintf(buf, " FOUND FILE: %s SIZE: %d", file.name(), file.size());
-        printlog(buf);
+        // sprintf(buf, " FOUND FILE: %s SIZE: %d", file.name(), file.size());
+        // printlog(buf);
         std::string str(file.name());
         diskFiles.push_back("/" + str);
       }

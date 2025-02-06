@@ -47,7 +47,6 @@ bool Fast1MhzSpeed = false;
 bool joystick = true;
 
 
-
 VGA6Bit vga;
 char buf[0xff];
 int logLineCount = 1;
@@ -57,16 +56,14 @@ bool serialVideoAttached = false;
 bool serialKeyboardAttached = false;
 bool videoColor = true;
 #define EEPROM_SIZE 1024
-int selectedDiskFileEEPROMaddress = 0;
-int selectedHdFileEEPROMaddress = 1;
 int HdDiskEEPROMaddress = 10;
 int IIpIIeEEPROMaddress = 11;
 int Fast1MhzSpeedEEPROMaddress = 12;
 int JoystickEEPROMaddress = 13;
 int DiskFileNameEEPROMaddress = 512;
 int HdFileNameEEPROMaddress = 768;
-byte selectedDiskFile;
-char selectedDiskFileName;
+String selectedDiskFileName;
+String selectedHdFileName;
 byte selectedHdFile;
 int firstShowFile = 0;
 int shownFile;
@@ -135,23 +132,15 @@ void setup() {
   joystick = EEPROM.readBool(JoystickEEPROMaddress);
   
   if (HdDisk) {
-    selectedHdFile = EEPROM.readByte(selectedHdFileEEPROMaddress);
-    shownFile = selectedHdFile;
-    sprintf(buf, "EEPROM selectedHdFile value: %x", selectedHdFile);
+    int size = readStringFromEEPROM(HdFileNameEEPROMaddress, &selectedHdFileName);
+    sprintf(buf, "EEPROM selectedHdFile value: %s", selectedHdFileName.c_str());
     printlog(buf);
   } else {
-
-    selectedDiskFile = EEPROM.readByte(selectedDiskFileEEPROMaddress);
-    //size_t filenameSize = EEPROM.readString(DiskFileNameEEPROMaddress, &selectedDiskFileName, 256);
-    //sprintf(buf, "EEPROM selectedHdFile value: %s", selectedDiskFileName);
-    //printlog(buf);
-    shownFile = selectedDiskFile;
-    sprintf(buf, "EEPROM selectedDiskFile value: %x", selectedDiskFile);
+    int size = readStringFromEEPROM(DiskFileNameEEPROMaddress, &selectedDiskFileName);
+    sprintf(buf, "EEPROM selectedDiskFileName value: %s", selectedDiskFileName.c_str());
     printlog(buf);
   }
 
-  sprintf(buf, "EEPROM HdDisk value: %x", HdDisk);
-  printlog(buf);
   diskAttached = (HdDisk == 0);
   hdAttached = !diskAttached;
   videoSetup();
@@ -162,6 +151,7 @@ void setup() {
   sei();
   HDSetup();
   DiskSetup();
+  
   speaker_begin();
   printlog("Ready.");
   setCpuFrequencyMhz(240);
@@ -204,6 +194,32 @@ void setup() {
   //   IIEAuxBankSwitchedRAM1[i] = 0;
   //   a = IIEAuxBankSwitchedRAM1[i];
   // }
+  
+}
+
+
+int writeStringToEEPROM(int addrOffset, const String &strToWrite)
+{
+  byte len = strToWrite.length();
+  EEPROM.write(addrOffset, len);
+  for (int i = 0; i < len; i++)
+  {
+    EEPROM.write(addrOffset + 1 + i, strToWrite[i]);
+  }
+  return addrOffset + 1 + len;
+}
+
+int readStringFromEEPROM(int addrOffset, String *strToRead)
+{
+  int newStrLen = EEPROM.read(addrOffset);
+  char data[newStrLen + 1];
+  for (int i = 0; i < newStrLen; i++)
+  {
+    data[i] = EEPROM.read(addrOffset + 1 + i);
+  }
+  data[newStrLen] = '\0'; 
+  *strToRead = String(data);
+  return addrOffset + 1 + newStrLen;
 }
 
 void printlog(String txt) {
@@ -222,18 +238,15 @@ void printlog(String txt) {
 }
 
 void saveEEPROM() {
-  paused = true;
   EEPROM.writeBool(HdDiskEEPROMaddress, HdDisk);
   EEPROM.writeBool(IIpIIeEEPROMaddress, AppleIIe);
   EEPROM.writeBool(Fast1MhzSpeedEEPROMaddress, Fast1MhzSpeed);
   EEPROM.writeBool(JoystickEEPROMaddress, joystick);
-
-  EEPROM.commit();
-  paused = false;
 }
 
 void changeHdDisk() {
   HdDisk = !HdDisk;
+  
 }
 
 void changeIIpIIe() {
@@ -266,10 +279,16 @@ void updateOptions(bool downDirection) {
     vga.fillRect(42, 42, 236, 147, 0);
     vga.setCursor(44, 44);
     std::vector<std::string> files;
-    if (diskAttached)
+    if (!HdDisk) 
+    {
       files = diskFiles;
-    if (hdAttached)
+    }
+    else
+    {
       files = hdFiles;
+    }
+    if (shownFile > files.size())
+      shownFile = 0;
     if (downDirection) {
       if (shownFile >= firstShowFile + 17) {
         firstShowFile = shownFile - 17;
