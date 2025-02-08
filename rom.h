@@ -3982,7 +3982,7 @@ const unsigned char AppleFontPixels[] PROGMEM = {
 0, 0, 0, 1, 0, 0, 0,
 
 };
-Font AppleFont_7x8(7, 8, AppleFontPixels, 0, 256);
+//Font AppleFont_7x8(7, 8, AppleFontPixels, 0, 256);
 
 const unsigned char AppleIIeFontPixels[] PROGMEM = {
 
@@ -6037,4 +6037,4 @@ const unsigned char AppleIIeFontPixels[] PROGMEM = {
 
 };
 
-Font AppleIIeFont_7x8(7, 8, AppleIIeFontPixels, 0, 256);
+//Font AppleIIeFont_7x8(7, 8, AppleIIeFontPixels, 0, 256);

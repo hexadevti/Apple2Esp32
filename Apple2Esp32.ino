@@ -1,6 +1,5 @@
-#include <ESP32Lib.h>
-#include <Ressources/Font8x8.h>
-#include <Ressources/Font6x8.h>
+#include "ESP32S3VGA.h"
+
 #include "rom.h"
 #include "FS.h"
 #include "SD.h"
@@ -25,8 +24,8 @@ const int green1pin = 14;
 const int blue0pin = 25;
 const int blue1pin = 26;
 // Keyboard Pins
-const int DataPin = 35;
-const int IRQpin = 34;
+const int DataPin = 48; //35;
+const int IRQpin = 47; //34;
 // SD Pins
 int sck = 18;
 int miso = 19;
@@ -40,17 +39,17 @@ int cs = 5;
 
 bool running = true;
 bool paused = false;
-bool AppleIIe = false;
+bool AppleIIe = true;
 bool OptionsWindow = false;
 bool HdDisk = false;
-bool Fast1MhzSpeed = false;
+bool Fast1MhzSpeed = true;
 bool joystick = true;
 
 
-VGA6Bit vga;
+VGA vga;
 char buf[0xff];
 int logLineCount = 1;
-bool diskAttached = true;
+bool diskAttached = false;
 bool hdAttached = false;
 bool serialVideoAttached = false;
 bool serialKeyboardAttached = false;
@@ -99,7 +98,7 @@ std::mutex page_lock;
 //unsigned char zp[0x200];
 static unsigned char ram[0xc000];
 static unsigned char auxram[0xc000];
-//static unsigned char auxzp[0x200];
+static unsigned char auxzp[0x200];
 
 unsigned char IIEAuxBankSwitchedRAM1[0x2000];
 static unsigned char IIEAuxBankSwitchedRAM2_1[0x1000];
@@ -124,37 +123,40 @@ static bool Pb2 = false;
 void setup() {
   Serial.begin(115200);
   pinMode(LED_PIN,OUTPUT);
-  EEPROM.begin(EEPROM_SIZE);
+  //EEPROM.begin(EEPROM_SIZE);
 
-  HdDisk = EEPROM.readBool(HdDiskEEPROMaddress);
-  AppleIIe = EEPROM.readBool(IIpIIeEEPROMaddress);
-  Fast1MhzSpeed = EEPROM.readBool(Fast1MhzSpeedEEPROMaddress);
-  joystick = EEPROM.readBool(JoystickEEPROMaddress);
+  // HdDisk = EEPROM.readBool(HdDiskEEPROMaddress);
+  // AppleIIe = EEPROM.readBool(IIpIIeEEPROMaddress);
+  // Fast1MhzSpeed = EEPROM.readBool(Fast1MhzSpeedEEPROMaddress);
+  // joystick = EEPROM.readBool(JoystickEEPROMaddress);
   
-  if (HdDisk) {
-    int size = readStringFromEEPROM(HdFileNameEEPROMaddress, &selectedHdFileName);
-    sprintf(buf, "EEPROM selectedHdFile value: %s", selectedHdFileName.c_str());
-    printlog(buf);
-  } else {
-    int size = readStringFromEEPROM(DiskFileNameEEPROMaddress, &selectedDiskFileName);
-    sprintf(buf, "EEPROM selectedDiskFileName value: %s", selectedDiskFileName.c_str());
-    printlog(buf);
-  }
+  // if (HdDisk) {
+  //   int size = readStringFromEEPROM(HdFileNameEEPROMaddress, &selectedHdFileName);
+  //   sprintf(buf, "EEPROM selectedHdFile value: %s", selectedHdFileName.c_str());
+  //   printlog(buf);
+  // } else {
+  //   int size = readStringFromEEPROM(DiskFileNameEEPROMaddress, &selectedDiskFileName);
+  //   sprintf(buf, "EEPROM selectedDiskFileName value: %s", selectedDiskFileName.c_str());
+  //   printlog(buf);
+  // }
 
-  diskAttached = (HdDisk == 0);
-  hdAttached = !diskAttached;
+  //sdiskAttached = (HdDisk == 0);
+  //hdAttached = !diskAttached;
   videoSetup();
 
-  SDCardSetup();
-  serialVideoSetup();
-  keyboard_begin();
+  //SDCardSetup();
+  //serialVideoSetup();
+  //keyboard_begin();
   sei();
-  HDSetup();
-  DiskSetup();
+  //HDSetup();
+  //DiskSetup();
   
-  speaker_begin();
+  //speaker_begin();
   printlog("Ready.");
-  setCpuFrequencyMhz(240);
+  //setCpuFrequencyMhz(240);
+
+  keyboard_begin();
+
 
   if (joystick)
   {
@@ -167,8 +169,7 @@ void setup() {
     timerpdl1 = JOY_MAX;
   }
   
-  
-  char a;
+  //   char a;
   // for (int i = 0; i < 0x200; i++) {
   //   auxzp[i] = 0;
   //   a = auxzp[i];
@@ -193,8 +194,7 @@ void setup() {
   // for (int i = 0; i < 0x2000; i++) {
   //   IIEAuxBankSwitchedRAM1[i] = 0;
   //   a = IIEAuxBankSwitchedRAM1[i];
-  // }
-  
+  // } 
 }
 
 
@@ -276,8 +276,8 @@ void updateOptions(bool downDirection) {
     std::string result = "";
     int sel = 0;
     int skip = 0;
-    vga.fillRect(42, 42, 236, 147, 0);
-    vga.setCursor(44, 44);
+    //vga.fillRect(42, 42, 236, 147, 0);
+    //vga.setCursor(44, 44);
     std::vector<std::string> files;
     if (!HdDisk) 
     {
@@ -313,13 +313,15 @@ void updateOptions(bool downDirection) {
       }
       if (shown > 17)
         break;        
-      if (id == shownFile)
-        vga.setTextColor(vga.RGB(0), vga.RGB(0xffffff));
-      else
-        vga.setTextColor(vga.RGB(0xffffff), vga.RGB(0));
-      if (i.size() > 39)
-        i = i.substr(0, 33) + "..." + i.substr(i.size()-3,3);  
-      vga.println(i.c_str());
+      
+      // if (id == shownFile)
+      //   vga.setTextColor(vga.RGB(0), vga.RGB(0xffffff));
+      // else
+      //   vga.setTextColor(vga.RGB(0xffffff), vga.RGB(0));
+
+      // if (i.size() > 39)
+      //   i = i.substr(0, 33) + "..." + i.substr(i.size()-3,3);  
+      // vga.println(i.c_str());
       
       shown++;
       id++;

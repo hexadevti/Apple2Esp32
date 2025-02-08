@@ -2,7 +2,7 @@ char processSoftSwitches(ushort address, char value, bool Read_Write = true) {
   // Keyboard Data
   if (address == 0xC000)
   {
-    if (Read_Write)
+    if (Read_Write) 
       return keyboard_read();
     else
       Store80On_Off = false;

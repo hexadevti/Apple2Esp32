@@ -201,7 +201,7 @@ void run() {
 
       lastCpuCycleCount = cpuCycleCount;
     }
-
+    
     if (joystick) processJoystick(0.4);
 
     lastPC = PC;
