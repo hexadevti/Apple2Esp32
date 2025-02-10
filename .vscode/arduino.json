@@ -1,8 +1,7 @@
 {
-    "sketch": "apple2esp32.ino",
-    "output": "build",
+    "port": "COM3",
+    "configuration": "JTAGAdapter=default,PSRAM=opi,FlashMode=qio,FlashSize=16M,LoopCore=1,EventsCore=1,USBMode=hwcdc,CDCOnBoot=default,MSCOnBoot=default,DFUOnBoot=default,UploadMode=default,PartitionScheme=noota_3g,CPUFreq=240,UploadSpeed=921600,DebugLevel=none,EraseFlash=none",
     "board": "esp32:esp32:esp32s3",
     "programmer": "esptool",
-    "configuration": "JTAGAdapter=default,PSRAM=opi,FlashMode=qio,FlashSize=16M,LoopCore=1,EventsCore=1,USBMode=hwcdc,CDCOnBoot=default,MSCOnBoot=default,DFUOnBoot=default,UploadMode=default,PartitionScheme=noota_3g,CPUFreq=240,UploadSpeed=921600,DebugLevel=none,EraseFlash=none",
-    "port": "COM3"
+    "sketch": "Apple2Esp32.ino"
 }

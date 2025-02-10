@@ -20,18 +20,6 @@ VGA vga;
 const PinConfig pins(-1,-1,-1,16,17,  -1,-1,-1,-1,7,15,  -1,-1,-1,5,6,  13,14);
 Mode mode = Mode::MODE_320x240x60;
 
-// VGA Pins
-// const int hsyncPin = 32;
-// const int vsyncPin = 33;
-// const int red0pin = 12;
-// const int red1pin = 13;
-// const int green0pin = 27;
-// const int green1pin = 14;
-// const int blue0pin = 25;
-// const int blue1pin = 26;
-// Keyboard Pins
-// const int DataPin = 48; //35;
-// const int IRQpin = 47; //34;
 // SD Pins
 // int sck = 18;
 // int miso = 19;
@@ -42,6 +30,8 @@ Mode mode = Mode::MODE_320x240x60;
 #define JOY_MAX 20000
 #define JOY_MID 1230
 #define JOY_MIN 10
+#define EEPROM_SIZE 1024
+#define FSTYPE LittleFS
 
 bool running = true;
 bool paused = false;
@@ -61,8 +51,6 @@ bool hdAttached = false;
 bool serialVideoAttached = false;
 bool serialKeyboardAttached = false;
 bool videoColor = true;
-#define EEPROM_SIZE 1024
-#define FSTYPE LittleFS
 int HdDiskEEPROMaddress = 10;
 int IIpIIeEEPROMaddress = 11;
 int Fast1MhzSpeedEEPROMaddress = 12;

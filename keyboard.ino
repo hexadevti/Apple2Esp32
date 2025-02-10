@@ -28,7 +28,7 @@ class MyEspUsbHost : public EspUsbHost
 {
   void onKeyboard(hid_keyboard_report_t report, hid_keyboard_report_t last_report)
   {
-    Serial.printf("modifier %d ", report.modifier);
+    //Serial.printf("modifier %d ", report.modifier);
     control = report.modifier == 1;
   }
 
@@ -42,8 +42,10 @@ class MyEspUsbHost : public EspUsbHost
     
     if (control)
     {
-      if (keycode >= 4 && keycode <= 29)
+      if (keycode >= 4 && keycode <= 29) {
         ascii = keycode - 3;
+        keymem = ascii | 0x80;
+      }
       else if (keycode == 69) // CTRL-F12
       {
         cpuReset();
@@ -201,7 +203,7 @@ void keyboard_task(void *pvParameters)
   while (true)
   {
     usbHost.task();
-    delay(100);
+    delay(1);
     // Serial.printf(" keymem = %d", keymem);
     // Serial.println();
   }
