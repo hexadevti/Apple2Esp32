@@ -345,12 +345,13 @@ void updateOptions(bool downDirection) {
       id++;
       
     }
-    else
-    {
-      vga.fillRect(10, 230, 236, 10, 0);
-    }
+    
     // sprintf(buf, "sel: %d, skip: %d, skiped: %d, shownFile: %d", sel, skip, skiped, shownFile);
     // Serial.println(buf);
+  }
+  else
+  {
+    vga.fillRect(10, 230, 300, 9, 0);
   }
   
 }
