@@ -28,12 +28,12 @@ void HDSetup()
   printlog("HS Setup...");
   LoadHD();
   if (HdDisk)
-    getHdFileInfo(SD);
+    getHdFileInfo(FSTYPE);
 }
 
 void LoadHD() 
 {
-  loadHDDir(SD, "/", 0);
+  loadHDDir(FSTYPE, "/", 0);
 }
 
 char HDSoftSwitchesRead(ushort address)
@@ -101,7 +101,7 @@ void getHdFileInfo(fs::FS &fs)
   }
   File file = fs.open(selectedHdFileName.c_str());
   sprintf(buf, "APPLE2ESP32 - %s", selectedHdFileName.c_str());
-  printMsg(buf, 0xff0000);
+  printMsg(buf, 0xff,0,0);
   printlog(buf);
   size_t len = file.size();
   Serial.print("File Size: ");
@@ -119,7 +119,7 @@ void nextHdFile()
   if (shownFile < (int)((hdFiles.size())-1)) {
     shownFile++;
     sprintf(buf, "APPLE2ESP32 - %s",hdFiles[shownFile].c_str());
-    printMsg(buf, 0x0000ff);
+    printMsg(buf, 0,0,0xff);
   }
 }
 
@@ -128,7 +128,7 @@ void prevHdFile()
   if (shownFile > 0) {
     shownFile--;
     sprintf(buf, "APPLE2ESP32 - %s", hdFiles[shownFile].c_str());
-    printMsg(buf, 0x0000ff);
+    printMsg(buf, 0,0,0xff);
   }
 }
 
@@ -146,14 +146,15 @@ void setHdFile()
   paused = true;
   selectedHdFileName = hdFiles[shownFile].c_str();
   sprintf(buf, "APPLE2ESP32 - %s", selectedHdFileName.c_str());
-  printMsg(buf, 0xff0000);
+  printMsg(buf, 0xff,0,0);
   paused = false;
 }
 
 char LoadBlock(unsigned short address, unsigned short block)
 {
-  digitalWrite(LED_PIN,HIGH);
-  getBlock(SD, block);
+  neopixelWrite(RGB_BUILTIN,RGB_BRIGHTNESS,0,0); // Red
+  //digitalWrite(LED_BUILTIN,HIGH);
+  getBlock(FSTYPE, block);
   try
   {
     for (int i = 0; i < 512; i++)
@@ -162,12 +163,14 @@ char LoadBlock(unsigned short address, unsigned short block)
       // printlog(buf);
       write8((address + i), actualBlock[i]);
     }
-    digitalWrite(LED_PIN,LOW);
+    neopixelWrite(RGB_BUILTIN,0,0,0); // Off / black
+    //digitalWrite(LED_BUILTIN,LOW);
     return 0;
   }
   catch(std::exception ex)
   {
-    digitalWrite(LED_PIN,LOW);
+    neopixelWrite(RGB_BUILTIN,0,0,0); // Off / black
+    //digitalWrite(LED_BUILTIN,LOW);
     return 0xb0;
   }
 }

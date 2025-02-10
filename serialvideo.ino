@@ -76,9 +76,9 @@
 //       char value = ram[0x400 + y * 40 + x];
 //       if (value >= 0x40 && value < 0x80) {
 //         // if (inversed)
-//         //   vga.setTextColor(vga.RGB(0), vga.RGB(0xffffff));
+//         //   vga.setTextColor(vga.rgb(0), vga.rgb(0xffffff));
 //         // else
-//         //   vga.setTextColor(vga.RGB(0xffffff), vga.RGB(0));
+//         //   vga.setTextColor(vga.rgb(0xffffff), vga.rgb(0));
 //         if (value != 0x60) {
 //           Serial.print("\e[");
 //           Serial.print(y);

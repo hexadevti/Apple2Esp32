@@ -4,7 +4,9 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/include/**"
+                "${workspaceFolder}/include/**",
+                "C:\\Users\\lucia\\OneDrive\\Documentos\\Arduino\\libraries"
+                
             ],
             "defines": [
                 "_DEBUG",

@@ -1,7 +1,9 @@
-#include "ESP32S3VGA.h"
+#include "VGA.h"
+#include "FONT_6x8.h"
 
 #include "rom.h"
 #include "FS.h"
+#include <LittleFS.h>
 #include "SD.h"
 #include <string>
 #include <vector>
@@ -14,25 +16,29 @@
 #include <mutex>
 #include <thread>
 
-// VGA Pins
-const int hsyncPin = 32;
-const int vsyncPin = 33;
-const int red0pin = 12;
-const int red1pin = 13;
-const int green0pin = 27;
-const int green1pin = 14;
-const int blue0pin = 25;
-const int blue1pin = 26;
-// Keyboard Pins
-const int DataPin = 48; //35;
-const int IRQpin = 47; //34;
-// SD Pins
-int sck = 18;
-int miso = 19;
-int mosi = 23;
-int cs = 5;
+VGA vga;
+const PinConfig pins(-1,-1,-1,16,17,  -1,-1,-1,-1,7,15,  -1,-1,-1,5,6,  13,14);
+Mode mode = Mode::MODE_320x240x60;
 
-#define LED_PIN 2
+// VGA Pins
+// const int hsyncPin = 32;
+// const int vsyncPin = 33;
+// const int red0pin = 12;
+// const int red1pin = 13;
+// const int green0pin = 27;
+// const int green1pin = 14;
+// const int blue0pin = 25;
+// const int blue1pin = 26;
+// Keyboard Pins
+// const int DataPin = 48; //35;
+// const int IRQpin = 47; //34;
+// SD Pins
+// int sck = 18;
+// int miso = 19;
+// int mosi = 23;
+// int cs = 5;
+
+
 #define JOY_MAX 20000
 #define JOY_MID 1230
 #define JOY_MIN 10
@@ -46,7 +52,8 @@ bool Fast1MhzSpeed = true;
 bool joystick = true;
 
 
-VGA vga;
+
+
 char buf[0xff];
 int logLineCount = 1;
 bool diskAttached = false;
@@ -55,6 +62,7 @@ bool serialVideoAttached = false;
 bool serialKeyboardAttached = false;
 bool videoColor = true;
 #define EEPROM_SIZE 1024
+#define FSTYPE LittleFS
 int HdDiskEEPROMaddress = 10;
 int IIpIIeEEPROMaddress = 11;
 int Fast1MhzSpeedEEPROMaddress = 12;
@@ -120,43 +128,53 @@ static bool Pb0 = false;
 static bool Pb1 = false;
 static bool Pb2 = false;
 
+
+
 void setup() {
   Serial.begin(115200);
-  pinMode(LED_PIN,OUTPUT);
-  //EEPROM.begin(EEPROM_SIZE);
+  //pinMode(LED_BUILTIN,OUTPUT);
+  EEPROM.begin(EEPROM_SIZE);
 
-  // HdDisk = EEPROM.readBool(HdDiskEEPROMaddress);
-  // AppleIIe = EEPROM.readBool(IIpIIeEEPROMaddress);
-  // Fast1MhzSpeed = EEPROM.readBool(Fast1MhzSpeedEEPROMaddress);
-  // joystick = EEPROM.readBool(JoystickEEPROMaddress);
-  
-  // if (HdDisk) {
-  //   int size = readStringFromEEPROM(HdFileNameEEPROMaddress, &selectedHdFileName);
-  //   sprintf(buf, "EEPROM selectedHdFile value: %s", selectedHdFileName.c_str());
-  //   printlog(buf);
-  // } else {
-  //   int size = readStringFromEEPROM(DiskFileNameEEPROMaddress, &selectedDiskFileName);
-  //   sprintf(buf, "EEPROM selectedDiskFileName value: %s", selectedDiskFileName.c_str());
-  //   printlog(buf);
-  // }
 
-  //sdiskAttached = (HdDisk == 0);
-  //hdAttached = !diskAttached;
+  // EEPROM.writeBool(HdDiskEEPROMaddress, true);
+  // EEPROM.writeBool(HdDiskEEPROMaddress, false);
+  // EEPROM.writeBool(IIpIIeEEPROMaddress, false);
+  // EEPROM.writeBool(Fast1MhzSpeedEEPROMaddress, true);
+  // EEPROM.writeBool(JoystickEEPROMaddress, true);
+  // writeStringToEEPROM(HdFileNameEEPROMaddress, "");
+  // writeStringToEEPROM(DiskFileNameEEPROMaddress, "/karateka.dsk");
+
+
+  HdDisk = EEPROM.readBool(HdDiskEEPROMaddress);
+  AppleIIe = EEPROM.readBool(IIpIIeEEPROMaddress);
+  Fast1MhzSpeed = EEPROM.readBool(Fast1MhzSpeedEEPROMaddress);
+  joystick = EEPROM.readBool(JoystickEEPROMaddress);
+
+  if (HdDisk) {
+    int size = readStringFromEEPROM(HdFileNameEEPROMaddress, &selectedHdFileName);
+    sprintf(buf, "EEPROM selectedHdFile value: %s", selectedHdFileName.c_str());
+    printlog(buf);
+  } else {
+    int size = readStringFromEEPROM(DiskFileNameEEPROMaddress, &selectedDiskFileName);
+    sprintf(buf, "EEPROM selectedDiskFileName value: %s", selectedDiskFileName.c_str());
+    printlog(buf);
+  }
+
+  diskAttached = (HdDisk == 0);
+  hdAttached = !diskAttached;
   videoSetup();
-
   //SDCardSetup();
   //serialVideoSetup();
-  //keyboard_begin();
+  keyboard_begin();
   sei();
-  //HDSetup();
-  //DiskSetup();
+  HDSetup();
+  DiskSetup();
   
   //speaker_begin();
   printlog("Ready.");
-  //setCpuFrequencyMhz(240);
+  setCpuFrequencyMhz(240);
 
-  keyboard_begin();
-
+  
 
   if (joystick)
   {
@@ -272,12 +290,12 @@ void showHideOptionsWindow() {
 
 void updateOptions(bool downDirection) {
   if (OptionsWindow) {
-    printOptionsBackground(0xff0000);
+    printOptionsBackground(0xff, 0, 0);
     std::string result = "";
     int sel = 0;
     int skip = 0;
-    //vga.fillRect(42, 42, 236, 147, 0);
-    //vga.setCursor(44, 44);
+    vga.fillRect(42, 42, 236, 147, 0);
+    vga.setCursor(44, 44);
     std::vector<std::string> files;
     if (!HdDisk) 
     {
@@ -314,22 +332,27 @@ void updateOptions(bool downDirection) {
       if (shown > 17)
         break;        
       
-      // if (id == shownFile)
-      //   vga.setTextColor(vga.RGB(0), vga.RGB(0xffffff));
-      // else
-      //   vga.setTextColor(vga.RGB(0xffffff), vga.RGB(0));
+      if (id == shownFile)
+        vga.setTextColor(vga.rgb(0,0,0), vga.rgb(0xff, 0xff, 0xff));
+      else
+        vga.setTextColor(vga.rgb(0xff, 0xff, 0xff), vga.rgb(0,0,0));
 
-      // if (i.size() > 39)
-      //   i = i.substr(0, 33) + "..." + i.substr(i.size()-3,3);  
-      // vga.println(i.c_str());
+      if (i.size() > 39)
+        i = i.substr(0, 33) + "..." + i.substr(i.size()-3,3);  
+        vga.println(i.c_str());
       
       shown++;
       id++;
       
     }
+    else
+    {
+      vga.fillRect(10, 230, 236, 10, 0);
+    }
     // sprintf(buf, "sel: %d, skip: %d, skiped: %d, shownFile: %d", sel, skip, skiped, shownFile);
     // Serial.println(buf);
   }
+  
 }
 void loop() {
   run();

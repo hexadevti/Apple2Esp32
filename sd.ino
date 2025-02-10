@@ -1,29 +1,29 @@
 void listDir(fs::FS &fs, const char *dirname, uint8_t levels) {
-  // Serial.printf("Listing directory: %s\n", dirname);
+  Serial.printf("Listing directory: %s\n", dirname);
 
   File root = fs.open(dirname);
   if (!root) {
-    // Serial.println("Failed to open directory");
+    Serial.println("Failed to open directory");
     return;
   }
   if (!root.isDirectory()) {
-    // Serial.println("Not a directory");
+    Serial.println("Not a directory");
     return;
   }
 
   File file = root.openNextFile();
   while (file) {
     if (file.isDirectory()) {
-      // Serial.print("  DIR : ");
-      // Serial.println(file.name());
+      Serial.print("  DIR : ");
+      Serial.println(file.name());
       if (levels) {
         listDir(fs, file.path(), levels - 1);
       }
     } else {
-      // Serial.print("  FILE: ");
-      // Serial.print(file.name());
-      // Serial.print("  SIZE: ");
-      // Serial.println(file.size());
+      Serial.print("  FILE: ");
+      Serial.print(file.name());
+      Serial.print("  SIZE: ");
+      Serial.println(file.size());
     }
     file = root.openNextFile();
   }
@@ -156,42 +156,42 @@ void testFileIO(fs::FS &fs, const char *path) {
 
 void SDCardSetup()
 {
-  printlog("SD Card Setup");
-  SPI.begin(sck, miso, mosi, cs);
-  delay(500);
-  int sdMountRetry = 0;
-  while (!SD.begin(cs) && sdMountRetry < 10) {
-    printlog("Card Mount Failed");
-    delay(100);
-    sdMountRetry++;
-  }
+  // printlog("SD Card Setup");
+  // SPI.begin(sck, miso, mosi, cs);
+  // delay(500);
+  // int sdMountRetry = 0;
+  // while (!SD.begin(cs) && sdMountRetry < 10) {
+  //   printlog("Card Mount Failed");
+  //   delay(100);
+  //   sdMountRetry++;
+  // }
 
-  if (sdMountRetry == 10) {
-    hdAttached = false;
-    diskAttached = false;
-    return;
-  }
+  // if (sdMountRetry == 10) {
+  //   hdAttached = false;
+  //   diskAttached = false;
+  //   return;
+  // }
   
 
-  uint8_t cardType = SD.cardType();
+  // uint8_t cardType = SD.cardType();
 
-  if (cardType == CARD_NONE) {
-    printlog("No SD card attached");
-    return;
-  }
+  // if (cardType == CARD_NONE) {
+  //   printlog("No SD card attached");
+  //   return;
+  // }
 
-  printlog("SD Card Type: ");
-  if (cardType == CARD_MMC) {
-    printlog("MMC");
-  } else if (cardType == CARD_SD) {
-    printlog("SDSC");
-  } else if (cardType == CARD_SDHC) {
-    printlog("SDHC");
-  } else {
-    printlog("UNKNOWN");
-  }
+  // printlog("SD Card Type: ");
+  // if (cardType == CARD_MMC) {
+  //   printlog("MMC");
+  // } else if (cardType == CARD_SD) {
+  //   printlog("SDSC");
+  // } else if (cardType == CARD_SDHC) {
+  //   printlog("SDHC");
+  // } else {
+  //   printlog("UNKNOWN");
+  // }
   
-  uint64_t cardSize = SD.cardSize() / (1024 * 1024);
-  sprintf(buf,"SD Card Size: %lluMB\n", cardSize);
-  printlog(buf);
+  // uint64_t cardSize = SD.cardSize() / (1024 * 1024);
+  // sprintf(buf,"SD Card Size: %lluMB\n", cardSize);
+  // printlog(buf);
 }

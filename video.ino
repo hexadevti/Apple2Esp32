@@ -1,14 +1,14 @@
-const int colors[] PROGMEM = {0b000000, 0b001100, 0b110011, 0b111111, 0b000000, 0b000011, 0b100000, 0b111111};
-const int colors16[] PROGMEM = {0x000000, 0x3300dd, 0x990000, 0xdd22dd, 0x227700, 0x444444, 0xff2222, 0xcc8844, 0x004477, 0x0044dd, 0x888888, 0x6677dd, 0x00dd11, 0x00ffff, 0x88ee33, 0xffffff };
+const int colors[] PROGMEM = {0b00000000, 0b00110000, 0b11001100, 0b11111100, 0b00000000, 0b00001100, 0b10000000, 0b11111100};
+const int colors16[] PROGMEM = {0x00000000, 0x3300dd00, 0x99000000, 0xdd22dd00, 0x22770000, 0x44444400, 0xff222200, 0xcc884400, 0x00447700, 0x0044dd00, 0x88888800, 0x6677dd00, 0x00dd1100, 0x00ffff00, 0x88ee3300, 0xffffff00 };
 int flashCount = 0;
 
-const PinConfig pins(-1,-1,-1,-1,42,  -1,-1,-1,-1,-1,40,  -1,-1,-1,-1,38,  1,2);
+
 
 void videoSetup()
 {
   printlog("Video Setup...");
-  Mode mode = Mode::MODE_320x240x60;
-  if(!vga.init(pins, mode, 8)) while(1) delay(1);
+  
+  if(!vga.init(pins, mode, 8, 3)) while(1) delay(1);
   printlog("Video initialized.");
   vga.show();
 	vga.start();
@@ -17,35 +17,40 @@ void videoSetup()
 
 
 
-void printMsg(char msg[], int color)
+void printMsg(char msg[], int r, int g, int b)
 {
-  // vga.setFont(Font6x8);
-  // vga.setTextColor(vga.RGB(color), vga.RGB(0));
-  // vga.setCursor(5, 8);
-  // vga.print("                                                                   ");
-  // vga.setCursor(5, 8);
-  // vga.print(msg);
-  // vga.setFont(AppleIIe ? AppleIIeFont_7x8 : AppleFont_7x8);
-  // vga.setTextColor(vga.RGB(0xffffff), vga.RGB(0));
+  vga.setFont(FONT_6x8);
+  vga.setTextColor(vga.rgb(r,g,b), vga.rgb(0,0,0));
+  vga.setCursor(5, 8);
+  vga.print("                                                                   ");
+  vga.setCursor(5, 8);
+  vga.print(msg);
+  //vga.setFont(AppleIIe ? AppleIIeFont_7x8 : AppleFont_7x8);
+  vga.setTextColor(vga.rgb(0xff, 0xff, 0xff), vga.rgb(0, 0, 0));
+  
 }
 
-void printStatus(char msg[], int color)
+void printStatus(char msg[], int r, int g, int b)
 {
-  // vga.setFont(Font6x8);
-  // vga.setTextColor(vga.RGB(color), vga.RGB(0));
-  // vga.setCursor(5, 224);
-  // vga.print("                                                                   ");
-  // vga.setCursor(5, 224);
-  // vga.print(msg);
-  // vga.setFont(AppleIIe ? AppleIIeFont_7x8 : AppleFont_7x8);
-  // vga.setTextColor(vga.RGB(0xffffff), vga.RGB(0));
+  vga.setFont(FONT_6x8);
+  vga.setTextColor(vga.rgb(r, g, b), vga.rgb(0, 0, 0));
+  vga.setCursor(5, 224);
+  vga.print("                                                                   ");
+  vga.setCursor(5, 224);
+  vga.print(msg);
+  //vga.setFont(AppleIIe ? AppleIIeFont_7x8 : AppleFont_7x8);
+  vga.setTextColor(vga.rgb(0xff, 0xff, 0xff), vga.rgb(0, 0, 0));
 }
 
 void graphicFlashCharacters(void *pvParameters)
 {
   bool inversed = false;
-  while (true)
+  while (running)
   {
+    while (paused) 
+    {
+      delay(100);
+    }
     
     page_lock.lock();
     int x = margin_x;
@@ -73,12 +78,12 @@ void graphicFlashCharacters(void *pvParameters)
                   if (j < 4)
                   {
                     if (!optionsScreenBlank(x,y))
-                      vga.dot(x, y, colors16[secondColor]);
+                      vga.dotFast(x, y, colors16[secondColor]);
                   }
                   else
                   {
                     if (!optionsScreenBlank(x,y))
-                      vga.dot(x, y, colors16[firstColor]);
+                      vga.dotFast(x, y, colors16[firstColor]);
                   }
                   x++;
                 }
@@ -100,7 +105,6 @@ void graphicFlashCharacters(void *pvParameters)
                   blockline[7 - i] = (chr & (1 << i)) != 0;
                 if (videoColor)
                 {
-
                   char pixels[7];
                   if (c % 2 == 0) // Odd
                   {
@@ -126,7 +130,7 @@ void graphicFlashCharacters(void *pvParameters)
                   for (int id = 0; id < 7; id++)
                   {
                     if (!optionsScreenBlank(x,y))
-                      vga.dot(x, y, colors[pixels[id]]);
+                      vga.dotFast(x, y, colors[pixels[id]]);
                     x++;
                   }
                   std::copy(std::begin(blockline), std::end(blockline), std::begin(blocklineAnt));
@@ -138,13 +142,12 @@ void graphicFlashCharacters(void *pvParameters)
                     int color = 0;
 
                     if (blockline[i])
-                      color = 0b111111;
+                      color = 0b11111111;
                     else
                       color = 0;
 
                     if (!optionsScreenBlank(x,y))
-                      vga.dot(x, y, color);
-
+                      vga.dotFast(x, y, color);
                     // sprintf(buf, "%04x: %02x",,chr);
                     // printlog(buf);
                     x++;
@@ -173,7 +176,7 @@ void graphicFlashCharacters(void *pvParameters)
                 if (!AppleIIe)
                   inverted = chr >= 0x40 && chr < 0x80 && inversed;
                 if (!optionsScreenBlank(x,y))
-                  vga.dot(x, y, bpixel ? (inverted ? 0 : 0xffffff) : (inverted ? 0xffffff : 0) );
+                  vga.dotFast(x, y, bpixel ? (inverted ? 0 : 0xffffffff) : (inverted ? 0xffffffff : 0) );
                 x++;
               }
             }
@@ -206,48 +209,15 @@ bool optionsScreenBlank(int x, int y) {
     return false;
 }
 
-void printOptionsBackground(int color)
+void printOptionsBackground(int r, int g, int b)
 {
-  //vga.fillRect(40, 40, 240, 160, 0);
-  //vga.rect(41, 41, 238, 158, vga.RGB(color));
-  //vga.setFont(Font6x8);
-  //vga.setTextColor(vga.RGB(color), vga.RGB(0));
-  //vga.setCursor(44, 188);
-  //sprintf(buf, " %s | %s | %s | %s | %s", HdDisk ? " HD " : "DISK", AppleIIe ? "IIe" : "II+", Fast1MhzSpeed ? "Fast" : "1Mhz", paused ? "Paused " : "Running", joystick ? "Joy On " : "Joy Off");
-  //vga.print(buf);
-}
-
-void printOptionsText(const char *text)
-{
-  //vga.fillRect(42, 42, 236, 147, 0);
-  //vga.setCursor(44, 44);
-  //vga.setTextColor(vga.RGB(0xffffff), vga.RGB(0));
-  //vga.print(text);
-}
-
-void printOptionsTextEx(char text[])
-{
-  // vga.setCursor(44, 44);
-  // vga.println("12345678901234567890123456789");
-  // vga.println("12345678901234567890123456789");
-  // vga.println("12345678901234567890123456789");
-  // vga.println("12345678901234567890123456789");
-  // vga.println("12345678901234567890123456789");
-  // vga.println("12345678901234567890123456789");
-  // vga.println("12345678901234567890123456789");
-  // vga.println("12345678901234567890123456789");
-  // vga.println("12345678901234567890123456789");
-  // vga.println("12345678901234567890123456789");
-  // vga.setTextColor(vga.RGB(0), vga.RGB(0xff0000));
-  // vga.println("12345678901234567890123456789");
-  // vga.setTextColor(vga.RGB(0xff0000), vga.RGB(0));
-  // vga.println("12345678901234567890123456789");
-  // vga.println("12345678901234567890123456789");
-  // vga.println("12345678901234567890123456789");
-  // vga.println("12345678901234567890123456789");
-  // vga.println("12345678901234567890123456789");
-  // vga.println("12345678901234567890123456789");
-  // vga.println("12345678901234567890123456789");
-  // vga.println("12345678901234567890123456789");
-
+  vga.fillRect(40, 40, 240, 160, 0);
+  vga.rect(41, 41, 238, 158, vga.rgb(r, g, b));
+  vga.setFont(FONT_6x8);
+  vga.setTextColor(vga.rgb(r, g, b), vga.rgb(0,0,0));
+  vga.setCursor(10, 230);
+  sprintf(buf, " %s | %s | %s | %s | %s", HdDisk ? " HD " : "DISK", AppleIIe ? "IIe" : "II+", Fast1MhzSpeed ? "Fast" : "1Mhz", paused ? "Paused " : "Running", joystick ? "Joy On " : "Joy Off");
+  vga.print(buf);
+  Serial.print(buf);
+  vga.show();
 }
