@@ -1,8 +1,25 @@
 #include "EspUsbHost.h"
 
 volatile unsigned char keymem = 0;
+volatile unsigned char keymem_hold = 0;
 volatile bool capslock = true;
 volatile bool control = false;
+volatile bool shift = false;
+volatile bool left_alt = false;
+volatile bool left_win = false;
+volatile bool right_alt = false;
+volatile bool right_win = false;
+
+#define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
+#define BYTE_TO_BINARY(byte)  \
+  ((byte) & 0x80 ? '1' : '0'), \
+  ((byte) & 0x40 ? '1' : '0'), \
+  ((byte) & 0x20 ? '1' : '0'), \
+  ((byte) & 0x10 ? '1' : '0'), \
+  ((byte) & 0x08 ? '1' : '0'), \
+  ((byte) & 0x04 ? '1' : '0'), \
+  ((byte) & 0x02 ? '1' : '0'), \
+  ((byte) & 0x01 ? '1' : '0') 
 
 const unsigned char ascii_to_apple[] = {
     //$0    $1    $2    $3    $4    $5    $6    $7    $8    $9    $A    $B    $C    $D    $E    $F
@@ -28,14 +45,120 @@ class MyEspUsbHost : public EspUsbHost
 {
   void onKeyboard(hid_keyboard_report_t report, hid_keyboard_report_t last_report)
   {
-    //Serial.printf("modifier %d ", report.modifier);
-    control = report.modifier == 1;
+    
+    // Serial.printf("modifier=["BYTE_TO_BINARY_PATTERN"]->["BYTE_TO_BINARY_PATTERN"], Key0=[0x%02x]->[0x%02x], Key1=[0x%02x]->[0x%02x], Key2=[0x%02x]->[0x%02x], Key3=[0x%02x]->[0x%02x], Key4=[0x%02x]->[0x%02x], Key5=[0x%02x]->[0x%02x]",
+    // BYTE_TO_BINARY(last_report.modifier),
+    // BYTE_TO_BINARY(report.modifier),
+    // last_report.keycode[0],
+    // report.keycode[0],
+    // last_report.keycode[1],
+    // report.keycode[1],
+    // last_report.keycode[2],
+    // report.keycode[2],
+    // last_report.keycode[3],
+    // report.keycode[3],
+    // last_report.keycode[4],
+    // report.keycode[4],
+    // last_report.keycode[5],
+    // report.keycode[5]);
+    // Serial.println();
+  
+    control = (report.modifier & 0b00010001) != 0;
+    shift = (report.modifier & 0b00100010) != 0;
+    left_alt = (report.modifier & 0b00000100) != 0;
+    right_alt = (report.modifier & 0b01000000) != 0;
+    left_win = (report.modifier & 0b00001000) != 0;
+    right_win = (report.modifier & 0b10000000) != 0;
+    
+    // Serial.print(control ? "Control" : "");
+    // Serial.print(shift ? "shift" : "");
+    // Serial.print(left_alt ? "left_alt" : "");
+    // Serial.print(left_win ? "left_win" : "");
+    // Serial.print(right_alt ? "right_alt" : "");
+    // Serial.print(right_win ? "right_win" : "");
+    // Serial.println();
+    if (last_report.keycode[1] == report.keycode[0] && last_report.keycode[1] != 0) { // up first key
+      OnKeyUp(last_report.keycode[0]);
+    } 
+    else {
+      if (report.keycode[1] != last_report.keycode[1]) {
+        if (report.keycode[1] != 0)
+          OnKeyDown(report.keycode[1]);
+        else 
+          OnKeyUp(last_report.keycode[1]);
+      }
+      else if (report.keycode[0] != last_report.keycode[0]) {
+        if (report.keycode[0] != 0)
+          OnKeyDown(report.keycode[0]);
+        else 
+          OnKeyUp(last_report.keycode[0]);
+      }
+    }
+    if (last_report.modifier != report.modifier)
+    {
+      onModifierChange();
+    }
+  }
+
+  void onModifierChange() {
+    if (left_win) {
+      Pb0 = true;
+    } else {
+      Pb0 = false;
+    }
+    if (right_win || left_alt) {
+      Pb1 = true;
+    } else {
+      Pb1 = false;
+    }
+  }
+
+  void OnKeyDown(uint8_t keycode) {
+    // Serial.printf("Down %d", keycode);
+    // Serial.println();
+    if (joystick) {
+      if (keycode == 80) // Left
+      {
+        timerpdl0 = JOY_MIN;
+      }
+      else if (keycode == 79) // Right
+      {
+        timerpdl0 = JOY_MAX;
+      }
+      else if (keycode == 82) // Up
+      {
+        timerpdl1 = JOY_MIN;
+      }
+      else if (keycode == 81) // Down
+      {
+        timerpdl1 = JOY_MAX;
+      }
+    }
+  }
+
+  void OnKeyUp(uint8_t keycode) {
+    // Serial.printf("Up %d", keycode);
+    // Serial.println();
+    if (joystick) {
+      if (keycode == 80 || keycode == 79) // Left || right
+      {
+        timerpdl0 = JOY_MID;
+      }
+      else if (keycode == 82 || keycode == 81) // Up || Down
+      {
+        timerpdl1 = JOY_MID;
+      }
+    }
+    keymem = 0;
+    keymem_hold = 0;
+
   }
 
   void onKeyboardKey(uint8_t ascii, uint8_t keycode, uint8_t modifier)
   {
     // Serial.printf("ascii = %d", ascii);
     // Serial.printf(" keycode = %d", keycode);
+    // Serial.println();
     // Serial.printf(" modifier = %d", modifier);
     // Serial.printf(" capslock = %d", capslock);
     bool shift_enabled = false;
@@ -96,29 +219,29 @@ class MyEspUsbHost : public EspUsbHost
         else if (keycode == 58) // F1
         {
           changeHdDisk();
-          updateOptions(true);
+          updateOptions(true, true);
           // Serial.println("f1");
         }
         else if (keycode == 59) // F2
         {
           changeIIpIIe();
-          updateOptions(true);
+          updateOptions(true, false);
           // Serial.println("f2");
         }
         else if (keycode == 60) // F3
         {
           fast1MhzSpeed();
-          updateOptions(true);
+          updateOptions(true, false);
         }
         else if (keycode == 61) // F4
         {
           pauseRunning();
-          updateOptions(true);
+          updateOptions(true, false);
         }
         else if (keycode == 62) // F5
         {
           joystickOnOff();
-          updateOptions(true);
+          updateOptions(true, false);
         }
         else if (keycode == 81) // Down Arrow
         {
@@ -126,7 +249,7 @@ class MyEspUsbHost : public EspUsbHost
               nextDiskFile();
             else
               nextHdFile();
-            updateOptions(true);
+            updateOptions(true, false);
 
           //Serial.println("down");
         }
@@ -136,7 +259,7 @@ class MyEspUsbHost : public EspUsbHost
             prevDiskFile();
           else
             prevHdFile();
-          updateOptions(false);
+          updateOptions(false, false);
           //Serial.println("up");
         }
 
@@ -152,14 +275,22 @@ class MyEspUsbHost : public EspUsbHost
             ascii = modifier == 1 ? 0x7c : 0x5c;
           else if (keycode == 39)
             ascii = modifier == 1 ? 0x29 : 0x00;
-          else if (keycode == 80)
+          else if (keycode == 80) // Left
+          {
             ascii = 0x08;
-          else if (keycode == 79)
+          }
+          else if (keycode == 79) // Right
+          {
             ascii = 0x15;
-          else if (keycode == 82)
+          }
+          else if (keycode == 82) // Up
+          {
             ascii = 0x0b;
-          else if (keycode == 81)
+          }
+          else if (keycode == 81) // Down
+          {
             ascii = 0x0a;
+          }
           else if (keycode == 57) // CapsLock
             capslock = !capslock;
         }
@@ -186,7 +317,7 @@ class MyEspUsbHost : public EspUsbHost
 
       // Serial.printf(" keymem = %d", keymem);
       // Serial.println();
-   
+      keymem_hold = keymem;
   };
 };
 MyEspUsbHost usbHost;
@@ -200,10 +331,35 @@ void keyboard_begin()
 
 void keyboard_task(void *pvParameters)
 {
-  while (true)
+  int count = 0;
+  int cycles = 0;
+  bool holdKey = false;
+  unsigned char repeat_keymem = 0;
+  while (running)
   {
+    
     usbHost.task();
-    delay(1);
+    delay(10);
+    repeat_keymem = keymem_hold;
+    if (repeat_keymem != 0)
+      count++;
+    else
+      count = 0;
+
+    if (count >= 50) {
+      if (cycles == 0) {
+        //Serial.println("RELEASE");
+        keymem = 0;
+      }
+      cycles++;
+      if (cycles >= 5) {
+        //Serial.println("REPEAT");
+        cycles = 0;
+        keymem = keymem_hold;
+      }
+    }
+
+
     // Serial.printf(" keymem = %d", keymem);
     // Serial.println();
   }
@@ -220,242 +376,3 @@ void keyboard_strobe()
   // Serial.printf(" keystrobe");
   // Serial.println();
 }
-
-// // keyboard scan buffer
-// unsigned short keyboard_data[3] = { 0, 0, 0 };
-// unsigned char keyboard_buf_indx = 0, keyboard_mbyte = 0;
-// boolean shift_enabled = false;
-// boolean ctrl_enabled = false;
-
-// // In apple II scancode format
-// volatile unsigned char keymem = 0;
-
-// unsigned char keyboard_read() {
-//   return keymem;
-// }
-
-// void keyboard_strobe() {
-//   keymem &= 0x7F;
-// }
-
-// void keyboard_begin() {
-//   pinMode(DataPin, INPUT_PULLUP);
-//   attachInterrupt(IRQpin, keyboard_bit, FALLING);
-// }
-
-// void keyboard_bit() {
-//   if (digitalRead(DataPin))
-//     keyboard_data[2] |= _BV(keyboard_buf_indx);
-//   else
-//     keyboard_data[2] &= ~(_BV(keyboard_buf_indx));
-//   if (++keyboard_buf_indx == 11) {
-//     // Ignore parity checks for now
-//     keyboard_data[2] = (keyboard_data[2] >> 1) & 0xFF;
-//     sprintf(buf, "initial keybdata: %02x", keyboard_data[2]);
-//     //Serial.println(buf);
-//     // extended keys
-//     if (keyboard_data[2] == 0xF0 || keyboard_data[2] == 0xE0)
-//       keyboard_mbyte = 1;
-//     else
-//     {
-//       //decrement counter for multibyte commands
-//       if (keyboard_mbyte)
-//         keyboard_mbyte--;
-//       // multibyte command is finished / normal command, process it
-//       if (!keyboard_mbyte)
-//       {
-//         if (keyboard_data[1] != 0xF0 && keyboard_data[1] != 0xE0)
-//         {
-//           //Standard keys
-//           if (keyboard_data[2] == 0x12 || keyboard_data[2] == 0x59)
-//           {
-//             shift_enabled = true;  //shift modifiers
-//             Pb1 = true;
-//           }
-//           else if (keyboard_data[2] == 0x14)
-//           {
-//             ctrl_enabled = true;
-//             Pb0 = true;
-//           }
-//           else
-//           {
-//             keymem = scancode_to_apple[keyboard_data[2] + ((shift_enabled) ? 0x80 : 0x00)];
-//             if (ctrl_enabled)
-//             {
-//               if (keyboard_data[2] == 0x07)  // CTRL-F12
-//               {
-//                 cpuReset();
-//               }
-//               else if (keyboard_data[2] == 0x03) // CTRL-F5
-//               {
-//                 ESP.restart();
-//               }
-//               else if (keyboard_data[2] == 0x76) // CTRL-ESC
-//               {
-//                 showHideOptionsWindow();
-//                 keymem = 0;
-//               }
-//               else if (keyboard_data[2] == 0x5a) // CTRL-ENTER
-//               {
-//                 if (HdDisk)
-//                   setHdFile();
-//                 else
-//                   setDiskFile();
-//                 if (HdDisk)
-//                   saveHdFile();
-//                 else
-//                   saveDiskFile();
-//                 ESP.restart();
-//               }
-//               else
-//               {
-//                 keymem -= 0x40;
-//               }
-//             }
-//             else
-//             {
-//               if (OptionsWindow) // Option Window Opened
-//               {
-//                 if (keyboard_data[2] == 0x76) // ESC
-//                 {
-//                   showHideOptionsWindow();
-//                 }
-//                 else if (keyboard_data[2] == 0x5a) // enter
-//                 {
-//                   if (HdDisk)
-//                     setHdFile();
-//                   else
-//                     setDiskFile();
-//                   diskChanged = true;
-//                   showHideOptionsWindow();
-
-//                 }
-//                 else if (keyboard_data[2] == 0x05) // F1
-//                 {
-//                   changeHdDisk();
-//                   updateOptions(true);
-//                   //Serial.println("f1");
-//                 }
-//                 else if (keyboard_data[2] == 0x06) // F2
-//                 {
-//                   changeIIpIIe();
-//                   updateOptions(true);
-//                   //Serial.println("f2");
-//                 }
-//                 else if (keyboard_data[2] == 0x04) // F3
-//                 {
-//                   fast1MhzSpeed();
-//                   updateOptions(true);
-//                 }
-//                 else if (keyboard_data[2] == 0x0c) // F4
-//                 {
-//                   pauseRunning();
-//                   updateOptions(true);
-//                 }
-//                 else if (keyboard_data[2] == 0x03) // F5
-//                 {
-//                   joystickOnOff();
-//                   updateOptions(true);
-//                 }
-
-//                 keymem = 0;
-
-//               }
-//             }
-
-//              Serial.print("keyboard_data:");
-//              Serial.println(keyboard_data[2]);
-//              Serial.print("shift:");
-//              Serial.println((shift_enabled) ? "1" : "0");
-//              Serial.print("ctrl:");
-//              Serial.println((ctrl_enabled) ? "1" : "0");
-//              Serial.print("key:");
-//              Serial.println(keymem);
-//           }
-//         }
-//         else if (keyboard_data[0] != 0xF0 && keyboard_data[1] == 0xE0)
-//         {
-//           //Extended keys
-//           if (keyboard_data[2] == 0x6B) // LEFT ARROW
-//           {
-//             keymem = 0x88;  //back key
-//             if (joystick) timerpdl0 = JOY_MIN;
-//           }
-//           else if (keyboard_data[2] == 0x74) // RIGHT ARROW
-//           {
-//             keymem = 0x95;  //forward key
-//             if (joystick) timerpdl0 = JOY_MAX;
-//           }
-//           else if (keyboard_data[2] == 0x75) // UP ARROW
-//           {
-//             keymem = 0x8b;
-//             if (joystick) timerpdl1 = JOY_MIN;
-//           }
-//           else if (keyboard_data[2] == 0x72) // DOWN ARROW
-//           {
-//             keymem = 0x8a;
-//             if (joystick) timerpdl1 = JOY_MAX;
-//           }
-
-//           // Power management keys, hardware reset
-//           if (OptionsWindow)
-//           {
-//             if (keyboard_data[2] == 0x72) // Down Arrow
-//             {
-//                 if (!HdDisk)
-//                   nextDiskFile();
-//                 else
-//                   nextHdFile();
-//                 updateOptions(true);
-
-//               //Serial.println("down");
-//             }
-//             else if (keyboard_data[2] == 0x75) // Up Arrow
-//             {
-//               if (!HdDisk)
-//                 prevDiskFile();
-//               else
-//                 prevHdFile();
-//               updateOptions(false);
-//               //Serial.println("up");
-//             }
-//             keymem = 0;
-
-//           }
-
-//         }
-//         else if (keyboard_data[1] == 0xF0 && (keyboard_data[2] == 0x12 || keyboard_data[2] == 0x59))
-//         {
-//           shift_enabled = false;
-//           if (joystick) Pb1 = false;
-//         }
-//         else if (keyboard_data[1] == 0xF0 && keyboard_data[2] == 0x14)
-//         {
-//           ctrl_enabled = false;
-//           if (joystick) Pb0 = false;
-//         }
-//         else if (keyboard_data[1] == 0xF0 && (keyboard_data[2] == 0x75 || keyboard_data[2] == 0x72))
-//         {
-//           if (joystick) timerpdl1 = JOY_MID;
-//         }
-//         else if (keyboard_data[1] == 0xF0 && (keyboard_data[2] == 0x6b || keyboard_data[2] == 0x74))
-//         {
-//           if (joystick) timerpdl0 = JOY_MID;
-//         }
-//         else
-//         {
-//           if (joystick)
-//           {
-//             timerpdl0 = JOY_MID;
-//             timerpdl1 = JOY_MID;
-//           }
-//         }
-//       }
-//     }
-
-//     //shuffle buffer
-//     keyboard_data[0] = keyboard_data[1];
-//     keyboard_data[1] = keyboard_data[2];
-//     keyboard_buf_indx = 0;
-//   }
-// }

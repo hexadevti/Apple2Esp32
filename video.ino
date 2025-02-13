@@ -1,5 +1,5 @@
 const int colors[] PROGMEM = {0b00000000, 0b00110000, 0b11001100, 0b11111100, 0b00000000, 0b00001100, 0b10000000, 0b11111100};
-const int colors16[] PROGMEM = {0x00000000, 0x3300dd00, 0x99000000, 0xdd22dd00, 0x22770000, 0x44444400, 0xff222200, 0xcc884400, 0x00447700, 0x0044dd00, 0x88888800, 0x6677dd00, 0x00dd1100, 0x00ffff00, 0x88ee3300, 0xffffff00 };
+const int colors16[] PROGMEM = {0x000000, 0x3300dd, 0x990000, 0xdd22dd, 0x227700, 0x444444, 0xff2222, 0xcc8844, 0x004477, 0x0044dd, 0x888888, 0x6677dd, 0x00dd11, 0x00ffff, 0x88ee33, 0xffffff };
 int flashCount = 0;
 
 
@@ -215,9 +215,11 @@ void printOptionsBackground(int r, int g, int b)
   vga.rect(41, 41, 238, 158, vga.rgb(r, g, b));
   vga.setFont(FONT_6x8);
   vga.setTextColor(vga.rgb(r, g, b), vga.rgb(0,0,0));
-  vga.setCursor(10, 230);
-  sprintf(buf, " %s | %s | %s | %s | %s", HdDisk ? " HD " : "DISK", AppleIIe ? "IIe" : "II+", Fast1MhzSpeed ? "Fast" : "1Mhz", paused ? "Paused " : "Running", joystick ? "Joy On " : "Joy Off");
+  vga.setCursor(0, 230);
+  sprintf(buf, "%s|%s|%s|%s|%s|%s", HdDisk ? " HD " : "DISK", AppleIIe ? "IIe" : "II+", Fast1MhzSpeed ? "Fast" : "1Mhz", paused ? "Paused " : "Running", joystick ? "Joy On " : "Joy Off", wifiConnected ? WiFi.localIP().toString() : "Not Connected");
   vga.print(buf);
-  Serial.print(buf);
+  vga.setCursor(0, 10);
+  sprintf(buf, " Apple2ESP32S3 %s", HdDisk ? selectedHdFileName.c_str() : selectedDiskFileName.c_str());
+  vga.print(buf);
   vga.show();
 }

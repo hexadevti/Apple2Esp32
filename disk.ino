@@ -49,6 +49,7 @@ const char translateDOTrack[] PROGMEM = {0x00, 0x07, 0x0e, 0x06, 0x0d, 0x05, 0x0
 const char translatePOTrack[] PROGMEM = {0x00, 0x08, 0x01, 0x09, 0x02, 0x0A, 0x03, 0x0b, 0x04, 0x0C, 0x05, 0x0d, 0x06, 0x0E, 0x07, 0x0f};
 const ushort secoffset[] PROGMEM = {0, 0x700, 0xe00, 0x600, 0xd00, 0x500, 0xc00, 0x400, 0xb00, 0x300, 0xa00, 0x200, 0x900, 0x100, 0x800, 0xf00};
 
+//bool trackPendingSave = false;
 void DiskSetup()
 {
   printlog("DiskII Setup...");
@@ -57,14 +58,11 @@ void DiskSetup()
     return;
   }
   //listDir(FSTYPE, "/", 1);
-  int tBytes = FSTYPE.totalBytes(); 
-  int uBytes = FSTYPE.usedBytes();
-  sprintf(buf, "SPIFFS.freeSpace = %d bytes", tBytes - uBytes);
+  sprintf(buf, "FS.freeSpace = %d bytes", FSTYPE.totalBytes() - FSTYPE.usedBytes());
   printlog(buf);
-  
-  LoadDisk();
   if (!HdDisk)
     getDiskFileInfo(FSTYPE);
+
   phaseBuffer = std::queue<uint8_t>();
 }
 
@@ -126,13 +124,18 @@ void AddPhase(uint8_t phase)
     track--;
   }
 
-  // sprintf(buf, "Track request: %d", track);
-  // printlog(buf);
   //getTrack(FSTYPE, track, false);
   if (track != diskTrack)
   {
+    // if (trackPendingSave) {
+    //   SaveImage(FSTYPE, diskTrack);
+    //   trackPendingSave = false;
+    // }
     diskTrack = track;
     trackChanged = true;
+    sprintf(buf, "Track changed: %d", track);
+    printlog(buf);
+    
   }
 
 }
@@ -154,8 +157,6 @@ void getDiskFileInfo(fs::FS &fs)
   //   selectedDiskFileName = "";
   // }
   File file = fs.open(selectedDiskFileName.c_str());
-  sprintf(buf, "APPLE2ESP32 - %s", selectedDiskFileName.c_str());
-  printMsg(buf, 0xff, 0, 0);
   printlog(buf);
   size_t len = file.size();
   sprintf(buf, "File Size: %d", len);
@@ -198,16 +199,43 @@ void getTrack(fs::FS &fs, int track, bool force)
   }
 }
 
-void SaveImage(fs::FS &fs)
+void SaveImage(fs::FS &fs, int track)
 {
-  File file = fs.open(selectedDiskFileName.c_str(), FILE_WRITE);
-  size_t len = file.size();
-  ;
-  size_t positionToWrite = GetOffset(diskTrack, 0);
-  file.seek(positionToWrite);
-  file.write(trackRawData, sizeof(trackRawData));
-  file.seek(len);
+  sprintf(buf, "Saving Track %0d", track);
+  Serial.println(buf);
+  int positionToWrite = GetOffset(track, 0);
+  uint8_t *sourceDiskData = (uint8_t *)ps_malloc(trackRawSize * 35);
+  uint8_t *tempDiskData = (uint8_t *)ps_malloc(trackRawSize * 35); 
+  File file = fs.open(selectedDiskFileName.c_str(), FILE_READ);
+  file.read(sourceDiskData, trackRawSize * 35);
   file.close();
+  // for (int i = 0; i < 1000; i++) {
+  //     sprintf(buf, "%02X", sourceDiskData[i]);
+  //     Serial.print(buf);
+  // }
+
+  
+    for (int i = 0; i < positionToWrite; i++) {
+      tempDiskData[i] = sourceDiskData[i];
+    }
+    for (int i = positionToWrite; i < trackRawSize + positionToWrite; i++) {
+      tempDiskData[i] = trackRawData[i-positionToWrite];
+    }    
+    for (int i = trackRawSize + positionToWrite; i < trackRawSize * 35; i++) {
+      tempDiskData[i] = sourceDiskData[i];
+    }
+    // for (int i = 0; i < 1000; i++) {
+    //   sprintf(buf, "%02X", tempDiskData[i]);
+    //   Serial.print(buf);
+    // }
+    file = fs.open(selectedDiskFileName.c_str(), FILE_WRITE);
+    if (file) {
+      file.write(tempDiskData, trackRawSize * 35);
+      file.close();
+    }
+    else {
+     Serial.println("File failed to open");
+    }
 }
 
 void nextDiskFile()
@@ -215,8 +243,6 @@ void nextDiskFile()
   if (shownFile < (int)((diskFiles.size()) - 1))
   {
     shownFile++;
-    sprintf(buf, "APPLE2ESP32 - %s",diskFiles[shownFile].c_str());
-    printMsg(buf, 0,0, 0xff);
   }
 }
 
@@ -225,8 +251,6 @@ void prevDiskFile()
   if (shownFile > 0)
   {
     shownFile--;
-    sprintf(buf, "APPLE2ESP32 - %s", diskFiles[shownFile].c_str());
-    printMsg(buf, 0,0,0xff);
   }
 }
 
@@ -243,15 +267,14 @@ void setDiskFile()
 {
   paused = true;
   selectedDiskFileName = diskFiles[shownFile].c_str();
-  sprintf(buf, "APPLE2ESP32 - %s", selectedDiskFileName.c_str());
-  printMsg(buf, 0xff,0,0);
   paused = false;
 }
 
 void loadDiskDir(fs::FS &fs, const char *dirname, uint8_t levels)
 {
-  sprintf(buf, "Loading directory: %s\n", dirname);
-  printlog(buf);
+  // sprintf(buf, "Loading directory: %s\n", dirname);
+  // printlog(buf);
+  diskFiles.clear();
 
   File root = fs.open(dirname);
   if (!root)
@@ -293,8 +316,8 @@ void loadDiskDir(fs::FS &fs, const char *dirname, uint8_t levels)
 
       if (acepted)
       {
-        sprintf(buf, " FOUND FILE: %s SIZE: %d", file.name(), file.size());
-        printlog(buf);
+        //sprintf(buf, " FOUND FILE: %s SIZE: %d", file.name(), file.size());
+        //printlog(buf);
         std::string str(file.name());
         diskFiles.push_back("/" + str);
       }
@@ -580,7 +603,7 @@ void PrintHex(uint8_t data[], int length)
     if (i % 16 == 0)
     {
       Serial.println();
-      sprintf(buf, "%04X: ", i);
+      sprintf(buf, "%08X: ", i);
       Serial.print(buf);
     }
     sprintf(buf, "%02X ", data[i]);
@@ -598,6 +621,7 @@ char DiskSoftSwitchesRead(ushort address)
     {
       if (diskChanged || trackChanged)
       {
+        Serial.println("read track");
         getTrack(FSTYPE, diskTrack, true);
         diskChanged = false;
         trackChanged = false;
@@ -641,7 +665,9 @@ void DiskSoftSwitchesWrite(ushort address, char value)
         {
           SetBlockData(sec, decsecData);
         }
-        SaveImage(FSTYPE);
+        //trackPendingSave = true;
+        SaveImage(FSTYPE, diskTrack);
+        Serial.println("read track");
         getTrack(FSTYPE, diskTrack, true);
         outputSectorData.clear();
       }
@@ -699,6 +725,7 @@ char ProcessSwitchc0e0(ushort address, char value)
   {
     DriveMotorON_OFF = false;
     neopixelWrite(RGB_BUILTIN,0,0,0); // Off / black
+    
     //digitalWrite(LED_BUILTIN, LOW);
   }
   else if (address == 0xc0e9)

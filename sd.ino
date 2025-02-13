@@ -1,5 +1,7 @@
 void listDir(fs::FS &fs, const char *dirname, uint8_t levels) {
-  Serial.printf("Listing directory: %s\n", dirname);
+  int i = 0;
+  String partlist;
+  //Serial.printf("Listing directory: %s\n", dirname);
 
   File root = fs.open(dirname);
   if (!root) {
@@ -14,17 +16,23 @@ void listDir(fs::FS &fs, const char *dirname, uint8_t levels) {
   File file = root.openNextFile();
   while (file) {
     if (file.isDirectory()) {
-      Serial.print("  DIR : ");
-      Serial.println(file.name());
+      // Serial.print("  DIR : ");
+      // Serial.println(file.name());
       if (levels) {
         listDir(fs, file.path(), levels - 1);
       }
     } else {
-      Serial.print("  FILE: ");
-      Serial.print(file.name());
-      Serial.print("  SIZE: ");
-      Serial.println(file.size());
+      // Serial.print("  FILE: ");
+      // Serial.print(file.name());
+      // Serial.print("  SIZE: ");
+      // Serial.println(file.size());
+      i++;
+      String st_after_symb = String(file.name()).substring(String(file.name()).indexOf("/") + 1);
+
+      partlist +=  String("<tr><td>") + String(i) + String("</td><td>") + String("<a href='") + String(file.name()) + String("'>") + st_after_symb + String("</td><td>") + String(file.size() / 1024) + String("</td><td>") + String("<input type='button' class='btndel' onclick=\"deletef('") + String(file.name()) + String("')\" value='X'>") + String("</td></tr>");
+      filelist = String("<table><tbody><tr><th>#</th><th>File name</th><th>Size(KB)</th><th></th></tr>") + partlist + String(" </tbody></table>");
     }
+    freeSpace = FSTYPE.totalBytes() - FSTYPE.usedBytes();
     file = root.openNextFile();
   }
 }
@@ -104,13 +112,23 @@ void renameFile(fs::FS &fs, const char *path1, const char *path2) {
   }
 }
 
-void deleteFile(fs::FS &fs, const char *path) {
-  // Serial.printf("Deleting file: %s\n", path);
-  if (fs.remove(path)) {
-    // Serial.println("File deleted");
+// void deleteFile(fs::FS &fs, const char *path) {
+//   // Serial.printf("Deleting file: %s\n", path);
+//   if (fs.remove(path)) {
+//     // Serial.println("File deleted");
+//   } else {
+//     // Serial.println("Delete failed");
+//   }
+// }
+void deleteFile(fs::FS &fs, String filename) {
+  Serial.printf("Deleting file: %s\r\n", filename);
+ if (!filename.startsWith("/")) filename = "/" + filename;
+  if (fs.remove(filename)) {
+    Serial.println("- file deleted");
   } else {
-    // Serial.println("Delete failed");
+    Serial.println("- delete failed");
   }
+  //listDir(fs, "/", 0);
 }
 
 void testFileIO(fs::FS &fs, const char *path) {

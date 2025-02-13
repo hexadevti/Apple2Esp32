@@ -1,5 +1,22 @@
 #include "VGA.h"
 #include "FONT_6x8.h"
+#include <ESPAsyncWebServer.h>
+#include <Update.h>
+#include <ESPmDNS.h>
+
+const char* host = "apple2";
+const char* ssid = "LUCIANO-ESCRITORIO";
+const char* password = "lrbf246!";
+String filelist = "";
+int freeSpace = 0;
+const char* PARAM = "file";
+#define U_PART U_SPIFFS
+bool wifiConnected = false;
+
+AsyncWebServer server(80);
+size_t content_len;
+File file;
+bool opened = false;
 
 #include "rom.h"
 #include "FS.h"
@@ -40,9 +57,6 @@ bool OptionsWindow = false;
 bool HdDisk = false;
 bool Fast1MhzSpeed = true;
 bool joystick = true;
-
-
-
 
 char buf[0xff];
 int logLineCount = 1;
@@ -155,12 +169,18 @@ void setup() {
   //serialVideoSetup();
   keyboard_begin();
   sei();
-  HDSetup();
-  DiskSetup();
+  if (HdDisk) {
+    HDSetup();
+  }
+  else
+  {
+    DiskSetup();
+  }
   
   //speaker_begin();
   printlog("Ready.");
   setCpuFrequencyMhz(240);
+  wifiSetup();
 
   
 
@@ -201,8 +221,25 @@ void setup() {
   //   IIEAuxBankSwitchedRAM1[i] = 0;
   //   a = IIEAuxBankSwitchedRAM1[i];
   // } 
+  printMsg("APPLE2ESP32S3 - Hit Ctrl-ESC to menu", 0xff, 0xff, 0xff);
+  
+  xTaskCreate(InfoMessage, "InfoMessage", 4096, NULL, 1, NULL);
+
+  sprintf(buf, "Total heap: %d", ESP.getHeapSize());
+  printlog(buf);
+  sprintf(buf, "Free heap: %d", ESP.getFreeHeap());
+  printlog(buf);
+  sprintf(buf, "Total PSRAM: %d", ESP.getPsramSize());
+  printlog(buf);
+  sprintf(buf, "Free PSRAM: %d", ESP.getFreePsram());
+  printlog(buf);
 }
 
+void InfoMessage(void *pvParameters) {
+  delay(5000);
+  vga.fillRect(0, 0, 300, 20, 0);
+  vTaskDelete(NULL);
+}
 
 int writeStringToEEPROM(int addrOffset, const String &strToWrite)
 {
@@ -273,11 +310,17 @@ void joystickOnOff() {
 
 void showHideOptionsWindow() {
   OptionsWindow = !OptionsWindow;
-  updateOptions(true);
+  updateOptions(true, OptionsWindow);
 }
 
-void updateOptions(bool downDirection) {
+void updateOptions(bool downDirection, bool reload) {
   if (OptionsWindow) {
+    if (reload) {
+      if (HdDisk)
+        LoadHD();
+      else
+        LoadDisk();
+    }
     printOptionsBackground(0xff, 0, 0);
     std::string result = "";
     int sel = 0;
@@ -339,7 +382,8 @@ void updateOptions(bool downDirection) {
   }
   else
   {
-    vga.fillRect(10, 230, 300, 9, 0);
+    vga.fillRect(0, 230, 300, 9, 0);
+    vga.fillRect(0, 0, 300, 20, 0);
   }
   
 }

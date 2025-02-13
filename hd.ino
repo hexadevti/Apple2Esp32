@@ -26,7 +26,12 @@ std::vector<std::string> fileExtensions = { ".hdv", ".po", ".2mg" };
 void HDSetup()
 {
   printlog("HS Setup...");
-  LoadHD();
+  if (!FSTYPE.begin(true)) {
+    Serial.println("FSTYPE Mount Failed");
+    return;
+  }
+  sprintf(buf, "FS.freeSpace = %d bytes", FSTYPE.totalBytes() - FSTYPE.usedBytes());
+  printlog(buf);
   if (HdDisk)
     getHdFileInfo(FSTYPE);
 }
@@ -100,9 +105,6 @@ void getHdFileInfo(fs::FS &fs)
     selectedHdFileName = "";
   }
   File file = fs.open(selectedHdFileName.c_str());
-  sprintf(buf, "APPLE2ESP32 - %s", selectedHdFileName.c_str());
-  printMsg(buf, 0xff,0,0);
-  printlog(buf);
   size_t len = file.size();
   Serial.print("File Size: ");
   hdDiskImageSize = len;
@@ -118,8 +120,6 @@ void nextHdFile()
 {
   if (shownFile < (int)((hdFiles.size())-1)) {
     shownFile++;
-    sprintf(buf, "APPLE2ESP32 - %s",hdFiles[shownFile].c_str());
-    printMsg(buf, 0,0,0xff);
   }
 }
 
@@ -127,8 +127,6 @@ void prevHdFile()
 {
   if (shownFile > 0) {
     shownFile--;
-    sprintf(buf, "APPLE2ESP32 - %s", hdFiles[shownFile].c_str());
-    printMsg(buf, 0,0,0xff);
   }
 }
 
@@ -145,8 +143,6 @@ void setHdFile()
 {
   paused = true;
   selectedHdFileName = hdFiles[shownFile].c_str();
-  sprintf(buf, "APPLE2ESP32 - %s", selectedHdFileName.c_str());
-  printMsg(buf, 0xff,0,0);
   paused = false;
 }
 
