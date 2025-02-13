@@ -278,7 +278,7 @@
                 "ARDUINO_ARCH_ESP32",
                 "ARDUINO_BOARD=\"ESP32S3_DEV\"",
                 "ARDUINO_VARIANT=\"esp32s3\"",
-                "ARDUINO_PARTITION_noota_3g",
+                "ARDUINO_PARTITION_no_ota",
                 "ESP32",
                 "CORE_DEBUG_LEVEL=0",
                 "ARDUINO_RUNNING_CORE=1",

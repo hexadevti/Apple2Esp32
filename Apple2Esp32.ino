@@ -38,10 +38,10 @@ const PinConfig pins(-1,-1,-1,16,17,  -1,-1,-1,-1,7,15,  -1,-1,-1,5,6,  13,14);
 Mode mode = Mode::MODE_320x240x60;
 
 // SD Pins
-// int sck = 18;
-// int miso = 19;
-// int mosi = 23;
-// int cs = 5;
+int sck = 18;
+int miso = 8;
+int mosi = 3;
+int cs = 46;
 
 
 #define JOY_MAX 20000

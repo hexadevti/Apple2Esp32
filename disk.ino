@@ -23,6 +23,8 @@ bool Drive1_2 = true;
 int pointer = 0;
 
 int diskTrack = -1;
+int lastSec = -1;
+int lastTrack = -1;
 int diskSector = 0;
 std::queue<uint8_t> phaseBuffer;
 std::vector<uint8_t> outputSectorData;
@@ -49,7 +51,7 @@ const char translateDOTrack[] PROGMEM = {0x00, 0x07, 0x0e, 0x06, 0x0d, 0x05, 0x0
 const char translatePOTrack[] PROGMEM = {0x00, 0x08, 0x01, 0x09, 0x02, 0x0A, 0x03, 0x0b, 0x04, 0x0C, 0x05, 0x0d, 0x06, 0x0E, 0x07, 0x0f};
 const ushort secoffset[] PROGMEM = {0, 0x700, 0xe00, 0x600, 0xd00, 0x500, 0xc00, 0x400, 0xb00, 0x300, 0xa00, 0x200, 0x900, 0x100, 0x800, 0xf00};
 
-//bool trackPendingSave = false;
+volatile bool trackPendingSave = false;
 void DiskSetup()
 {
   printlog("DiskII Setup...");
@@ -64,6 +66,26 @@ void DiskSetup()
     getDiskFileInfo(FSTYPE);
 
   phaseBuffer = std::queue<uint8_t>();
+
+  xTaskCreate(saveTrackAsync, "saveTrackAsync", 4096, NULL, 1, NULL);
+}
+
+void saveTrackAsync(void *pvParameters) {
+  int count = 0;
+  while (running)
+  {
+    if (trackPendingSave && !DriveMotorON_OFF) {
+      if (count > 100) {
+        Serial.println("Late Save.");
+        SaveImage(FSTYPE, diskTrack);
+        trackPendingSave = false;
+        count = 0;
+      }
+      count++;
+    }
+    delay(10);
+  }
+  
 }
 
 void LoadDisk()
@@ -127,14 +149,14 @@ void AddPhase(uint8_t phase)
   //getTrack(FSTYPE, track, false);
   if (track != diskTrack)
   {
-    // if (trackPendingSave) {
-    //   SaveImage(FSTYPE, diskTrack);
-    //   trackPendingSave = false;
-    // }
+    sprintf(buf, "Track changed: %d pending: %d", track, trackPendingSave);
+    printlog(buf);
+    if (trackPendingSave) {
+      SaveImage(FSTYPE, diskTrack);
+      trackPendingSave = false;
+    }
     diskTrack = track;
     trackChanged = true;
-    sprintf(buf, "Track changed: %d", track);
-    printlog(buf);
     
   }
 
@@ -177,7 +199,7 @@ void getTrack(fs::FS &fs, int track, bool force)
   if (track != diskTrack || force)
   {
     size_t positionToRead = GetOffset(track, 0);
-    sprintf(buf, "track %d - %s", track, selectedDiskFileName.c_str());
+    sprintf(buf, "Reading track %d - %s", track, selectedDiskFileName.c_str());
     printlog(buf);
     File file = fs.open(selectedDiskFileName.c_str(), FILE_READ);
 
@@ -621,7 +643,6 @@ char DiskSoftSwitchesRead(ushort address)
     {
       if (diskChanged || trackChanged)
       {
-        Serial.println("read track");
         getTrack(FSTYPE, diskTrack, true);
         diskChanged = false;
         trackChanged = false;
@@ -652,9 +673,14 @@ void DiskSoftSwitchesWrite(ushort address, char value)
 
       if (outputSectorData.size() == 354)
       {
-        sprintf(buf, "Disk Track: %d, Sector: %d", diskTrack, sec);
+        sprintf(buf, "Preparing Track: %d, Sector: %d", diskTrack, sec);
         printlog(buf);
-
+        if (lastTrack == diskTrack && lastSec == sec) {
+          SaveImage(FSTYPE, diskTrack);
+          getTrack(FSTYPE, diskTrack, true);
+        }
+        lastTrack = diskTrack;
+        lastSec = sec;
         std::vector<uint8_t> cleanData(outputSectorData.begin() + 7, outputSectorData.begin() + 350);
         std::vector<uint8_t> decsecData = Decode6_2(cleanData);
         if (FlagDO_PO)
@@ -665,10 +691,9 @@ void DiskSoftSwitchesWrite(ushort address, char value)
         {
           SetBlockData(sec, decsecData);
         }
-        //trackPendingSave = true;
-        SaveImage(FSTYPE, diskTrack);
-        Serial.println("read track");
-        getTrack(FSTYPE, diskTrack, true);
+        trackPendingSave = true;
+        // SaveImage(FSTYPE, diskTrack);
+        // getTrack(FSTYPE, diskTrack, true);
         outputSectorData.clear();
       }
     }
