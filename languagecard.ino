@@ -50,7 +50,7 @@ char ProcessSwitch(ushort address, byte b)
           bits[i] = (last4bits >> i) & 1;
         }
         
-        sprintf(buf, "Languege card switch: %04X", address);
+        //sprintf(buf, "Languege card switch: %04X", address);
         // Serial.println(buf);
         MemoryBankBankSelect1_2 = bits[3];
         if (bits[1] && bits[0])

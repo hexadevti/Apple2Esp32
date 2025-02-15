@@ -166,6 +166,7 @@ unsigned char pull8() {
 
 void cpuReset()
 {
+  IIEMemoryBankReadRAM_ROM = false;
   PC = read16(0xFFFC);
   STP = 0xFD;
 }

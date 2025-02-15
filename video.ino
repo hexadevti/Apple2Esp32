@@ -29,7 +29,15 @@ void printMsg(char msg[], int r, int g, int b)
   vga.setTextColor(vga.rgb(0xff, 0xff, 0xff), vga.rgb(0, 0, 0));
   
 }
-
+void printLoading(int r, int g, int b) {
+  vga.fillRect(40, 40, 240, 160, 0);
+  vga.rect(41, 41, 238, 158, vga.rgb(r, g, b));
+  vga.setCursor(120,120);
+  vga.setFont(FONT_6x8);
+  vga.setTextColor(vga.rgb(r,g,b), vga.rgb(0,0,0));
+  vga.print("Loading...");
+}
+  
 void printStatus(char msg[], int r, int g, int b)
 {
   vga.setFont(FONT_6x8);
@@ -51,7 +59,7 @@ void graphicFlashCharacters(void *pvParameters)
     {
       delay(100);
     }
-    
+    Vertical_blankingOn_Off = false; // IIe video problem with Total Replay
     page_lock.lock();
     int x = margin_x;
     int y = margin_y;
@@ -186,6 +194,7 @@ void graphicFlashCharacters(void *pvParameters)
         }
       }
     }
+    Vertical_blankingOn_Off = true;
     page_lock.unlock();
     vTaskDelay(pdMS_TO_TICKS(20));
     flashCount++;

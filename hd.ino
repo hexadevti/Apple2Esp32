@@ -21,6 +21,8 @@ size_t hdDiskImageSize ;
 ushort fileHeaderSize = 0;
 unsigned char actualBlock[512];
 std::vector<std::string> fileExtensions = { ".hdv", ".po", ".2mg" };
+File hdFile;
+ushort lastBlock = -1;
 
 
 void HDSetup()
@@ -32,8 +34,30 @@ void HDSetup()
   }
   sprintf(buf, "FS.freeSpace = %d bytes", FSTYPE.totalBytes() - FSTYPE.usedBytes());
   printlog(buf);
-  if (HdDisk)
+  if (HdDisk) {
     getHdFileInfo(FSTYPE);
+    xTaskCreate(getBlockAsync, "getBlockAsync", 4096, NULL, 1, NULL);
+  }
+
+}
+
+void getBlockAsync(void *pvParameters) {
+  int count = 0;
+  while (running)
+  {
+    if (trackPendingSave && !DriveMotorON_OFF) {
+      if (count > 5) {
+        Serial.println("Late Save.");
+        SaveImage(FSTYPE, diskTrack);
+        getTrack(FSTYPE, diskTrack, true);
+        trackPendingSave = false;
+        count = 0;
+      }
+      count++;
+    }
+    delay(10);
+  }
+  
 }
 
 void LoadHD() 
@@ -153,12 +177,13 @@ char LoadBlock(unsigned short address, unsigned short block)
   getBlock(FSTYPE, block);
   try
   {
+    // sprintf(buf,"Write block to memory: %d", block);
+    // printlog(buf);
     for (int i = 0; i < 512; i++)
     {
-      // sprintf(buf,"Load block %04X:%02X", (address + i), actualBlock[i]);
-      // printlog(buf);
       write8((address + i), actualBlock[i]);
     }
+    //printlog("512 bytes written");
     neopixelWrite(RGB_BUILTIN,0,0,0); // Off / black
     //digitalWrite(LED_BUILTIN,LOW);
     return 0;
@@ -179,22 +204,41 @@ ushort getBlockQty()
 
 void getBlock(fs::FS &fs, ushort block) 
 {
-  size_t positionToRead = block * 512 + fileHeaderSize;
-  File file = fs.open(selectedHdFileName.c_str());
-  size_t len = file.size();;
-  uint32_t start = millis();
-  uint32_t end = start;
-  if (file) {
-    if (file.seek(positionToRead))
-    {
-      file.read(actualBlock, 512);
-      // // // Serial.print("File Read Block:");// // // Serial.println(block);
+  // sprintf(buf,"File getBlock: %d", block);
+  // printlog(buf);
+  if (block != lastBlock + 1) {
+    //printlog("New");
+    if (hdFile.available())
+      hdFile.close();
+      
+    hdFile = fs.open(selectedHdFileName.c_str());
+    if (hdFile) {
+      size_t positionToRead = block * 512 + fileHeaderSize;
+      if (hdFile.seek(positionToRead))
+      {
+        hdFile.read(actualBlock, 512);
+        //printSequence(20);
+        
+      }
     }
-    end = millis() - start;
-    file.close();
-  } else {
-    printlog("Failed to open file for reading");
   }
+  else
+  {
+    //printlog("Sequential");
+    if (hdFile.available()) {
+      hdFile.read(actualBlock, 512);
+      //printSequence(20);
+    }
+  }
+  lastBlock = block;
+}
+
+void printSequence(int seq) {
+  for (int i = 0; i < seq; i++) {
+    sprintf(buf,"%02X ", actualBlock[i]);
+    Serial.print(buf);
+  }
+  Serial.println();
 }
 
 void loadHDDir(fs::FS &fs, const char *dirname, uint8_t levels) {

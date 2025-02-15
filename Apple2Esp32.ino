@@ -48,7 +48,7 @@ int cs = 46;
 #define JOY_MID 1230
 #define JOY_MIN 10
 #define EEPROM_SIZE 1024
-#define FSTYPE LittleFS
+#define FSTYPE SD //LittleFS
 
 bool running = true;
 bool paused = false;
@@ -65,14 +65,16 @@ bool hdAttached = false;
 bool serialVideoAttached = false;
 bool serialKeyboardAttached = false;
 bool videoColor = true;
-int HdDiskEEPROMaddress = 10;
-int IIpIIeEEPROMaddress = 11;
-int Fast1MhzSpeedEEPROMaddress = 12;
-int JoystickEEPROMaddress = 13;
-int DiskFileNameEEPROMaddress = 512;
-int HdFileNameEEPROMaddress = 768;
+int HdDiskEEPROMaddress = 0;
+int IIpIIeEEPROMaddress = 1;
+int Fast1MhzSpeedEEPROMaddress = 2;
+int JoystickEEPROMaddress = 3;
+int NewDeviceConfigEEPROMaddress = 50; 
+int DiskFileNameEEPROMaddress = 128;
+int HdFileNameEEPROMaddress = 256;
 String selectedDiskFileName;
 String selectedHdFileName;
+String NewDeviceConfig;
 byte selectedHdFile;
 int firstShowFile = 0;
 int shownFile;
@@ -101,18 +103,27 @@ bool RAMWriteOn_Off = false;
 bool AltZPOn_Off = false;
 bool IOUDisOn_Off = false;
 bool DHiResOn_Off = false;
+bool IIEMemoryBankBankSelect1_2 = true;
+bool IIEMemoryBankReadRAM_ROM = false;
+bool IIEMemoryBankWriteRAM_NoWrite = false;
+
+
 int IIeExpansionCardBank = 0;
 std::vector<std::string> hdFiles;
 std::vector<std::string> diskFiles;
 std::mutex page_lock;
-//unsigned char zp[0x200];
+static unsigned char zp[0x200];
+static unsigned char auxzp[0x200];
 static unsigned char ram[0xc000];
 static unsigned char auxram[0xc000];
-static unsigned char auxzp[0x200];
 
 unsigned char IIEAuxBankSwitchedRAM1[0x2000];
 static unsigned char IIEAuxBankSwitchedRAM2_1[0x1000];
 static unsigned char IIEAuxBankSwitchedRAM2_2[0x1000];
+
+unsigned char IIEmemoryBankSwitchedRAM1[0x2000];
+static unsigned char IIEmemoryBankSwitchedRAM2_1[0x1000];
+static unsigned char IIEmemoryBankSwitchedRAM2_2[0x1000];
 
 static bool CgReset0 = false;
 static bool CgReset1 = false;
@@ -136,17 +147,24 @@ void setup() {
   Serial.begin(115200);
   //pinMode(LED_BUILTIN,OUTPUT);
   EEPROM.begin(EEPROM_SIZE);
-
-
-  // EEPROM.writeBool(HdDiskEEPROMaddress, true);
-  // EEPROM.writeBool(HdDiskEEPROMaddress, false);
-  // EEPROM.writeBool(IIpIIeEEPROMaddress, false);
-  // EEPROM.writeBool(Fast1MhzSpeedEEPROMaddress, true);
-  // EEPROM.writeBool(JoystickEEPROMaddress, true);
-  // writeStringToEEPROM(HdFileNameEEPROMaddress, "");
-  // writeStringToEEPROM(DiskFileNameEEPROMaddress, "/karateka.dsk");
-
-
+  delay(3000);
+  readStringFromEEPROM(NewDeviceConfigEEPROMaddress, &NewDeviceConfig);
+  sprintf(buf, "EEPROM NewDeviceConfig value: %s", NewDeviceConfig.c_str());
+  printlog(buf);
+  if (NewDeviceConfig != "ok")
+  {
+    
+    Serial.println("New Device");
+    int e1 = EEPROM.writeBool(HdDiskEEPROMaddress, false);
+    int e2 = EEPROM.writeBool(IIpIIeEEPROMaddress, false);
+    int e3 = EEPROM.writeBool(Fast1MhzSpeedEEPROMaddress, true);
+    int e4 = EEPROM.writeBool(JoystickEEPROMaddress, true);
+    int e7 = writeStringToEEPROM(NewDeviceConfigEEPROMaddress, "ok");
+    int e5 = writeStringToEEPROM(HdFileNameEEPROMaddress, "/");
+    int e6 = writeStringToEEPROM(DiskFileNameEEPROMaddress, "/karateka.dsk");
+    EEPROM.commit();
+  }
+  
   HdDisk = EEPROM.readBool(HdDiskEEPROMaddress);
   AppleIIe = EEPROM.readBool(IIpIIeEEPROMaddress);
   Fast1MhzSpeed = EEPROM.readBool(Fast1MhzSpeedEEPROMaddress);
@@ -162,10 +180,15 @@ void setup() {
     printlog(buf);
   }
 
+
+  sprintf(buf, "EEPROM values %d,%d,%d,%d,%s,%s,%s", HdDisk,AppleIIe,Fast1MhzSpeed,joystick,selectedHdFileName.c_str(),selectedDiskFileName.c_str(),NewDeviceConfig.c_str());
+  printlog(buf);
   diskAttached = (HdDisk == 0);
   hdAttached = !diskAttached;
   videoSetup();
-  //SDCardSetup();
+  #if (FSTYPE == SD)
+    SDCardSetup();
+  #endif
   //serialVideoSetup();
   keyboard_begin();
   sei();
@@ -177,7 +200,7 @@ void setup() {
     DiskSetup();
   }
   
-  //speaker_begin();
+  speaker_begin();
   printlog("Ready.");
   setCpuFrequencyMhz(240);
   wifiSetup();
@@ -194,33 +217,7 @@ void setup() {
     timerpdl0 = JOY_MAX;
     timerpdl1 = JOY_MAX;
   }
-  
-  //   char a;
-  // for (int i = 0; i < 0x200; i++) {
-  //   auxzp[i] = 0;
-  //   a = auxzp[i];
-  // }
-  // for (int i = 0; i < 0xc000; i++) {
 
-  //   auxram[i] = rand() % 0x100;
-  // }
-  // for (int i = 0; i < 0xc000; i++) {
-
-  //   sprintf(buf, "%02x ", auxram[i]);
-  //   Serial.print(buf);
-  //   if (i % 0xf == 0)
-  //     Serial.println();
-  // }
-  // for (int i = 0; i < 0x1000; i++) {
-  //   IIEAuxBankSwitchedRAM2_1[i] = 0;
-  //   IIEAuxBankSwitchedRAM2_2[i] = 0;
-  //   a = IIEAuxBankSwitchedRAM2_1[i];
-  //   a = IIEAuxBankSwitchedRAM2_2[i];
-  // }
-  // for (int i = 0; i < 0x2000; i++) {
-  //   IIEAuxBankSwitchedRAM1[i] = 0;
-  //   a = IIEAuxBankSwitchedRAM1[i];
-  // } 
   printMsg("APPLE2ESP32S3 - Hit Ctrl-ESC to menu", 0xff, 0xff, 0xff);
   
   xTaskCreate(InfoMessage, "InfoMessage", 4096, NULL, 1, NULL);
@@ -315,6 +312,7 @@ void showHideOptionsWindow() {
 
 void updateOptions(bool downDirection, bool reload) {
   if (OptionsWindow) {
+    printLoading(0xff, 0, 0);
     if (reload) {
       if (HdDisk)
         LoadHD();

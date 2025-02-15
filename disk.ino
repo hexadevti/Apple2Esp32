@@ -75,9 +75,10 @@ void saveTrackAsync(void *pvParameters) {
   while (running)
   {
     if (trackPendingSave && !DriveMotorON_OFF) {
-      if (count > 100) {
+      if (count > 5) {
         Serial.println("Late Save.");
         SaveImage(FSTYPE, diskTrack);
+        getTrack(FSTYPE, diskTrack, true);
         trackPendingSave = false;
         count = 0;
       }
@@ -153,6 +154,7 @@ void AddPhase(uint8_t phase)
     printlog(buf);
     if (trackPendingSave) {
       SaveImage(FSTYPE, diskTrack);
+      getTrack(FSTYPE, diskTrack, true);
       trackPendingSave = false;
     }
     diskTrack = track;
@@ -686,12 +688,20 @@ void DiskSoftSwitchesWrite(ushort address, char value)
         if (FlagDO_PO)
         {
           SetSectorData(translateDOTrack[sec], decsecData);
+          trackPendingSave = true;
         }
         else
         {
           SetBlockData(sec, decsecData);
+          trackPendingSave = true;
+          if (diskTrack == 0 && sec == 11)
+          {
+            SaveImage(FSTYPE, diskTrack);
+            getTrack(FSTYPE, diskTrack, true);
+            trackPendingSave = false;
+          }
+          
         }
-        trackPendingSave = true;
         // SaveImage(FSTYPE, diskTrack);
         // getTrack(FSTYPE, diskTrack, true);
         outputSectorData.clear();

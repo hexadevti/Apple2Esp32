@@ -339,20 +339,20 @@ void keyboard_task(void *pvParameters)
   {
     
     usbHost.task();
-    delay(10);
+    delay(1);
     repeat_keymem = keymem_hold;
     if (repeat_keymem != 0)
       count++;
     else
       count = 0;
 
-    if (count >= 50) {
+    if (count >= 100) {
       if (cycles == 0) {
         //Serial.println("RELEASE");
         keymem = 0;
       }
       cycles++;
-      if (cycles >= 5) {
+      if (cycles >= 20) {
         //Serial.println("REPEAT");
         cycles = 0;
         keymem = keymem_hold;
