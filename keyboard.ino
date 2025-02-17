@@ -177,6 +177,10 @@ class MyEspUsbHost : public EspUsbHost
       {
         ESP.restart();
       }
+      else if (keycode == 63) // CTRL-F6
+      {
+        demo();
+      }
       else if (keycode == 41) // CTRL-ESC
       {
         showHideOptionsWindow();

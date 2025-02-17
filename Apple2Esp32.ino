@@ -35,7 +35,10 @@ bool opened = false;
 
 VGA vga;
 const PinConfig pins(-1,-1,-1,16,17,  -1,-1,-1,-1,7,15,  -1,-1,-1,5,6,  13,14);
-Mode mode = Mode::MODE_320x240x60;
+//Mode mode = Mode::MODE_320x240x60;
+Mode mode(8, 48, 24, 320, 10, 2, 33, 240, 12587500, 0, 0, 2);
+//Mode mode(16, 96, 48, 640, 10, 2, 33, 480, 25175000);
+
 
 // SD Pins
 int sck = 18;
@@ -48,7 +51,7 @@ int cs = 46;
 #define JOY_MID 1230
 #define JOY_MIN 10
 #define EEPROM_SIZE 1024
-#define FSTYPE SD //LittleFS
+#define FSTYPE LittleFS
 
 bool running = true;
 bool paused = false;
