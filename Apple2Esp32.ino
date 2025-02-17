@@ -35,8 +35,8 @@ bool opened = false;
 
 VGA vga;
 const PinConfig pins(-1,-1,-1,16,17,  -1,-1,-1,-1,7,15,  -1,-1,-1,5,6,  13,14);
-//Mode mode = Mode::MODE_320x240x60;
-Mode mode(8, 48, 24, 320, 10, 2, 33, 240, 12587500, 0, 0, 2);
+Mode mode = Mode::MODE_320x240x60;
+//Mode mode(8, 48, 24, 320, 10, 2, 33, 240, 12587500, 0, 0, 2);
 //Mode mode(16, 96, 48, 640, 10, 2, 33, 480, 25175000);
 
 
@@ -51,7 +51,7 @@ int cs = 46;
 #define JOY_MID 1230
 #define JOY_MIN 10
 #define EEPROM_SIZE 1024
-#define FSTYPE LittleFS
+#define FSTYPE SD //LittleFS
 
 bool running = true;
 bool paused = false;
@@ -83,15 +83,17 @@ int firstShowFile = 0;
 int shownFile;
 
 int margin_x = 14;
+int margin_x_dhgr = 30;
+
 int margin_y = 24;
 int text_margin_x = 2;
 int text_margin_y = 3;
 
-bool Graphics_Text;
-bool Page1_Page2;
-bool DisplayFull_Split;
-bool LoRes_HiRes;
-bool Cols40_80;
+bool Graphics_Text = false;
+bool Page1_Page2 = true;
+bool DisplayFull_Split = true;
+bool LoRes_HiRes = true;
+bool Cols40_80 = true;
 bool SoundClick;
 bool lock_video = false;
 
@@ -104,7 +106,7 @@ bool Vertical_blankingOn_Off = false;
 bool RAMReadOn_Off = false;
 bool RAMWriteOn_Off = false;
 bool AltZPOn_Off = false;
-bool IOUDisOn_Off = false;
+bool IOUDisOn_Off = true;
 bool DHiResOn_Off = false;
 bool IIEMemoryBankBankSelect1_2 = true;
 bool IIEMemoryBankReadRAM_ROM = false;

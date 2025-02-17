@@ -16,7 +16,7 @@ void videoSetup()
   printlog("Video initialized.");
   vga.show();
   vga.start();
-  xTaskCreate(graphicFlashCharacters, "graphicFlashCharacters", 1024, NULL, 1, NULL);
+  xTaskCreate(graphicFlashCharacters, "graphicFlashCharacters", 4096, NULL, 1, NULL);
 }
 
 void demo()
@@ -177,7 +177,7 @@ void graphicFlashCharacters(void *pvParameters)
     }
     Vertical_blankingOn_Off = false; // IIe video problem with Total Replay
     page_lock.lock();
-    int x = margin_x;
+    int x = DHiResOn_Off ? margin_dhgr : margin_x;
     int y = margin_y;
     ushort textPage = Page1_Page2 ? 0x400 : 0x800;
     ushort graphicsPage = Page1_Page2 ? 0x2000 : 0x4000;
@@ -209,7 +209,7 @@ void graphicFlashCharacters(void *pvParameters)
                   else
                   {
                     if (!optionsScreenBlank(x, y))
-                      vga.dotFast(x, y, getLoresColor(secondColor));
+                      vga.dotFast(x, y, getLoresColor(firstColor));
                   }
                   x++;
                 }
@@ -219,11 +219,12 @@ void graphicFlashCharacters(void *pvParameters)
           }
           else if (DHiResOn_Off)
           {
+
             for (int block = 0; block < 8; block++)
             {
               bool line[0x50 * 7];
               int lineId = 0;
-
+              bool last7bits = false;
               for (ushort c = 0; c < 0x50; c++)
               {
                 char chr;
@@ -235,48 +236,70 @@ void graphicFlashCharacters(void *pvParameters)
                 {
                   chr = ram[(ushort)((0x2000 + (b * 0x28) + (l * 0x80) + (c - 1) / 2) + block * 0x400)];
                 }
-                // bool blockline[8];
-                // for (int i = 0; i < 8; i++)
-                //   blockline[7 - i] = (chr & (1 << i)) != 0;
+                bool blockline[8];
+                for (int i = 0; i < 8; i++)
+                  blockline[7 - i] = (chr & (1 << i)) != 0;
 
-                // if (videoColor)
-                // {
-                //   for (int i = 7; i > 0; i--)
-                //   {
-                //     line[lineId] = blockline[i];
-                //     lineId++;
-                //   }
-                // }
-                // else
-                // {
-                //   for (int i = 7; i > 0; i--)
-                //   {
-                //     int color = 0;
-
-                //     if (blockline[i])
-                //       color = 0b11111111;
-                //     else
-                //       color = 0;
-
-                //     if (!optionsScreenBlank(x, y))
-                //       vga.dotFast(x, y, color);
-                //     x++;
-                //   }
-                // }
-              }
-              if (videoColor)
-              {
-                for (int i = 0; i < 0x50 * 7; i = i + 4)
+                if (videoColor)
                 {
-                  // int color = (line[i] ? 8 : 0) + (line[i + 1] ? 4 : 0) + (line[i + 2] ? 2 : 0) + (line[i + 3] ? 1 : 0);
-                  // if (!optionsScreenBlank(x, y))
-                  //   vga.dotFast(x, y, getLoresColor(color));
-                  // //*pixel++ = colors16[color];
-                  // x++;
+                   for (int i = 7; i > 0; i--)
+                  {
+                    line[lineId] = blockline[i];
+                    lineId++;
+                  }
+                }
+                else
+                {
+                  for (int i = 7; i > 0; i--)
+                  {
+                    int color = 0;
+
+                    if (i % 2 != 0)
+                    {
+                      if (i == 7)
+                      {
+                        if (blockline[i] && last7bits)
+                          color = vga.rgb(255, 255, 255);
+                        else if (blockline[i] != last7bits)
+                          color = vga.rgb(127, 127, 127);
+                        else
+                          color = vga.rgb(0, 0, 0);
+                      }
+                      else
+                      {
+                        if (blockline[i] && blockline[i + 1])
+                          color = vga.rgb(255, 255, 255);
+                        else if (blockline[i] != blockline[i + 1])
+                          color = vga.rgb(127, 127, 127);
+                        else
+                          color = vga.rgb(0, 0, 0);
+                      }
+
+
+                      if (!optionsScreenBlank(x, y))
+                        vga.dotFast(x, y, color);
+                      if (i == 1)
+                        last7bits = blockline[i];
+                      x++;
+                    }
+                  }
                 }
               }
-              x = margin_x;
+              if (videoColor) {
+                for (int i = 0; i < 0x50 * 7; i = i + 4)
+                {
+                  int color = (line[i] ? 8 : 0) + (line[i + 1] ? 4 : 0) + (line[i + 2] ? 2 : 0) + (line[i + 3] ? 1 : 0);
+                  if (!optionsScreenBlank(x, y))
+                    vga.dotFast(x, y, getLoresColor(color));
+                  x++;
+                  if (!optionsScreenBlank(x, y))
+                    vga.dotFast(x, y, getLoresColor(color));
+                  x++;
+                }
+              }
+              x = margin_x_dhgr;
               y++;
+
             }
           }
           else // hires
@@ -347,8 +370,8 @@ void graphicFlashCharacters(void *pvParameters)
             }
           }
         }
-        else // Text modes
-        {
+        else if (Cols40_80) // Text modes
+        { 
           for (int i = 0; i < 8; i++) // char lines
           {
             x = margin_x;
@@ -368,6 +391,47 @@ void graphicFlashCharacters(void *pvParameters)
               }
             }
             y++;
+          }
+        }
+        else if (AppleIIe && !Cols40_80)
+        {
+          for (int i = 0; i < 8; i++)
+          {
+            for (int j = 0; j < 0x50; j++)
+            {
+              char chr;
+              if (j % 2 == 0)
+              {
+                chr = auxram[0, (ushort)(0x400 + (b * 0x28) + (l * 0x80) + j / 2)];
+              }
+              else
+              {
+                chr = ram[(ushort)(0x400 + (b * 0x28) + (l * 0x80) + (j - 1) / 2)];
+              }
+              bool last7bits = false;
+              for (int k = 0; k < 7; k++)
+              {
+                ushort addr = (chr * 7 * 8) + (i * 7) + k;
+                bool bpixel = AppleIIeFontPixels[addr];
+                int color = 0;
+                if (k % 2 != 0) {
+                  if (bpixel && last7bits)
+                    color = vga.rgb(255,255,255);
+                  else if (bpixel != last7bits)
+                    color = vga.rgb(127,127,127);
+                  else
+                    color = vga.rgb(0,0,0);
+                  if (!optionsScreenBlank(x, y))
+                    vga.dotFast(x, y, color);
+                    x++;
+                }
+                last7bits = bpixel;
+
+              }
+            }
+            x = margin_x_dhgr;
+            y++;
+          
           }
         }
       }
