@@ -121,16 +121,21 @@ std::vector<std::string> diskFiles;
 std::mutex page_lock;
 static unsigned char zp[0x200];
 static unsigned char auxzp[0x200];
-static unsigned char ram[0xc000];
-static unsigned char auxram[0xc000];
 
-unsigned char IIEAuxBankSwitchedRAM1[0x2000];
-static unsigned char IIEAuxBankSwitchedRAM2_1[0x1000];
-static unsigned char IIEAuxBankSwitchedRAM2_2[0x1000];
 
-unsigned char IIEmemoryBankSwitchedRAM1[0x2000];
-static unsigned char IIEmemoryBankSwitchedRAM2_1[0x1000];
-static unsigned char IIEmemoryBankSwitchedRAM2_2[0x1000];
+static unsigned char* ram;
+static unsigned char* auxram;
+
+static unsigned char* IIEAuxBankSwitchedRAM1;
+static unsigned char* IIEAuxBankSwitchedRAM2_1;
+static unsigned char* IIEAuxBankSwitchedRAM2_2;
+
+static unsigned char* IIEmemoryBankSwitchedRAM1;
+static unsigned char* IIEmemoryBankSwitchedRAM2_1;
+static unsigned char* IIEmemoryBankSwitchedRAM2_2;
+
+
+
 
 static bool CgReset0 = false;
 static bool CgReset1 = false;
@@ -158,6 +163,31 @@ void setup() {
   readStringFromEEPROM(NewDeviceConfigEEPROMaddress, &NewDeviceConfig);
   sprintf(buf, "EEPROM NewDeviceConfig value: %s", NewDeviceConfig.c_str());
   printlog(buf);
+
+  ram = (unsigned char*)malloc(0xc000 * sizeof(unsigned char));
+  auxram = (unsigned char*)malloc(0xc000 * sizeof(unsigned char));
+
+static unsigned char* IIEmemoryBankSwitchedRAM1;
+static unsigned char* IIEmemoryBankSwitchedRAM2_1;
+static unsigned char* IIEmemoryBankSwitchedRAM2_2;
+
+IIEAuxBankSwitchedRAM1 = (unsigned char*)malloc(0x2000 * sizeof(unsigned char));
+IIEAuxBankSwitchedRAM2_1 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
+IIEAuxBankSwitchedRAM2_2 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
+
+IIEmemoryBankSwitchedRAM1 = (unsigned char*)malloc(0x2000 * sizeof(unsigned char));
+IIEmemoryBankSwitchedRAM2_1 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
+IIEmemoryBankSwitchedRAM2_2 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
+
+  memset(ram, 0, 0xc000 * sizeof(unsigned char));
+  memset(auxram, 0, 0xc000 * sizeof(unsigned char));
+  memset(IIEAuxBankSwitchedRAM1, 0, 0x2000 * sizeof(unsigned char));
+  memset(IIEAuxBankSwitchedRAM2_1, 0, 0x1000 * sizeof(unsigned char));
+  memset(IIEAuxBankSwitchedRAM2_2, 0, 0x1000 * sizeof(unsigned char));
+  memset(IIEmemoryBankSwitchedRAM1, 0, 0x2000 * sizeof(unsigned char));
+  memset(IIEmemoryBankSwitchedRAM2_1, 0, 0x1000 * sizeof(unsigned char));
+  memset(IIEmemoryBankSwitchedRAM2_2, 0, 0x1000 * sizeof(unsigned char));
+
   if (NewDeviceConfig != "ok")
   {
     
