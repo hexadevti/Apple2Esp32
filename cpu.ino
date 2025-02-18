@@ -176,7 +176,7 @@ unsigned char pull8() {
   return read8(STP_BASE + (++STP));
 }
 
-void cpuCycle() {
+void run() {
 	
   // Load the reset vector
   PC = read16(0xFFFC);

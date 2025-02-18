@@ -11,6 +11,7 @@ String filelist = "";
 int freeSpace = 0;
 const char* PARAM = "file";
 #define U_PART U_SPIFFS
+#define FSTYPE LittleFS
 bool wifiConnected = false;
 
 AsyncWebServer server(80);
@@ -51,7 +52,7 @@ int cs = 46;
 #define JOY_MID 1230
 #define JOY_MIN 10
 #define EEPROM_SIZE 1024
-#define FSTYPE SD //LittleFS
+
 
 bool running = true;
 bool paused = false;
@@ -175,7 +176,7 @@ void setup() {
   AppleIIe = EEPROM.readBool(IIpIIeEEPROMaddress);
   Fast1MhzSpeed = EEPROM.readBool(Fast1MhzSpeedEEPROMaddress);
   joystick = EEPROM.readBool(JoystickEEPROMaddress);
-
+  
   if (HdDisk) {
     int size = readStringFromEEPROM(HdFileNameEEPROMaddress, &selectedHdFileName);
     sprintf(buf, "EEPROM selectedHdFile value: %s", selectedHdFileName.c_str());
@@ -185,19 +186,16 @@ void setup() {
     sprintf(buf, "EEPROM selectedDiskFileName value: %s", selectedDiskFileName.c_str());
     printlog(buf);
   }
-
-
+  
+  
   sprintf(buf, "EEPROM values %d,%d,%d,%d,%s,%s,%s", HdDisk,AppleIIe,Fast1MhzSpeed,joystick,selectedHdFileName.c_str(),selectedDiskFileName.c_str(),NewDeviceConfig.c_str());
   printlog(buf);
   diskAttached = (HdDisk == 0);
   hdAttached = !diskAttached;
   videoSetup();
-  #if (FSTYPE == SD)
-    SDCardSetup();
-  #endif
-  //serialVideoSetup();
   keyboard_begin();
   sei();
+
   if (HdDisk) {
     HDSetup();
   }
@@ -206,13 +204,18 @@ void setup() {
     DiskSetup();
   }
   
-  speaker_begin();
-  printlog("Ready.");
+  
+  
+  // #if (FSTYPE == SD)
+  //   SDCardSetup();
+  // #endif
+  
+  //speaker_begin();
   setCpuFrequencyMhz(240);
   wifiSetup();
-
   
-
+  
+  
   if (joystick)
   {
     timerpdl0 = JOY_MID;
@@ -223,11 +226,11 @@ void setup() {
     timerpdl0 = JOY_MAX;
     timerpdl1 = JOY_MAX;
   }
-
+  
   printMsg("APPLE2ESP32S3 - Hit Ctrl-ESC to menu", 0xff, 0xff, 0xff);
   
   xTaskCreate(InfoMessage, "InfoMessage", 4096, NULL, 1, NULL);
-
+  
   sprintf(buf, "Total heap: %d", ESP.getHeapSize());
   printlog(buf);
   sprintf(buf, "Free heap: %d", ESP.getFreeHeap());
@@ -236,6 +239,7 @@ void setup() {
   printlog(buf);
   sprintf(buf, "Free PSRAM: %d", ESP.getFreePsram());
   printlog(buf);
+  printlog("Ready.");
 }
 
 void InfoMessage(void *pvParameters) {
@@ -392,5 +396,5 @@ void updateOptions(bool downDirection, bool reload) {
   
 }
 void loop() {
-  cpuCycle();
+  run();
 }
