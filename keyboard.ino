@@ -117,19 +117,19 @@ class MyEspUsbHost : public EspUsbHost
     // Serial.printf("Down %d", keycode);
     // Serial.println();
     if (joystick) {
-      if (keycode == 80) // Left
+      if (keycode == 92) // Left
       {
         timerpdl0 = JOY_MIN;
       }
-      else if (keycode == 79) // Right
+      else if (keycode == 94) // Right
       {
         timerpdl0 = JOY_MAX;
       }
-      else if (keycode == 82) // Up
+      else if (keycode == 96) // Up
       {
         timerpdl1 = JOY_MIN;
       }
-      else if (keycode == 81) // Down
+      else if (keycode == 90 || keycode == 98) // Down
       {
         timerpdl1 = JOY_MAX;
       }
@@ -140,11 +140,11 @@ class MyEspUsbHost : public EspUsbHost
     // Serial.printf("Up %d", keycode);
     // Serial.println();
     if (joystick) {
-      if (keycode == 80 || keycode == 79) // Left || right
+      if (keycode == 92 || keycode == 94) // Left || right
       {
         timerpdl0 = JOY_MID;
       }
-      else if (keycode == 82 || keycode == 81) // Up || Down
+      else if (keycode == 96 || keycode == 90 || keycode == 98) // Up || Down
       {
         timerpdl1 = JOY_MID;
       }
@@ -157,7 +157,7 @@ class MyEspUsbHost : public EspUsbHost
   void onKeyboardKey(uint8_t ascii, uint8_t keycode, uint8_t modifier)
   {
     // Serial.printf("ascii = %d", ascii);
-    // Serial.printf(" keycode = %d", keycode);
+    //Serial.printf(" keycode = %d", keycode);
     // Serial.println();
     // Serial.printf(" modifier = %d", modifier);
     // Serial.printf(" capslock = %d", capslock);
@@ -350,13 +350,13 @@ void keyboard_task(void *pvParameters)
     else
       count = 0;
 
-    if (count >= 100) {
+    if (count >= 70) {
       if (cycles == 0) {
         //Serial.println("RELEASE");
         keymem = 0;
       }
       cycles++;
-      if (cycles >= 20) {
+      if (cycles >= 10) {
         //Serial.println("REPEAT");
         cycles = 0;
         keymem = keymem_hold;

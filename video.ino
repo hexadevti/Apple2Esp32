@@ -177,7 +177,12 @@ void graphicFlashCharacters(void *pvParameters)
     }
     Vertical_blankingOn_Off = false; // IIe video problem with Total Replay
     page_lock.lock();
-    int x = DHiResOn_Off ? margin_dhgr : margin_x;
+    int x;
+    if (Cols40_80)
+    x = margin_x;
+    else
+    x = margin_x_80cols;
+    x = DHiResOn_Off ? margin_x_dhgr : margin_x;
     int y = margin_y;
     ushort textPage = Page1_Page2 ? 0x400 : 0x800;
     ushort graphicsPage = Page1_Page2 ? 0x2000 : 0x4000;

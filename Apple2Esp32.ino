@@ -83,7 +83,8 @@ int firstShowFile = 0;
 int shownFile;
 
 int margin_x = 14;
-int margin_x_dhgr = 30;
+int margin_x_dhgr = 14;
+int margin_x_80cols = 30;
 
 int margin_y = 24;
 int text_margin_x = 2;
@@ -391,5 +392,5 @@ void updateOptions(bool downDirection, bool reload) {
   
 }
 void loop() {
-  run();
+  cpuCycle();
 }

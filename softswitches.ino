@@ -103,19 +103,23 @@ char processSoftSwitches(ushort address, char value, bool Read_Write = true)
     LoRes_HiRes = true;
   else if (address == 0xc057)
     LoRes_HiRes = false;
-  else if (address == 0xc058)
+  else if (address == 0xc058) {
     Cols40_80 = true;
-  else if (address == 0xc059)
+  }
+  else if (address == 0xc059) {
     Cols40_80 = false;
+  }
   else if (address == 0xc05e)
   {
-    if (IOUDisOn_Off)
+    if (IOUDisOn_Off) {
       DHiResOn_Off = true;
+    }
   }
   else if (address == 0xc05f)
   {
-    if (IOUDisOn_Off)
+    if (IOUDisOn_Off) {
       DHiResOn_Off = false;
+    }
   }
   else if (address == 0xc061)
     return (char)(Pb0 ? 0x80 : 0x00);
