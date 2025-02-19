@@ -6039,7 +6039,7 @@ const unsigned char AppleIIeFontPixels[] PROGMEM = {
 
 //Font AppleIIeFont_7x8(7, 8, AppleIIeFontPixels, 0, 256);
 
-const char index_html[] PROGMEM = R"rawliteral(
+const char index_html[] = R"rawliteral(
    <!DOCTYPE HTML><html>
    <head>
      <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -6094,7 +6094,7 @@ const char index_html[] PROGMEM = R"rawliteral(
      </p>
    </body></html>)rawliteral";
    
-   const char upload_html[] PROGMEM = R"rawliteral(
+   const char upload_html[] = R"rawliteral(
    <!DOCTYPE HTML><html class="HTML">
    <head>
      <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -6206,7 +6206,7 @@ const char index_html[] PROGMEM = R"rawliteral(
    
    </script></body></html>)rawliteral";
    
-   const char FS_HTML[] PROGMEM = R"rawliteral(
+   const char FS_HTML[] = R"rawliteral(
    <!DOCTYPE html>
    <!-- saved from url=(0031)http://192.168.0.160/ -->
    <html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">

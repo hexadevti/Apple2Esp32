@@ -11,7 +11,8 @@ String filelist = "";
 int freeSpace = 0;
 const char* PARAM = "file";
 #define U_PART U_SPIFFS
-#define FSTYPE LittleFS
+#define FSTYPE SD 
+// LittleFS
 bool wifiConnected = false;
 
 AsyncWebServer server(80);
@@ -20,9 +21,10 @@ File file;
 bool opened = false;
 
 #include "rom.h"
-#include "FS.h"
 #include <LittleFS.h>
+#include "FS.h"
 #include "SD.h"
+#include "SPI.h"
 #include <string>
 #include <vector>
 #include <EEPROM.h>
@@ -35,7 +37,7 @@ bool opened = false;
 #include <thread>
 
 VGA vga;
-const PinConfig pins(-1,-1,-1,16,17,  -1,-1,-1,-1,7,15,  -1,-1,-1,5,6,  13,14);
+const PinConfig pins(-1,-1,-1,5,6,  -1,-1,-1,-1,7,15,  -1,-1,-1,16,17,  13,14);
 Mode mode = Mode::MODE_320x240x60;
 //Mode mode(8, 48, 24, 320, 10, 2, 33, 240, 12587500, 0, 0, 2);
 //Mode mode(16, 96, 48, 640, 10, 2, 33, 480, 25175000);
@@ -46,7 +48,6 @@ int sck = 18;
 int miso = 8;
 int mosi = 3;
 int cs = 46;
-
 
 #define JOY_MAX 20000
 #define JOY_MID 1230
@@ -123,8 +124,15 @@ static unsigned char zp[0x200];
 static unsigned char auxzp[0x200];
 
 
+// static unsigned char ram[0xc000];
+// static unsigned char auxram[0xc000];
 static unsigned char* ram;
 static unsigned char* auxram;
+
+
+static unsigned char* memoryBankSwitchedRAM1;
+static unsigned char* memoryBankSwitchedRAM2_1;
+static unsigned char* memoryBankSwitchedRAM2_2;
 
 static unsigned char* IIEAuxBankSwitchedRAM1;
 static unsigned char* IIEAuxBankSwitchedRAM2_1;
@@ -167,20 +175,23 @@ void setup() {
   ram = (unsigned char*)malloc(0xc000 * sizeof(unsigned char));
   auxram = (unsigned char*)malloc(0xc000 * sizeof(unsigned char));
 
-static unsigned char* IIEmemoryBankSwitchedRAM1;
-static unsigned char* IIEmemoryBankSwitchedRAM2_1;
-static unsigned char* IIEmemoryBankSwitchedRAM2_2;
+  memoryBankSwitchedRAM1 = (unsigned char*)malloc(0x2000 * sizeof(unsigned char));
+  memoryBankSwitchedRAM2_1 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
+  memoryBankSwitchedRAM2_2 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
 
-IIEAuxBankSwitchedRAM1 = (unsigned char*)malloc(0x2000 * sizeof(unsigned char));
-IIEAuxBankSwitchedRAM2_1 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
-IIEAuxBankSwitchedRAM2_2 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
+  IIEAuxBankSwitchedRAM1 = (unsigned char*)malloc(0x2000 * sizeof(unsigned char));
+  IIEAuxBankSwitchedRAM2_1 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
+  IIEAuxBankSwitchedRAM2_2 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
 
-IIEmemoryBankSwitchedRAM1 = (unsigned char*)malloc(0x2000 * sizeof(unsigned char));
-IIEmemoryBankSwitchedRAM2_1 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
-IIEmemoryBankSwitchedRAM2_2 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
+  IIEmemoryBankSwitchedRAM1 = (unsigned char*)malloc(0x2000 * sizeof(unsigned char));
+  IIEmemoryBankSwitchedRAM2_1 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
+  IIEmemoryBankSwitchedRAM2_2 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
 
   memset(ram, 0, 0xc000 * sizeof(unsigned char));
   memset(auxram, 0, 0xc000 * sizeof(unsigned char));
+  memset(memoryBankSwitchedRAM1, 0, 0x2000 * sizeof(unsigned char));
+  memset(memoryBankSwitchedRAM2_1, 0, 0x1000 * sizeof(unsigned char));
+  memset(memoryBankSwitchedRAM2_2, 0, 0x1000 * sizeof(unsigned char));
   memset(IIEAuxBankSwitchedRAM1, 0, 0x2000 * sizeof(unsigned char));
   memset(IIEAuxBankSwitchedRAM2_1, 0, 0x1000 * sizeof(unsigned char));
   memset(IIEAuxBankSwitchedRAM2_2, 0, 0x1000 * sizeof(unsigned char));
@@ -220,6 +231,8 @@ IIEmemoryBankSwitchedRAM2_2 = (unsigned char*)malloc(0x1000 * sizeof(unsigned ch
   
   sprintf(buf, "EEPROM values %d,%d,%d,%d,%s,%s,%s", HdDisk,AppleIIe,Fast1MhzSpeed,joystick,selectedHdFileName.c_str(),selectedDiskFileName.c_str(),NewDeviceConfig.c_str());
   printlog(buf);
+
+  SDCardSetup();
   diskAttached = (HdDisk == 0);
   hdAttached = !diskAttached;
   videoSetup();
@@ -234,13 +247,7 @@ IIEmemoryBankSwitchedRAM2_2 = (unsigned char*)malloc(0x1000 * sizeof(unsigned ch
     DiskSetup();
   }
   
-  
-  
-  // #if (FSTYPE == SD)
-  //   SDCardSetup();
-  // #endif
-  
-  //speaker_begin();
+  speaker_begin();
   setCpuFrequencyMhz(240);
   wifiSetup();
   
@@ -257,18 +264,18 @@ IIEmemoryBankSwitchedRAM2_2 = (unsigned char*)malloc(0x1000 * sizeof(unsigned ch
     timerpdl1 = JOY_MAX;
   }
   
-  printMsg("APPLE2ESP32S3 - Hit Ctrl-ESC to menu", 0xff, 0xff, 0xff);
+  // printMsg("APPLE2ESP32S3 - Hit Ctrl-ESC to menu", 0xff, 0xff, 0xff);
   
-  xTaskCreate(InfoMessage, "InfoMessage", 4096, NULL, 1, NULL);
+  // xTaskCreate(InfoMessage, "InfoMessage", 4096, NULL, 1, NULL);
   
-  sprintf(buf, "Total heap: %d", ESP.getHeapSize());
-  printlog(buf);
-  sprintf(buf, "Free heap: %d", ESP.getFreeHeap());
-  printlog(buf);
-  sprintf(buf, "Total PSRAM: %d", ESP.getPsramSize());
-  printlog(buf);
-  sprintf(buf, "Free PSRAM: %d", ESP.getFreePsram());
-  printlog(buf);
+  // sprintf(buf, "Total heap: %d", ESP.getHeapSize());
+  // printlog(buf);
+  // sprintf(buf, "Free heap: %d", ESP.getFreeHeap());
+  // printlog(buf);
+  // sprintf(buf, "Total PSRAM: %d", ESP.getPsramSize());
+  // printlog(buf);
+  // sprintf(buf, "Free PSRAM: %d", ESP.getFreePsram());
+  // printlog(buf);
   printlog("Ready.");
 }
 
