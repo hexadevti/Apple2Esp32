@@ -37,7 +37,7 @@ bool opened = false;
 #include <thread>
 
 VGA vga;
-const PinConfig pins(-1,-1,-1,5,6,  -1,-1,-1,-1,7,15,  -1,-1,-1,16,17,  13,14);
+const PinConfig pins(-1,-1,-1,16,17,  -1,-1,-1,-1,7,15,  -1,-1,-1,5,6,  14,13);
 Mode mode = Mode::MODE_320x240x60;
 //Mode mode(8, 48, 24, 320, 10, 2, 33, 240, 12587500, 0, 0, 2);
 //Mode mode(16, 96, 48, 640, 10, 2, 33, 480, 25175000);
@@ -251,7 +251,7 @@ void setup() {
   setCpuFrequencyMhz(240);
   wifiSetup();
   
-  
+  analog_joystick_begin();
   
   if (joystick)
   {
