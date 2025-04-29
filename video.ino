@@ -17,6 +17,7 @@ void videoSetup()
   printlog("Video initialized.");
   vga.show();
   vga.start();
+  vga.fillRect(0,0,640,240,0);
   xTaskCreate(graphicFlashCharacters, "graphicFlashCharacters", 4096, NULL, 1, NULL);
 }
 
@@ -290,6 +291,7 @@ void graphicFlashCharacters(void *pvParameters)
               bool line[0x50 * 7];
               int lineId = 0;
               bool last7bits = false;
+              x = margin_x;
               for (ushort c = 0; c < 0x50; c++)
               {
                 char chr;
@@ -317,36 +319,9 @@ void graphicFlashCharacters(void *pvParameters)
                 {
                   for (int i = 7; i > 0; i--)
                   {
-                    int color = 0;
-
-                    if (i % 2 != 0)
-                    {
-                      if (i == 7)
-                      {
-                        if (blockline[i] && last7bits)
-                          color = vga.rgb(255, 255, 255);
-                        else if (blockline[i] != last7bits)
-                          color = vga.rgb(127, 127, 127);
-                        else
-                          color = vga.rgb(0, 0, 0);
-                      }
-                      else
-                      {
-                        if (blockline[i] && blockline[i + 1])
-                          color = vga.rgb(255, 255, 255);
-                        else if (blockline[i] != blockline[i + 1])
-                          color = vga.rgb(127, 127, 127);
-                        else
-                          color = vga.rgb(0, 0, 0);
-                      }
-
-
-                      if (!optionsScreenBlank(x, y))
-                        vga.dotFast(x, y, color);
-                      if (i == 1)
-                        last7bits = blockline[i];
-                      x++;
-                    }
+                    if (!optionsScreenBlank(x, y))
+                      vga.dotFast(x, y, blockline[i] ? vga.rgb(255, 255, 255) : vga.rgb(0, 0, 0));
+                    x++;
                   }
                 }
               }
@@ -354,15 +329,15 @@ void graphicFlashCharacters(void *pvParameters)
                 for (int i = 0; i < 0x50 * 7; i = i + 4)
                 {
                   int color = (line[i] ? 8 : 0) + (line[i + 1] ? 4 : 0) + (line[i + 2] ? 2 : 0) + (line[i + 3] ? 1 : 0);
-                  if (!optionsScreenBlank(x, y))
-                    vga.dotFast(x, y, getDoubleHiresColor(color));
-                  x++;
-                  if (!optionsScreenBlank(x, y))
-                    vga.dotFast(x, y, getDoubleHiresColor(color));
-                  x++;
+                  for (int pixel=0;pixel<pixels_per_dot*2;pixel++) {
+                    if (!optionsScreenBlank(x, y))
+                      vga.dotFast(x, y, getDoubleHiresColor(color));
+                    x++;
+                  }
+                  
                 }
               }
-              x = margin_x_dhgr;
+              
               y++;
 
             }
@@ -405,9 +380,11 @@ void graphicFlashCharacters(void *pvParameters)
 
                   for (int id = 0; id < 7; id++)
                   {
-                    if (!optionsScreenBlank(x, y))
-                      vga.dotFast(x, y, getHiresColor(pixels[id]));
-                    x++;
+                    for (int pixel=0;pixel<pixels_per_dot;pixel++) {
+                      if (!optionsScreenBlank(x, y))
+                        vga.dotFast(x, y, getHiresColor(pixels[id]));
+                      x++;
+                    }
                   }
                   std::copy(std::begin(blockline), std::end(blockline), std::begin(blocklineAnt));
                 }
@@ -422,11 +399,13 @@ void graphicFlashCharacters(void *pvParameters)
                     else
                       color = 0;
 
-                    if (!optionsScreenBlank(x, y))
-                      vga.dotFast(x, y, color);
-                    // sprintf(buf, "%04x: %02x",,chr);
-                    // printlog(buf);
-                    x++;
+                    for (int pixel=0;pixel<pixels_per_dot;pixel++) {
+                      if (!optionsScreenBlank(x, y))
+                        vga.dotFast(x, y, color);
+                        // sprintf(buf, "%04x: %02x",,chr);
+                        // printlog(buf);
+                        x++;
+                    }
                   }
                 }
               }
@@ -450,9 +429,11 @@ void graphicFlashCharacters(void *pvParameters)
                 bool inverted = false;
                 if (!AppleIIe)
                   inverted = chr >= 0x40 && chr < 0x80 && inversed;
-                if (!optionsScreenBlank(x, y))
-                  vga.dotFast(x, y, bpixel ? (inverted ? 0 : 0xffffffff) : (inverted ? 0xffffffff : 0));
-                x++;
+                for (int pixel=0;pixel<pixels_per_dot;pixel++) {
+                  if (!optionsScreenBlank(x, y))
+                    vga.dotFast(x, y, bpixel ? (inverted ? 0 : 0xffffffff) : (inverted ? 0xffffffff : 0));
+                  x++;
+                }
               }
             }
             y++;
@@ -473,28 +454,16 @@ void graphicFlashCharacters(void *pvParameters)
               {
                 chr = ram[(ushort)(0x400 + (b * 0x28) + (l * 0x80) + (j - 1) / 2)];
               }
-              bool last7bits = false;
               for (int k = 0; k < 7; k++)
               {
                 ushort addr = (chr * 7 * 8) + (i * 7) + k;
                 bool bpixel = AppleIIeFontPixels[addr];
-                int color = 0;
-                if (k % 2 != 0) {
-                  if (bpixel && last7bits)
-                    color = vga.rgb(255,255,255);
-                  else if (bpixel != last7bits)
-                    color = vga.rgb(127,127,127);
-                  else
-                    color = vga.rgb(0,0,0);
-                  if (!optionsScreenBlank(x, y))
-                    vga.dotFast(x, y, color);
-                    x++;
-                }
-                last7bits = bpixel;
-
+                if (!optionsScreenBlank(x, y))
+                  vga.dotFast(x, y, bpixel ? vga.rgb(255,255,255) : vga.rgb(0,0,0));
+                  x++;
               }
             }
-            x = margin_x_dhgr;
+            x = margin_x;
             y++;
           
           }
@@ -533,7 +502,7 @@ void printOptionsBackground(int r, int g, int b)
   vga.setFont(FONT_6x8);
   vga.setTextColor(vga.rgb(r, g, b), vga.rgb(0, 0, 0));
   vga.setCursor(0, 230);
-  sprintf(buf, "%s|%s|%s|%s|%s|%s", HdDisk ? " HD " : "DISK", AppleIIe ? "IIe" : "II+", Fast1MhzSpeed ? "Fast" : "1Mhz", paused ? "Paused " : "Running", joystick ? "Joy On " : "Joy Off", wifiConnected ? WiFi.localIP().toString() : "Not Connected");
+  sprintf(buf, "%s|%s|%s|%s|%s|%s|%s", HdDisk ? " HD " : "DISK", AppleIIe ? "IIe" : "II+", Fast1MhzSpeed ? "Fast" : "1Mhz", paused ? "Paused " : "Running", joystick ? "Joy On " : "Joy Off", videoColor ? "Color On " : "Color Off", wifiConnected ? WiFi.localIP().toString() : "Not Connected");
   vga.print(buf);
   vga.setCursor(0, 10);
   sprintf(buf, " Apple2ESP32S3 %s", HdDisk ? selectedHdFileName.c_str() : selectedDiskFileName.c_str());

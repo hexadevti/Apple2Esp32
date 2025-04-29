@@ -247,6 +247,11 @@ class MyEspUsbHost : public EspUsbHost
           joystickOnOff();
           updateOptions(true, false);
         }
+        else if (keycode == 63) // F6
+        {
+          videoColorOnOff();
+          updateOptions(true, false);
+        }
         else if (keycode == 81) // Down Arrow
         {
             if (!HdDisk)

@@ -78,6 +78,7 @@ int HdDiskEEPROMaddress = 0;
 int IIpIIeEEPROMaddress = 1;
 int Fast1MhzSpeedEEPROMaddress = 2;
 int JoystickEEPROMaddress = 3;
+int VideoColorEEPROMaddress = 4;
 int NewDeviceConfigEEPROMaddress = 50; 
 int DiskFileNameEEPROMaddress = 128;
 int HdFileNameEEPROMaddress = 256;
@@ -88,11 +89,12 @@ byte selectedHdFile;
 int firstShowFile = 0;
 int shownFile;
 
-int margin_x = 0; // 14;
+int pixels_per_dot = 2;
+int margin_x = 30;
 int margin_x_dhgr = 14;
 int margin_x_80cols = 30;
 
-int margin_y = 0; //24;
+int margin_y = 24;
 int text_margin_x = 2;
 int text_margin_y = 3;
 
@@ -211,6 +213,7 @@ void setup() {
     int e2 = EEPROM.writeBool(IIpIIeEEPROMaddress, false);
     int e3 = EEPROM.writeBool(Fast1MhzSpeedEEPROMaddress, true);
     int e4 = EEPROM.writeBool(JoystickEEPROMaddress, true);
+    int e8 = EEPROM.writeBool(VideoColorEEPROMaddress, true);
     int e7 = writeStringToEEPROM(NewDeviceConfigEEPROMaddress, "ok");
     int e5 = writeStringToEEPROM(HdFileNameEEPROMaddress, "/");
     int e6 = writeStringToEEPROM(DiskFileNameEEPROMaddress, "/karateka.dsk");
@@ -221,6 +224,7 @@ void setup() {
   AppleIIe = EEPROM.readBool(IIpIIeEEPROMaddress);
   Fast1MhzSpeed = EEPROM.readBool(Fast1MhzSpeedEEPROMaddress);
   joystick = EEPROM.readBool(JoystickEEPROMaddress);
+  videoColor = EEPROM.readBool(VideoColorEEPROMaddress);
   
   if (HdDisk) {
     int size = readStringFromEEPROM(HdFileNameEEPROMaddress, &selectedHdFileName);
@@ -233,7 +237,7 @@ void setup() {
   }
   
   
-  sprintf(buf, "EEPROM values %d,%d,%d,%d,%s,%s,%s", HdDisk,AppleIIe,Fast1MhzSpeed,joystick,selectedHdFileName.c_str(),selectedDiskFileName.c_str(),NewDeviceConfig.c_str());
+  sprintf(buf, "EEPROM values %d,%d,%d,%d,%d,%s,%s,%s", HdDisk,AppleIIe,Fast1MhzSpeed,joystick,videoColor,selectedHdFileName.c_str(),selectedDiskFileName.c_str(),NewDeviceConfig.c_str());
   printlog(buf);
 
   SDCardSetup();
@@ -333,6 +337,7 @@ void saveEEPROM() {
   EEPROM.writeBool(IIpIIeEEPROMaddress, AppleIIe);
   EEPROM.writeBool(Fast1MhzSpeedEEPROMaddress, Fast1MhzSpeed);
   EEPROM.writeBool(JoystickEEPROMaddress, joystick);
+  EEPROM.writeBool(VideoColorEEPROMaddress, videoColor);
 }
 
 void changeHdDisk() {
@@ -354,6 +359,10 @@ void pauseRunning() {
 
 void joystickOnOff() {
   joystick = !joystick;
+}
+
+void videoColorOnOff() {
+  videoColor = !videoColor;
 }
 
 void showHideOptionsWindow() {
