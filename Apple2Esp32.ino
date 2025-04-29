@@ -38,9 +38,13 @@ bool opened = false;
 
 VGA vga;
 const PinConfig pins(-1,-1,-1,16,17,  -1,-1,-1,-1,7,15,  -1,-1,-1,5,6,  14,13);
-Mode mode = Mode::MODE_320x240x60;
-//Mode mode(8, 48, 24, 320, 10, 2, 33, 240, 12587500, 0, 0, 2);
-//Mode mode(16, 96, 48, 640, 10, 2, 33, 480, 25175000);
+//Mode mode = Mode::MODE_320x240x60;
+//Mode mode(6, 68, 72, 560, 4, 2, 25, 297, 23760000, 0, 0, 2);  better
+//Mode mode(6, 68, 72, 560, 4, 2, 30, 240, 23760000, 0, 0, 2); 
+//Mode mode(6, 70, 76, 640, 4, 2, 30, 240, 23760000, 0, 0, 2);
+Mode mode(16, 96, 48, 640, 4, 2, 30, 240, 23760000, 0, 0, 2);
+
+
 
 
 // SD Pins
@@ -84,11 +88,11 @@ byte selectedHdFile;
 int firstShowFile = 0;
 int shownFile;
 
-int margin_x = 14;
+int margin_x = 0; // 14;
 int margin_x_dhgr = 14;
 int margin_x_80cols = 30;
 
-int margin_y = 24;
+int margin_y = 0; //24;
 int text_margin_x = 2;
 int text_margin_y = 3;
 

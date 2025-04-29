@@ -181,7 +181,6 @@ void getDiskFileInfo(fs::FS &fs)
   //   selectedDiskFileName = "";
   // }
   File file = fs.open(selectedDiskFileName.c_str());
-  printlog(buf);
   size_t len = file.size();
   sprintf(buf, "File Size: %d", len);
   printlog(buf);
@@ -201,14 +200,16 @@ void getTrack(fs::FS &fs, int track, bool force)
   if (track != diskTrack || force)
   {
     size_t positionToRead = GetOffset(track, 0);
-    sprintf(buf, "Reading track %d - %s", track, selectedDiskFileName.c_str());
-    printlog(buf);
+    // sprintf(buf, "Reading track %d - %s (%s)", track, selectedDiskFileName.c_str(), force ? "force" : "");
+    // printlog(buf);
     File file = fs.open(selectedDiskFileName.c_str(), FILE_READ);
 
     if (file)
     {
       if (file.seek(positionToRead))
       {
+        // sprintf(buf, "File Read %d - %d", track, diskTrack);
+        // printlog(buf);
         file.read(trackRawData, trackRawSize);
         diskTrack = track;
         TrackRawData(diskTrack);
@@ -652,10 +653,11 @@ char DiskSoftSwitchesRead(ushort address)
       
       if (pointer > trackEncodedSize - 1)
         pointer = 0;
-      // sprintf(buf, "Disk Track: %d, Disk Read: %04X, Pointer: %d, Data: %02X", diskTrack, address, pointer, trackEncodedData[pointer]);
-      // printlog(buf);
-      // sprintf(buf, "(%04x)[R]%04X: %02X", PC, address, trackEncodedData[pointer]);
-      // printlog(buf);
+      
+      //   sprintf(buf, "Disk Track: %d, Disk Read: %04X, Pointer: %d, Data: %02X", diskTrack, address, pointer, trackEncodedData[pointer]);
+      //   printlog(buf);
+      //  sprintf(buf, "(%04x)[R]%04X: %02X", PC, address, trackEncodedData[pointer]);
+      //  printlog(buf);
       return trackEncodedData[pointer++];
     }
   }
