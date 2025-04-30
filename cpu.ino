@@ -52,7 +52,6 @@ uint32_t cpuCycleCount = 0;
 uint32_t lastCpuCycleCount = 0;
 uint32_t diffCpuCycleCount = 0;
 
-
 //high nibble SR flags, low nibble address mode
 const unsigned char flagsIIe[] PROGMEM = {
 	//X0               X1                X2                    X3    X4                    X5                X6                X7    X8              X9                 XA                  XB    XC                    XD                XE                XF   
@@ -145,7 +144,7 @@ void setflags() {
   
   // if (lastPC >= 0x5d00 && lastPC < 0x5e00) {
   //   sprintf(buf, "setflag: opflag=%02X result=%02X opflags & 0x80=%02X result & 0x80=%02X", opflags, result, opflags & 0x80, result & 0x80);
-  //   printlog(buf);
+  //   printLog(buf);
   // }
   
   // Set various status flags
@@ -176,7 +175,7 @@ unsigned char pull8() {
   return read8(STP_BASE + (++STP));
 }
 
-void run() {
+void cpuLoop() {
 	
   // Load the reset vector
   PC = read16(0xFFFC);
@@ -214,20 +213,6 @@ void run() {
 
     opflags = AppleIIe ? flagsIIe[opcode] : flagsIIplus[opcode];
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     // Addressing modes
     switch (opflags & 0x0F) {
       case AD_IMP:
@@ -241,11 +226,11 @@ void run() {
         PC += 2;
         break;
       case AD_IABX:
-		argument_addr = read16(PC) + (unsigned short)X;
-		value16 = (argument_addr + 1 & 0xFF00) | ((argument_addr + 1) & 0x00FF);
-		argument_addr = (unsigned short)read8(argument_addr) | ((unsigned short)read8(value16) << 8);
-		PC += 2;
-		break;
+		    argument_addr = read16(PC) + (unsigned short)X;
+		    value16 = (argument_addr + 1 & 0xFF00) | ((argument_addr + 1) & 0x00FF);
+		    argument_addr = (unsigned short)read8(argument_addr) | ((unsigned short)read8(value16) << 8);
+		    PC += 2;
+		    break;
       case AD_ABSY:
         argument_addr = read16(PC) + (unsigned short)Y;
         PC += 2;
@@ -254,11 +239,11 @@ void run() {
         argument_addr = PC++;
         break;
       case AD_IND:
-		argument_addr = read16(PC);
-		value16 = (argument_addr + 1 & 0xFF00) | ((argument_addr + 1) & 0x00FF);
-		argument_addr = (unsigned short)read8(argument_addr) | ((unsigned short)read8(value16) << 8);
-		PC += 2;
-		break;
+		    argument_addr = read16(PC);
+		    value16 = (argument_addr + 1 & 0xFF00) | ((argument_addr + 1) & 0x00FF);
+		    argument_addr = (unsigned short)read8(argument_addr) | ((unsigned short)read8(value16) << 8);
+		    PC += 2;
+		    break;
       case AD_INDX:
         argument_addr = ((unsigned short)read8(PC++) + (unsigned short)X) & 0xFF;
         value16 = (argument_addr & 0xFF00) | ((argument_addr + 1) & 0x00FF);  // Page wrap
@@ -278,10 +263,10 @@ void run() {
         argument_addr = (unsigned short)read8(PC++);
         break;
       case AD_IZPG:
-		argument_addr = (unsigned short)read8(PC++);
-		value16 = (argument_addr + 1 & 0xFF00) | ((argument_addr + 1) & 0x00FF);
-		argument_addr = (unsigned short)read8(argument_addr) | ((unsigned short)read8(value16) << 8);
-		break;
+		    argument_addr = (unsigned short)read8(PC++);
+		    value16 = (argument_addr + 1 & 0xFF00) | ((argument_addr + 1) & 0x00FF);
+		    argument_addr = (unsigned short)read8(argument_addr) | ((unsigned short)read8(value16) << 8);
+		    break;
       case AD_ZPGX:
         argument_addr = ((unsigned short)read8(PC++) + (unsigned short)X) & 0xFF;
         break;
@@ -290,15 +275,6 @@ void run() {
         break;
     }
 
-    
-    // if (lastPC == 0x800 && argument_addr == 0xbf00)
-    //   debug = true;
-
-    // if (debug) {
-    // //if (lastPC >= 0x800 && lastPC < 0x900) {
-    //   printCPUStatus();
-    // }
-    
     //opcodes
     switch (opcode) {
       //ADC
@@ -311,65 +287,64 @@ void run() {
       case 0x61:
       case 0x71:
       case 0x72: //e
-		value16 = (unsigned short)read8(argument_addr);
-		if (SR & SR_DEC) { // Decimal
-			result = (unsigned short)(A & 0x0F) + (unsigned short)(value16 & 0x0f) + (SR & 0x01 > 0);
-			if (result > 0x09)
-				result += 0x06;
-			if (result <= 0x0F)
-				result = (unsigned short)(result & 0x0F) + (unsigned short)(A & 0xF0) + (unsigned short)(value16 & 0xF0);
-			else
-				result = (unsigned short)(result & 0x0F) + (unsigned short)(A & 0xF0) + (unsigned short)(value16 & 0xF0) + 0x10;
+        value16 = (unsigned short)read8(argument_addr);
+        if (SR & SR_DEC) { // Decimal
+          result = (unsigned short)(A & 0x0F) + (unsigned short)(value16 & 0x0f) + (SR & 0x01 > 0);
+          if (result > 0x09)
+            result += 0x06;
+          if (result <= 0x0F)
+            result = (unsigned short)(result & 0x0F) + (unsigned short)(A & 0xF0) + (unsigned short)(value16 & 0xF0);
+          else
+            result = (unsigned short)(result & 0x0F) + (unsigned short)(A & 0xF0) + (unsigned short)(value16 & 0xF0) + 0x10;
 
-			if (result == 0) // Zero Flag
-				SR |= 0x02;
-			else
-				SR &= 0xfd;
+          if (result == 0) // Zero Flag
+            SR |= 0x02;
+          else
+            SR &= 0xfd;
 
-			//if ((((A ^ result) & 0x80) > 0) && !(((A ^ result) & 0x80) > 0)) // Overflow
-			if (((A ^ result) & 0x80) > 0)
-				SR |= 0x40;
-			else
-				SR &= 0xbf;
+          //if ((((A ^ result) & 0x80) > 0) && !(((A ^ result) & 0x80) > 0)) // Overflow
+          if (((A ^ result) & 0x80) > 0)
+            SR |= 0x40;
+          else
+            SR &= 0xbf;
 
-			if ((result & 0x1F0) > 0x90)
-				result += 0x60;
+          if ((result & 0x1F0) > 0x90)
+            result += 0x60;
 
-			if ((result & 0xFF0) > 0xF0) // Carry
-				SR |= 0x01;
-			else
-				SR &= 0xfe;
-		}
-		else
-		{ // Binary
-			result = (unsigned short)A + value16 + (unsigned short)(SR & SR_CARRY);
-			if (!(((A ^ value16) & 0x80) > 0))
-				SR |= 0x40;
-			else
-				SR &= 0xbf;
+          if ((result & 0xFF0) > 0xF0) // Carry
+            SR |= 0x01;
+          else
+            SR &= 0xfe;
+        }
+        else
+        { // Binary
+          result = (unsigned short)A + value16 + (unsigned short)(SR & SR_CARRY);
+          if (!(((A ^ value16) & 0x80) > 0))
+            SR |= 0x40;
+          else
+            SR &= 0xbf;
 
-			if (result >= 0x100)
-			{
-				SR |= 0x01;
-				if (result >= 0x180)
-					SR &= 0xbf;
-			}
-			else
-			{
-				SR &= 0xfe;
-				if (result < 0x80)
-					SR &= 0xbf;
-			}
-		}
-		setflags();
-		A = result & 0xFF;
-		if ((A & 0x80) == 0x80) // Negative
-			SR |= 0x80;
-		else
-			SR &= 0x7f;
-
-		break;
-		//AND
+          if (result >= 0x100)
+          {
+            SR |= 0x01;
+            if (result >= 0x180)
+              SR &= 0xbf;
+          }
+          else
+          {
+            SR &= 0xfe;
+            if (result < 0x80)
+              SR &= 0xbf;
+          }
+        }
+        setflags();
+        A = result & 0xFF;
+        if ((A & 0x80) == 0x80) // Negative
+          SR |= 0x80;
+        else
+          SR &= 0x7f;
+    		break;
+		    //AND
       case 0x29:
       case 0x25:
       case 0x35:
@@ -422,24 +397,24 @@ void run() {
       case 0x2C:
       case 0x34: //e
       case 0x3C: //e
-		value8 = read8(argument_addr);
-		result = A & value8;
-		setflags();
-		SR = (SR & 0x3F) | (value8 & 0xC0);
-		if (result == 0) // Zero Flag
-			SR |= 0x02;
-		else
-			SR &= 0xfd;
-		break;
+        value8 = read8(argument_addr);
+        result = A & value8;
+        setflags();
+        SR = (SR & 0x3F) | (value8 & 0xC0);
+        if (result == 0) // Zero Flag
+          SR |= 0x02;
+        else
+          SR &= 0xfd;
+        break;
       //BMI
       case 0x89: //e
-		value8 = read8(argument_addr);
-		result = A & value8;
-		if (result == 0) // Zero Flag
-			SR |= 0x02;
-		else
-			SR &= 0xfd;
-		break;
+        value8 = read8(argument_addr);
+        result = A & value8;
+        if (result == 0) // Zero Flag
+          SR |= 0x02;
+        else
+          SR &= 0xfd;
+        break;
 		//BMI
       case 0x30:
         if ((SR & SR_NEG)) PC += argument_addr;
@@ -521,16 +496,16 @@ void run() {
       case 0xD6:
       case 0xCE:
       case 0xDE:
-		value16 = (unsigned short)read8(argument_addr);
-		result = value16 - 1;
-		setflags();
-		write8(argument_addr, result & 0xFF);
-		break;
-      case 0x3A: //e
-		result = A - 1;
-		setflags();
-		A = result;
-		break;
+        value16 = (unsigned short)read8(argument_addr);
+        result = value16 - 1;
+        setflags();
+        write8(argument_addr, result & 0xFF);
+        break;
+          case 0x3A: //e
+        result = A - 1;
+        setflags();
+        A = result;
+        break;
 		//DEX
       case 0xCA:
         result = --X;
@@ -561,17 +536,17 @@ void run() {
       case 0xF6:
       case 0xEE:
       case 0xFE:
-		value16 = (unsigned short)read8(argument_addr);
-		result = value16 + 1;
-		setflags();
-		write8(argument_addr, result & 0xFF);
-		break;
-		//INX
+        value16 = (unsigned short)read8(argument_addr);
+        result = value16 + 1;
+        setflags();
+        write8(argument_addr, result & 0xFF);
+        break;
+		  //INX
       case 0x1A: //e
-		result = A + 1;
-		setflags();
-		A = result;
-		break;
+        result = A + 1;
+        setflags();
+        A = result;
+        break;
       case 0xE8:
         result = ++X;
         setflags();
@@ -628,23 +603,23 @@ void run() {
         break;
       //LSR A
       case 0x4A:
-		value8 = A;
-		result = value8 >> 1;
-		result |= (value8 & 0x1) ? 0x8000 : 0;
-		setflags();
-		A = result & 0xFF;
-		break;
+        value8 = A;
+        result = value8 >> 1;
+        result |= (value8 & 0x1) ? 0x8000 : 0;
+        setflags();
+        A = result & 0xFF;
+        break;
 		//LSR
       case 0x46:
       case 0x56:
       case 0x4E:
       case 0x5E:
-		value8 = read8(argument_addr);
-		result = value8 >> 1;
-		result |= (value8 & 0x1) ? 0x8000 : 0;
-		setflags();
-		write8(argument_addr, result & 0xFF);
-		break;
+        value8 = read8(argument_addr);
+        result = value8 >> 1;
+        result |= (value8 & 0x1) ? 0x8000 : 0;
+        setflags();
+        write8(argument_addr, result & 0xFF);
+        break;
 		//ORA
       case 0x09:
       case 0x05:
@@ -761,43 +736,41 @@ void run() {
       case 0xE1:
       case 0xF1:
       case 0xF2:
-		if (SR & SR_DEC) { // Decimal
-			value16 = (unsigned short)read8(argument_addr);
-			if (!(((A ^ value16) & 0x80) > 0))
-				SR |= 0x40;
-			else
-				SR &= 0xbf;
-			unsigned short value2 = (unsigned short)(A - value16 - (!(SR & 0x01 > 0)));
-			result = (unsigned short)((unsigned short)(A & 0x0F) - (unsigned short)(value16 & 0x0F) - (unsigned short)(!(SR & 0x01 > 0)));
-			if ((result & 0x10) > 0)
-				result = ((result - 0x06) & 0x0F) | ((A & 0xF0) - (value16 & 0xF0) - 0x10);
-			else
-				result = (result & 0x0F) | ((A & 0xF0) - (value16 & 0xF0));
-			if ((result & 0x100) > 0)
-				result -= 0x60;
+        if (SR & SR_DEC) { // Decimal
+            value16 = (unsigned short)read8(argument_addr);
+          if (!(((A ^ value16) & 0x80) > 0))
+            SR |= 0x40;
+          else
+            SR &= 0xbf;
+          unsigned short value2 = (unsigned short)(A - value16 - (!(SR & 0x01 > 0)));
+          result = (unsigned short)((unsigned short)(A & 0x0F) - (unsigned short)(value16 & 0x0F) - (unsigned short)(!(SR & 0x01 > 0)));
+          if ((result & 0x10) > 0)
+            result = ((result - 0x06) & 0x0F) | ((A & 0xF0) - (value16 & 0xF0) - 0x10);
+          else
+            result = (result & 0x0F) | ((A & 0xF0) - (value16 & 0xF0));
+          if ((result & 0x100) > 0)
+            result -= 0x60;
 
-			if ((unsigned short)value2 < (unsigned short)0x0100) // carry
-				SR |= 0x01;
-			else
-				SR &= 0xfe;
-
-
-		}
-		else {
-			value16 = ((unsigned short)read8(argument_addr)) ^ 0x00FF;
-			result = (unsigned short)A + value16 + (unsigned short)(SR & SR_CARRY);
-			setflags();
-		}
-		A = result & 0xFF;
-		if ((A & 0x80) > 0) // Negative
-			SR |= 0x80;
-		else
-			SR &= 0x7f;
-		if (!((A & 0xFF) > 0)) // Zero
-			SR |= 0x02;
-		else
-			SR &= 0xfd;
-		break;
+          if ((unsigned short)value2 < (unsigned short)0x0100) // carry
+            SR |= 0x01;
+          else
+            SR &= 0xfe;
+        }
+        else {
+          value16 = ((unsigned short)read8(argument_addr)) ^ 0x00FF;
+          result = (unsigned short)A + value16 + (unsigned short)(SR & SR_CARRY);
+          setflags();
+        }
+        A = result & 0xFF;
+        if ((A & 0x80) > 0) // Negative
+          SR |= 0x80;
+        else
+          SR &= 0x7f;
+        if (!((A & 0xFF) > 0)) // Zero
+          SR |= 0x02;
+        else
+          SR &= 0xfd;
+        break;
 		//SEC
       case 0x38:
         SR |= SR_CARRY;
@@ -896,95 +869,86 @@ void run() {
         break;
         //NOP
       case 0x02:
-		PC++;
-		break;
-	case 0x22:
-		PC++;
-		break;
-	case 0x42:
-		PC++;
-		break;
-	case 0x62:
-		PC++;
-		break;
-	case 0x82:
-		PC++;
-		break;
-	case 0xc2:
-		PC++;
-		break;
-	case 0xe2:
-		PC++;
-		break;
-	case 0xea:
-		//PC++;
-		break;
-	case 0x03:
-		break;
-	case 0x13:
-		break;
-	case 0x23:
-		break;
-	case 0x33:
-		break;
-	case 0x43:
-		break;
-	case 0x53:
-		break;
-	case 0x63:
-		break;
-	case 0x73:
-		break;
-	case 0x83:
-		break;
-	case 0x93:
-		break;
-	case 0xa3:
-		break;
-	case 0xb3:
-		break;
-	case 0xc3:
-		break;
-	case 0xd3:
-		break;
-	case 0xe3:
-		break;
-	case 0xf3:
-		break;
-	case 0x44:
-		PC++;
-		break;
-	case 0x54:
-		PC++;
-		break;
-	case 0xd4:
-		PC++;
-		break;
-	case 0xf4:
-		PC++;
-		break;
-	case 0x5c:
-		PC++;
-		PC++;
-		break;
-	case 0xdc:
-		PC++;
-		PC++;
-		break;
-	case 0xfc:
-		PC++;
-		PC++;
-		break;
+        PC++;
+        break;
+      case 0x22:
+        PC++;
+        break;
+      case 0x42:
+        PC++;
+        break;
+      case 0x62:
+        PC++;
+        break;
+      case 0x82:
+        PC++;
+        break;
+      case 0xc2:
+        PC++;
+        break;
+      case 0xe2:
+        PC++;
+        break;
+      case 0xea:
+        //PC++;
+        break;
+      case 0x03:
+        break;
+      case 0x13:
+        break;
+      case 0x23:
+        break;
+      case 0x33:
+        break;
+      case 0x43:
+        break;
+      case 0x53:
+        break;
+      case 0x63:
+        break;
+      case 0x73:
+        break;
+      case 0x83:
+        break;
+      case 0x93:
+        break;
+      case 0xa3:
+        break;
+      case 0xb3:
+        break;
+      case 0xc3:
+        break;
+      case 0xd3:
+        break;
+      case 0xe3:
+        break;
+      case 0xf3:
+        break;
+      case 0x44:
+        PC++;
+        break;
+      case 0x54:
+        PC++;
+        break;
+      case 0xd4:
+        PC++;
+        break;
+      case 0xf4:
+        PC++;
+        break;
+      case 0x5c:
+        PC++;
+        PC++;
+        break;
+      case 0xdc:
+        PC++;
+        PC++;
+        break;
+      case 0xfc:
+        PC++;
+        PC++;
+        break;
     }
     
   }
-}
-
-void printCPUStatus() {
-  char sFlags[8]; 
-      for (int f = 0;f<8;f++) {
-        sFlags[7-f] = (SR & (1 << f)) != 0 ? '1' : '0';
-      }
-      sprintf(buf, "[PC]%04X: %02X ,[Addr]%04X(%02X): A=%02X X=%02X Y=%02X FL=%02X(%s) OPFlag=%02X, cycleCount=%d, diffCycleCount=%d", lastPC, opcode, argument_addr, read8(argument_addr), A, X, Y, SR, sFlags, opflags, cycleCount, diffCpuCycleCount);
-      printlog(buf);
 }

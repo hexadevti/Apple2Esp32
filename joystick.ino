@@ -49,12 +49,22 @@ void processJoystick(float speedAdjust) {
     }
 }
 
-void analog_joystick_begin()
+void analogJoystickSetup()
 {
-  xTaskCreate(analog_joystick_task, "analog_joystick_task", 4096, NULL, 1, NULL);
+  if (joystick)
+  {
+    timerpdl0 = JOY_MID;
+    timerpdl1 = JOY_MID;
+  }
+  else
+  {
+    timerpdl0 = JOY_MAX;
+    timerpdl1 = JOY_MAX;
+  }
+  xTaskCreate(analogJoystickTask, "analogJoystickTask", 4096, NULL, 1, NULL);
 }
 
-void analog_joystick_task(void *pvParameters)
+void analogJoystickTask(void *pvParameters)
 {
     while (running)
     {

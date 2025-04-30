@@ -1,8 +1,4 @@
 
-bool MemoryBankBankSelect1_2 = true;
-bool MemoryBankReadRAM_ROM = false;
-bool MemoryBankWriteRAM_NoWrite = false;
-
 void languagecardWrite(ushort address, byte b)
 {
     if (address >= 0xd000)
@@ -17,7 +13,7 @@ void languagecardWrite(ushort address, byte b)
         else
             memoryBankSwitchedRAM1[address - 0xe000] = b;
     }
-    ProcessSwitch(address, b);
+    processSwitch(address, b);
 }
 
 char languagecardRead(ushort address)
@@ -33,10 +29,10 @@ char languagecardRead(ushort address)
     else if (address >= 0xd000)
         ret = memoryBankSwitchedRAM1[address - 0xe000];
 
-    return ProcessSwitch(address, ret);
+    return processSwitch(address, ret);
 }
 
-char ProcessSwitch(ushort address, byte b)
+char processSwitch(ushort address, byte b)
 {
     if (address >= 0xc080 && address < 0xc090)
     {

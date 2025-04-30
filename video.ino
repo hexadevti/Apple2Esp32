@@ -1,44 +1,16 @@
-const int colors[] PROGMEM = {0b00000000, 0b00110000, 0b11001100, 0b11111111, 0b00000000, 0b00001100, 0b11000000, 0b11111111};
-
-// const int colors16[] PROGMEM = {   0x000000,   0x8B008B,   0x00008B,   0x800080,   0x006400,   0xA9A9A9,   0x0000CD,   0xADD8E6, 0x8B4513, 0xFF4500, 0x808080, 0xFF69B4, 0x008000, 0xFFFF00, 0x00FFFF, 0xffffff };
-////////////////////////////////      0           1           2           3           4           5           6            7           8          9          10          11          12           13          14          15
-// const int colors16[] PROGMEM = {0b00000000, 0b11001111, 0b01000000, 0b01000100, 0b00010000, 0b01010100, 0b10101000, 0b10101011, 0b01000000, 0b00010000, 0b00000100, 0b01010000, 0b01000100, 0b00010100, 0b01010100, 0b01010101};
-
 int flashCount = 0;
 
 void videoSetup()
 {
-  printlog("Video Setup...");
-
-  
+  printLog("Video Setup...");
   while (!vga.init(pins, mode, 8, 3))
     delay(1);
 
-  printlog("Video initialized.");
+  printLog("Video initialized.");
   vga.show();
   vga.start();
   vga.fillRect(0,0,640,240,0);
   xTaskCreate(graphicFlashCharacters, "graphicFlashCharacters", 4096, NULL, 1, NULL);
-}
-
-void demo()
-{
-  OptionsWindow = true;
-  int pos = 40;
-  int size = 10;
-  int line = 0;
-  int col = 0;
-  for (int i = 0; i < 256; i++)
-  {
-    if (i % 16 == 0)
-    {
-      line++;
-      col = 0;
-    }
-    vga.fillRect(pos + col * size, pos + line * size, size, size, i);
-    vga.rect(pos + col * size, pos + line * size, size, size, 0);
-    col++;
-  }
 }
 
 int getLoresColor(int id)
@@ -192,39 +164,6 @@ int getDoubleHiresColor(int id)
     break;
   }
   return ret;
-}
-
-void printMsg(char msg[], int r, int g, int b)
-{
-  vga.setFont(FONT_6x8);
-  vga.setTextColor(vga.rgb(r, g, b), vga.rgb(0, 0, 0));
-  vga.setCursor(5, 8);
-  vga.print("                                                                   ");
-  vga.setCursor(5, 8);
-  vga.print(msg);
-  // vga.setFont(AppleIIe ? AppleIIeFont_7x8 : AppleFont_7x8);
-  vga.setTextColor(vga.rgb(0xff, 0xff, 0xff), vga.rgb(0, 0, 0));
-}
-void printLoading(int r, int g, int b)
-{
-  vga.fillRect(40, 40, 240, 160, 0);
-  vga.rect(41, 41, 238, 158, vga.rgb(r, g, b));
-  vga.setCursor(120, 120);
-  vga.setFont(FONT_6x8);
-  vga.setTextColor(vga.rgb(r, g, b), vga.rgb(0, 0, 0));
-  vga.print("Loading...");
-}
-
-void printStatus(char msg[], int r, int g, int b)
-{
-  vga.setFont(FONT_6x8);
-  vga.setTextColor(vga.rgb(r, g, b), vga.rgb(0, 0, 0));
-  vga.setCursor(5, 224);
-  vga.print("                                                                   ");
-  vga.setCursor(5, 224);
-  vga.print(msg);
-  // vga.setFont(AppleIIe ? AppleIIeFont_7x8 : AppleFont_7x8);
-  vga.setTextColor(vga.rgb(0xff, 0xff, 0xff), vga.rgb(0, 0, 0));
 }
 
 void graphicFlashCharacters(void *pvParameters)
@@ -403,7 +342,7 @@ void graphicFlashCharacters(void *pvParameters)
                       if (!optionsScreenBlank(x, y))
                         vga.dotFast(x, y, color);
                         // sprintf(buf, "%04x: %02x",,chr);
-                        // printlog(buf);
+                        // printLog(buf);
                         x++;
                     }
                   }
@@ -480,32 +419,4 @@ void graphicFlashCharacters(void *pvParameters)
       flashCount = 0;
     }
   }
-}
-
-bool optionsScreenBlank(int x, int y)
-{
-  if (OptionsWindow)
-  {
-    if (x >= 40 && x < 280 && y >= 40 && y < 200)
-      return true;
-    else
-      return false;
-  }
-  else
-    return false;
-}
-
-void printOptionsBackground(int r, int g, int b)
-{
-  vga.fillRect(40, 40, 240, 160, 0);
-  vga.rect(41, 41, 238, 158, vga.rgb(r, g, b));
-  vga.setFont(FONT_6x8);
-  vga.setTextColor(vga.rgb(r, g, b), vga.rgb(0, 0, 0));
-  vga.setCursor(0, 230);
-  sprintf(buf, "%s|%s|%s|%s|%s|%s|%s", HdDisk ? " HD " : "DISK", AppleIIe ? "IIe" : "II+", Fast1MhzSpeed ? "Fast" : "1Mhz", paused ? "Paused " : "Running", joystick ? "Joy On " : "Joy Off", videoColor ? "Color On " : "Color Off", wifiConnected ? WiFi.localIP().toString() : "Not Connected");
-  vga.print(buf);
-  vga.setCursor(0, 10);
-  sprintf(buf, " Apple2ESP32S3 %s", HdDisk ? selectedHdFileName.c_str() : selectedDiskFileName.c_str());
-  vga.print(buf);
-  vga.show();
 }

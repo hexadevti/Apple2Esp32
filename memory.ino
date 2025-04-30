@@ -1,3 +1,28 @@
+void memoryAlloc() {
+  ram = (unsigned char*)malloc(0xc000 * sizeof(unsigned char));
+  auxram = (unsigned char*)malloc(0xc000 * sizeof(unsigned char));
+  memoryBankSwitchedRAM1 = (unsigned char*)malloc(0x2000 * sizeof(unsigned char));
+  memoryBankSwitchedRAM2_1 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
+  memoryBankSwitchedRAM2_2 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
+  IIEAuxBankSwitchedRAM1 = (unsigned char*)malloc(0x2000 * sizeof(unsigned char));
+  IIEAuxBankSwitchedRAM2_1 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
+  IIEAuxBankSwitchedRAM2_2 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
+  IIEmemoryBankSwitchedRAM1 = (unsigned char*)malloc(0x2000 * sizeof(unsigned char));
+  IIEmemoryBankSwitchedRAM2_1 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
+  IIEmemoryBankSwitchedRAM2_2 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
+
+  memset(ram, 0, 0xc000 * sizeof(unsigned char));
+  memset(auxram, 0, 0xc000 * sizeof(unsigned char));
+  memset(memoryBankSwitchedRAM1, 0, 0x2000 * sizeof(unsigned char));
+  memset(memoryBankSwitchedRAM2_1, 0, 0x1000 * sizeof(unsigned char));
+  memset(memoryBankSwitchedRAM2_2, 0, 0x1000 * sizeof(unsigned char));
+  memset(IIEAuxBankSwitchedRAM1, 0, 0x2000 * sizeof(unsigned char));
+  memset(IIEAuxBankSwitchedRAM2_1, 0, 0x1000 * sizeof(unsigned char));
+  memset(IIEAuxBankSwitchedRAM2_2, 0, 0x1000 * sizeof(unsigned char));
+  memset(IIEmemoryBankSwitchedRAM1, 0, 0x2000 * sizeof(unsigned char));
+  memset(IIEmemoryBankSwitchedRAM2_1, 0, 0x1000 * sizeof(unsigned char));
+  memset(IIEmemoryBankSwitchedRAM2_2, 0, 0x1000 * sizeof(unsigned char));
+}
 
 unsigned char read8(unsigned short address)
 {

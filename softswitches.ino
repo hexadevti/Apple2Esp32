@@ -48,7 +48,7 @@ char processSoftSwitches(ushort address, char value, bool Read_Write = true)
   else if (address == 0xc00f)
     AltCharSetOn_Off = true;
   else if (address == 0xC010)
-    keyboard_strobe();
+    keyboardStrobe();
   else if (address == 0xc011)
     return (char)(IIEMemoryBankBankSelect1_2 ? 0x00 : 0xff);
   else if (address == 0xc012)
@@ -78,7 +78,7 @@ char processSoftSwitches(ushort address, char value, bool Read_Write = true)
   else if (address == 0xc01f)
     return (char)(Cols40_80 ? 0x00 : 0xff);
   else if (address == 0xC030)
-    speaker_toggle();
+    speakerToggle();
   else if (address == 0xc050)
     Graphics_Text = true;
   else if (address == 0xc051)
@@ -217,9 +217,9 @@ char processSoftSwitches(ushort address, char value, bool Read_Write = true)
   }
   else if (address >= 0xc0e0 && address < 0xc0f0) // Slot 6 - Disk
     if (Read_Write)
-      return diskAttached ? DiskSoftSwitchesRead(address) : 0;
+      return diskAttached ? diskSoftSwitchesRead(address) : 0;
     else
-      DiskSoftSwitchesWrite(address, value);
+      diskSoftSwitchesWrite(address, value);
   else if (address >= 0xc0f0 && address < 0xc100) // Slot 7 - HD
   {
     if (Read_Write)

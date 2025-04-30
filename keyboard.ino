@@ -70,28 +70,28 @@ class MyEspUsbHost : public EspUsbHost
     left_win = (report.modifier & 0b00001000) != 0;
     right_win = (report.modifier & 0b10000000) != 0;
     
-    // Serial.print(control ? "Control" : "");
-    // Serial.print(shift ? "shift" : "");
-    // Serial.print(left_alt ? "left_alt" : "");
-    // Serial.print(left_win ? "left_win" : "");
-    // Serial.print(right_alt ? "right_alt" : "");
-    // Serial.print(right_win ? "right_win" : "");
+    // printLog(control ? "Control" : "");
+    // printLog(shift ? "shift" : "");
+    // printLog(left_alt ? "left_alt" : "");
+    // printLog(left_win ? "left_win" : "");
+    // printLog(right_alt ? "right_alt" : "");
+    // printLog(right_win ? "right_win" : "");
     // Serial.println();
     if (last_report.keycode[1] == report.keycode[0] && last_report.keycode[1] != 0) { // up first key
-      OnKeyUp(last_report.keycode[0]);
+      onKeyUp(last_report.keycode[0]);
     } 
     else {
       if (report.keycode[1] != last_report.keycode[1]) {
         if (report.keycode[1] != 0)
-          OnKeyDown(report.keycode[1]);
+          onKeyDown(report.keycode[1]);
         else 
-          OnKeyUp(last_report.keycode[1]);
+          onKeyUp(last_report.keycode[1]);
       }
       else if (report.keycode[0] != last_report.keycode[0]) {
         if (report.keycode[0] != 0)
-          OnKeyDown(report.keycode[0]);
+          onKeyDown(report.keycode[0]);
         else 
-          OnKeyUp(last_report.keycode[0]);
+          onKeyUp(last_report.keycode[0]);
       }
     }
     if (last_report.modifier != report.modifier)
@@ -113,7 +113,7 @@ class MyEspUsbHost : public EspUsbHost
     }
   }
 
-  void OnKeyDown(uint8_t keycode) {
+  void onKeyDown(uint8_t keycode) {
     // Serial.printf("Down %d", keycode);
     // Serial.println();
     if (joystick) {
@@ -136,7 +136,7 @@ class MyEspUsbHost : public EspUsbHost
     }
   }
 
-  void OnKeyUp(uint8_t keycode) {
+  void onKeyUp(uint8_t keycode) {
     // Serial.printf("Up %d", keycode);
     // Serial.println();
     if (joystick) {
@@ -153,7 +153,7 @@ class MyEspUsbHost : public EspUsbHost
     keymem_hold = 0;
 
   }
-
+  
   void onKeyboardKey(uint8_t ascii, uint8_t keycode, uint8_t modifier)
   {
     // Serial.printf("ascii = %d", ascii);
@@ -222,34 +222,34 @@ class MyEspUsbHost : public EspUsbHost
         }
         else if (keycode == 58) // F1
         {
-          changeHdDisk();
+          HdDisk = !HdDisk;
           updateOptions(true, true);
           // Serial.println("f1");
         }
         else if (keycode == 59) // F2
         {
-          changeIIpIIe();
+          AppleIIe = !AppleIIe;
           updateOptions(true, false);
           // Serial.println("f2");
         }
         else if (keycode == 60) // F3
         {
-          fast1MhzSpeed();
+          Fast1MhzSpeed = !Fast1MhzSpeed;
           updateOptions(true, false);
         }
         else if (keycode == 61) // F4
         {
-          pauseRunning();
+          paused = !paused;
           updateOptions(true, false);
         }
         else if (keycode == 62) // F5
         {
-          joystickOnOff();
+          joystick = !joystick;
           updateOptions(true, false);
         }
         else if (keycode == 63) // F6
         {
-          videoColorOnOff();
+          videoColor = !videoColor;
           updateOptions(true, false);
         }
         else if (keycode == 81) // Down Arrow
@@ -331,14 +331,14 @@ class MyEspUsbHost : public EspUsbHost
 };
 MyEspUsbHost usbHost;
 
-void keyboard_begin()
+void keyboardSetup()
 {
   usbHost.begin();
   usbHost.setHIDLocal(HID_LOCAL_Japan_Katakana);
-  xTaskCreate(keyboard_task, "keyboard_task", 4096, NULL, 1, NULL);
+  xTaskCreate(keyboardTask, "keyboardTask", 4096, NULL, 1, NULL);
 }
 
-void keyboard_task(void *pvParameters)
+void keyboardTask(void *pvParameters)
 {
   int count = 0;
   int cycles = 0;
@@ -379,7 +379,7 @@ unsigned char keyboard_read()
   return keymem;
 }
 
-void keyboard_strobe()
+void keyboardStrobe()
 {
   keymem &= 0x7F;
   // Serial.printf(" keystrobe");
