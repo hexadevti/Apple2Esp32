@@ -16,22 +16,22 @@
 #include <thread>
 
 // VGA Pins
-const int hsyncPin = 32;
-const int vsyncPin = 33;
-const int red0pin = 12;
-const int red1pin = 13;
-const int green0pin = 27;
-const int green1pin = 14;
-const int blue0pin = 25;
-const int blue1pin = 26;
+const int hsyncPin = 23;
+const int vsyncPin = 15;
+const int red0pin = 21;
+const int red1pin = 22;
+const int green0pin = 18;
+const int green1pin = 19;
+const int blue0pin = 4;
+const int blue1pin = 5;
 // Keyboard Pins
-const int DataPin = 35;
-const int IRQpin = 34;
+const int DataPin = 32;
+const int IRQpin = 33;
 // SD Pins
-int sck = 18;
-int miso = 19;
-int mosi = 23;
-int cs = 5;
+int sck = 14;
+int miso = 16;
+int mosi = 17;
+int cs = 27;
 
 #define LED_PIN 2
 #define JOY_MAX 20000
