@@ -1,4 +1,4 @@
-#define SPEAKER_PIN 4
+#define SPEAKER_PIN 2
 
 boolean speaker_state = false;
 
