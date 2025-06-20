@@ -1,9 +1,3 @@
-static unsigned char memoryBankSwitchedRAM1[0x2000];
-static unsigned char memoryBankSwitchedRAM2_1[0x1000];
-static unsigned char memoryBankSwitchedRAM2_2[0x1000];
-bool MemoryBankBankSelect1_2 = true;
-bool MemoryBankReadRAM_ROM = false;
-bool MemoryBankWriteRAM_NoWrite = false;
 
 void languagecardWrite(ushort address, byte b)
 {
@@ -11,7 +5,7 @@ void languagecardWrite(ushort address, byte b)
     {
         if (address >= 0xd000 && address < 0xe000)
         {
-            if (MemoryBankBankSelect1_2)
+            if (memoryBankBankSelect1_2)
                 memoryBankSwitchedRAM2_1[address - 0xd000] = b;
             else
                 memoryBankSwitchedRAM2_2[address - 0xd000] = b;
@@ -27,7 +21,7 @@ char languagecardRead(ushort address)
     char ret = 0;
     if (address >= 0xd000 && address < 0xe000)
     {
-        if (MemoryBankBankSelect1_2)
+        if (memoryBankBankSelect1_2)
             ret = memoryBankSwitchedRAM2_1[address - 0xd000];
         else
             ret = memoryBankSwitchedRAM2_2[address - 0xd000];
@@ -52,26 +46,26 @@ char ProcessSwitch(ushort address, byte b)
         
         sprintf(buf, "Languege card switch: %04X", address);
         // Serial.println(buf);
-        MemoryBankBankSelect1_2 = bits[3];
+        memoryBankBankSelect1_2 = bits[3];
         if (bits[1] && bits[0])
         {
-            MemoryBankReadRAM_ROM = true;
-            MemoryBankWriteRAM_NoWrite = true;
+            memoryBankReadRAM_ROM = true;
+            memoryBankWriteRAM_NoWrite = true;
         }
         else if (!bits[1] && bits[0])
         {
-            MemoryBankReadRAM_ROM = false;
-            MemoryBankWriteRAM_NoWrite = true;
+            memoryBankReadRAM_ROM = false;
+            memoryBankWriteRAM_NoWrite = true;
         }
         else if (bits[1] && !bits[0])
         {
-            MemoryBankReadRAM_ROM = false;
-            MemoryBankWriteRAM_NoWrite = false;
+            memoryBankReadRAM_ROM = false;
+            memoryBankWriteRAM_NoWrite = false;
         }
         else if (!bits[1] && !bits[0])
         {
-            MemoryBankReadRAM_ROM = true;
-            MemoryBankWriteRAM_NoWrite = false;
+            memoryBankReadRAM_ROM = true;
+            memoryBankWriteRAM_NoWrite = false;
         }
     }
     return b;

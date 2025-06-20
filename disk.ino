@@ -145,7 +145,7 @@ void getDiskFileInfo(fs::FS &fs)
   }
   File file = fs.open(selectedDiskFileName.c_str());
   sprintf(buf, "APPLE2ESP32 - %s", selectedDiskFileName.c_str());
-  printMsg(buf, 0xff0000);
+  printMsg(buf, TFT_RED);
   printlog(buf);
   size_t len = file.size();
   sprintf(buf, "File Size: %d", len);
@@ -234,7 +234,7 @@ void setDiskFile()
   paused = true;
   selectedDiskFileName = diskFiles[shownFile].c_str();
   sprintf(buf, "APPLE2ESP32 - %s", selectedDiskFileName.c_str());
-  printMsg(buf, 0xff0000);
+  printMsg(buf, TFT_RED);
   paused = false;
 }
 
@@ -261,8 +261,8 @@ void loadDiskDir(fs::FS &fs, const char *dirname, uint8_t levels)
   {
     if (file.isDirectory())
     {
-      // printlog("  DIR : ");
-      // printlog(file.name());
+       printlog("  DIR : ");
+       printlog(file.name());
       if (levels)
       {
         loadDiskDir(fs, file.path(), levels - 1);
@@ -283,8 +283,8 @@ void loadDiskDir(fs::FS &fs, const char *dirname, uint8_t levels)
 
       if (acepted)
       {
-        // sprintf(buf, " FOUND FILE: %s SIZE: %d", file.name(), file.size());
-        // printlog(buf);
+         sprintf(buf, " FOUND FILE: %s SIZE: %d", file.name(), file.size());
+         printlog(buf);
         std::string str(file.name());
         diskFiles.push_back("/" + str);
       }

@@ -101,7 +101,7 @@ void getHdFileInfo(fs::FS &fs)
   }
   File file = fs.open(selectedHdFileName.c_str());
   sprintf(buf, "APPLE2ESP32 - %s", selectedHdFileName.c_str());
-  printMsg(buf, 0xff0000);
+  printMsg(buf, TFT_RED);
   printlog(buf);
   size_t len = file.size();
   Serial.print("File Size: ");
@@ -146,7 +146,7 @@ void setHdFile()
   paused = true;
   selectedHdFileName = hdFiles[shownFile].c_str();
   sprintf(buf, "APPLE2ESP32 - %s", selectedHdFileName.c_str());
-  printMsg(buf, 0xff0000);
+  printMsg(buf, TFT_RED);
   paused = false;
 }
 

@@ -75,10 +75,10 @@ void textLoResSerialRender(bool inversed) {
     for (int x = 0; x < 40; x++) {
       char value = ram[0x400 + y * 40 + x];
       if (value >= 0x40 && value < 0x80) {
-        if (inversed)
-          vga.setTextColor(vga.RGB(0), vga.RGB(0xffffff));
-        else
-          vga.setTextColor(vga.RGB(0xffffff), vga.RGB(0));
+        // if (inversed)
+        //   // vga.setTextColor(// vga.RGB(0), // vga.RGB(0xffffff));
+        // else
+        //   // vga.setTextColor(// vga.RGB(0xffffff), // vga.RGB(0));
         if (value != 0x60) {
           Serial.print("\e[");
           Serial.print(y);

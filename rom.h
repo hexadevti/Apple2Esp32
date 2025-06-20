@@ -1921,7 +1921,7 @@ const unsigned char appleiieenhancedc0ff[16696] PROGMEM =
 int appleiieenhancedc0ffcnt = 16696;
 
 
-const unsigned char AppleFontPixels[] PROGMEM = {
+const bool AppleFontPixels[] PROGMEM = {
 1, 1, 1, 1, 1, 1, 1,
 1, 1, 0, 0, 0, 1, 1,
 1, 0, 1, 1, 1, 0, 1,
@@ -3982,9 +3982,9 @@ const unsigned char AppleFontPixels[] PROGMEM = {
 0, 0, 0, 1, 0, 0, 0,
 
 };
-Font AppleFont_7x8(7, 8, AppleFontPixels, 0, 256);
+//Font AppleFont_7x8(7, 8, AppleFontPixels, 0, 256);
 
-const unsigned char AppleIIeFontPixels[] PROGMEM = {
+const bool AppleIIeFontPixels[] PROGMEM = {
 
 1, 1, 0, 0, 0, 1, 1,
 1, 0, 1, 1, 1, 0, 1,
@@ -6037,4 +6037,4 @@ const unsigned char AppleIIeFontPixels[] PROGMEM = {
 
 };
 
-Font AppleIIeFont_7x8(7, 8, AppleIIeFontPixels, 0, 256);
+//Font AppleIIeFont_7x8(7, 8, AppleIIeFontPixels, 0, 256);
