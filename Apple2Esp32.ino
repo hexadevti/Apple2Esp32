@@ -13,18 +13,10 @@
 #include <mutex>
 #include <thread>
 
-// VGA Pins
-const int hsyncPin = 23;
-const int vsyncPin = 15;
-const int red0pin = 21;
-const int red1pin = 22;
-const int green0pin = 20;
-const int green1pin = 19;
-const int blue0pin = 4;
-const int blue1pin = 6;
 // Keyboard Pins
 const int DataPin = 21;
 const int IRQpin = 22;
+
 // SD Pins
 int sck = 18;
 int miso = 19;
@@ -38,6 +30,26 @@ int cs = 5;
 #define JOY_MID 1230
 #define JOY_MIN 10
 
+#define FSTYPE SD 
+
+#define HdDiskEEPROMaddress 0
+#define IIpIIeEEPROMaddress 1
+#define Fast1MhzSpeedEEPROMaddress 2
+#define JoystickEEPROMaddress 3
+#define VideoColorEEPROMaddress 4
+#define NewDeviceConfigEEPROMaddress 50
+#define DiskFileNameEEPROMaddress 128
+#define HdFileNameEEPROMaddress 256
+#define EEPROM_SIZE 1024
+
+String selectedDiskFileName;
+String selectedHdFileName;
+String NewDeviceConfig;
+byte selectedHdFile;
+int firstShowFile = 0;
+int shownFile;
+
+
 bool running = true;
 bool paused = false;
 bool AppleIIe = false;
@@ -45,7 +57,7 @@ bool OptionsWindow = false;
 bool HdDisk = false;
 bool Fast1MhzSpeed = false;
 bool joystick = true;
-
+size_t content_len;
 
 //VGA6Bit vga;
 static const uint16_t screenWidth  = 240;
@@ -59,18 +71,8 @@ bool hdAttached = false;
 bool serialVideoAttached = false;
 bool serialKeyboardAttached = false;
 bool videoColor = true;
-#define EEPROM_SIZE 1024
-int HdDiskEEPROMaddress = 10;
-int IIpIIeEEPROMaddress = 11;
-int Fast1MhzSpeedEEPROMaddress = 12;
-int JoystickEEPROMaddress = 13;
-int DiskFileNameEEPROMaddress = 512;
-int HdFileNameEEPROMaddress = 768;
-String selectedDiskFileName;
-String selectedHdFileName;
-byte selectedHdFile;
-int firstShowFile = 0;
-int shownFile;
+
+
 
 int margin_x = 20;
 int margin_y = 24;
@@ -96,27 +98,19 @@ bool RAMWriteOn_Off = false;
 bool AltZPOn_Off = false;
 bool IOUDisOn_Off = false;
 bool DHiResOn_Off = false;
-bool memoryBankBankSelect1_2 = true;
-bool memoryBankReadRAM_ROM = false;
-bool memoryBankWriteRAM_NoWrite = false;
+bool IIEMemoryBankBankSelect1_2 = true;
+bool IIEMemoryBankReadRAM_ROM = false;
+bool IIEMemoryBankWriteRAM_NoWrite = false;
+bool MemoryBankBankSelect1_2 = true;
+bool MemoryBankReadRAM_ROM = false;
+bool MemoryBankWriteRAM_NoWrite = false;
+
 
 int IIeExpansionCardBank = 0;
 
 std::vector<std::string> hdFiles;
 std::vector<std::string> diskFiles;
 std::mutex page_lock;
-// static unsigned char zp[0x200];
-// static unsigned char ram[0xc000];
-// static unsigned char auxram[0xc000];
-// static unsigned char auxzp[0x200];
-
-// static unsigned char IIEAuxBankSwitchedRAM1[0x2000];
-// static unsigned char IIEAuxBankSwitchedRAM2_1[0x1000];
-// static unsigned char IIEAuxBankSwitchedRAM2_2[0x1000];
-
-// static unsigned char memoryBankSwitchedRAM1[0x2000];
-// static unsigned char memoryBankSwitchedRAM2_1[0x1000];
-// static unsigned char memoryBankSwitchedRAM2_2[0x1000];
 
 static unsigned char zp[0x200];
 static unsigned char auxzp[0x200];
@@ -128,6 +122,19 @@ static unsigned char* memoryBankSwitchedRAM2_2;
 static unsigned char* IIEAuxBankSwitchedRAM1;
 static unsigned char* IIEAuxBankSwitchedRAM2_1;
 static unsigned char* IIEAuxBankSwitchedRAM2_2;
+static unsigned char* IIEmemoryBankSwitchedRAM1;
+static unsigned char* IIEmemoryBankSwitchedRAM2_1;
+static unsigned char* IIEmemoryBankSwitchedRAM2_2;
+static bool diskUnitNumber1_2 = true;
+static bool DrivePhase0ON_OFF;
+static bool DrivePhase1ON_OFF;
+static bool DrivePhase2ON_OFF;
+static bool DrivePhase3ON_OFF;
+static bool FlagDO_PO;
+static bool DriveQ6H_L;
+static bool DriveQ7H_L;
+static bool DriveMotorON_OFF;
+
 
 static bool CgReset0 = false;
 static bool CgReset1 = false;
@@ -146,56 +153,18 @@ static bool Pb1 = false;
 static bool Pb2 = false;
 
 void setup() {
-  Serial.begin(115200);
+  logSetup();
 
   pinMode(RED_LED_PIN,INPUT);
   pinMode(GREEN_LED_PIN,OUTPUT);
   pinMode(BLUE_LED_PIN,INPUT);
   
-  EEPROM.begin(EEPROM_SIZE);
-  // EEPROM.write(HdDiskEEPROMaddress, false);
-  // EEPROM.write(IIpIIeEEPROMaddress, true);
-  // EEPROM.write(Fast1MhzSpeedEEPROMaddress, false);
-  // EEPROM.write(JoystickEEPROMaddress, true);
-  // writeStringToEEPROM(HdFileNameEEPROMaddress, "/Total Replay v5.1.hdv");
-  // writeStringToEEPROM(DiskFileNameEEPROMaddress, "/teste lu de ro.DSK");
-
-  HdDisk = EEPROM.readBool(HdDiskEEPROMaddress);
-  AppleIIe = EEPROM.readBool(IIpIIeEEPROMaddress);
-  Fast1MhzSpeed = EEPROM.readBool(Fast1MhzSpeedEEPROMaddress);
-  joystick = EEPROM.readBool(JoystickEEPROMaddress);
-  if (HdDisk) {
-    int size = readStringFromEEPROM(HdFileNameEEPROMaddress, &selectedHdFileName);
-    sprintf(buf, "EEPROM selectedHdFile value: %s", selectedHdFileName.c_str());
-    printlog(buf);
-  } else {
-    int size = readStringFromEEPROM(DiskFileNameEEPROMaddress, &selectedDiskFileName);
-    sprintf(buf, "EEPROM selectedDiskFileName value: %s", selectedDiskFileName.c_str());
-    printlog(buf);
-  }
-
+  epromSetup();
   diskAttached = (HdDisk == 0);
   hdAttached = !diskAttached;
   videoSetup();
 
-ram = (unsigned char*)malloc(0xc000 * sizeof(unsigned char));
-auxram = (unsigned char*)malloc(0xc000 * sizeof(unsigned char));
-memoryBankSwitchedRAM1 = (unsigned char*)malloc(0x2000 * sizeof(unsigned char));
-memoryBankSwitchedRAM2_1 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
-memoryBankSwitchedRAM2_2 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
-IIEAuxBankSwitchedRAM1 = (unsigned char*)malloc(0x2000 * sizeof(unsigned char));
-IIEAuxBankSwitchedRAM2_1 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
-IIEAuxBankSwitchedRAM2_2 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
-
-memset(ram, 0, 0xc000 * sizeof(unsigned char));
-memset(auxram, 0, 0xc000 * sizeof(unsigned char));
-memset(memoryBankSwitchedRAM1, 0, 0x2000 * sizeof(unsigned char));
-memset(memoryBankSwitchedRAM2_1, 0, 0x1000 * sizeof(unsigned char));
-memset(memoryBankSwitchedRAM2_2, 0, 0x1000 * sizeof(unsigned char));
-memset(IIEAuxBankSwitchedRAM1, 0, 0x2000 * sizeof(unsigned char));
-memset(IIEAuxBankSwitchedRAM2_1, 0, 0x1000 * sizeof(unsigned char));
-memset(IIEAuxBankSwitchedRAM2_2, 0, 0x1000 * sizeof(unsigned char));
-
+  memoryAlloc(); 
 
   joystick = true;
   SDCardSetup();
@@ -203,7 +172,7 @@ memset(IIEAuxBankSwitchedRAM2_2, 0, 0x1000 * sizeof(unsigned char));
   keyboard_begin();
   sei();
   HDSetup();
-  DiskSetup();
+  diskSetup();
   // hdAttached = false;
   // diskAttached = false;
 
@@ -224,58 +193,7 @@ memset(IIEAuxBankSwitchedRAM2_2, 0, 0x1000 * sizeof(unsigned char));
   }
   
   
-  // char a;
-  // for (int i = 0; i < 0x200; i++) {
-  //   auxzp[i] = 0;
-  //   a = auxzp[i];
-  // }
-  // for (int i = 0; i < 0xc000; i++) {
-
-  //   auxram[i] = rand() % 0x100;
-  // }
-  // for (int i = 0; i < 0xc000; i++) {
-
-  //   // sprintf(buf, "%02x ", auxram[i]);
-  //   // Serial.print(buf);
-  //   if (i % 0xf == 0)
-  //     Serial.println();
-  // }
-  // for (int i = 0; i < 0x1000; i++) {
-  //   IIEAuxBankSwitchedRAM2_1[i] = 0;
-  //   IIEAuxBankSwitchedRAM2_2[i] = 0;
-  //   a = IIEAuxBankSwitchedRAM2_1[i];
-  //   a = IIEAuxBankSwitchedRAM2_2[i];
-  // }
-  // for (int i = 0; i < 0x2000; i++) {
-  //   IIEAuxBankSwitchedRAM1[i] = 0;
-  //   a = IIEAuxBankSwitchedRAM1[i];
-  // }
   
-}
-
-
-int writeStringToEEPROM(int addrOffset, const String &strToWrite)
-{
-  byte len = strToWrite.length();
-  EEPROM.write(addrOffset, len);
-  for (int i = 0; i < len; i++)
-  {
-    EEPROM.write(addrOffset + 1 + i, strToWrite[i]);
-  }
-  return addrOffset + 1 + len;
-}
-
-int readStringFromEEPROM(int addrOffset, String *strToRead)
-{
-  int newStrLen = EEPROM.read(addrOffset);
-  char data[newStrLen + 1];
-  for (int i = 0; i < newStrLen; i++)
-  {
-    data[i] = EEPROM.read(addrOffset + 1 + i);
-  }
-  data[newStrLen] = '\0'; 
-  *strToRead = String(data);
-  return addrOffset + 1 + newStrLen;
 }
 
 void printlog(String txt) {
@@ -293,12 +211,6 @@ void printlog(String txt) {
     Serial.println(txt.c_str());
 }
 
-void saveEEPROM() {
-  EEPROM.writeBool(HdDiskEEPROMaddress, HdDisk);
-  EEPROM.writeBool(IIpIIeEEPROMaddress, AppleIIe);
-  EEPROM.writeBool(Fast1MhzSpeedEEPROMaddress, Fast1MhzSpeed);
-  EEPROM.writeBool(JoystickEEPROMaddress, joystick);
-}
 
 void changeHdDisk() {
   HdDisk = !HdDisk;
@@ -386,5 +298,5 @@ void updateOptions(bool downDirection) {
   }
 }
 void loop() {
-  run();
+  cpuLoop();
 }

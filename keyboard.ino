@@ -32,7 +32,7 @@ unsigned char keyboard_read() {
   return keymem;
 }
 
-void keyboard_strobe() {
+void keyboardStrobe() {
   keymem &= 0x7F;
 }
 

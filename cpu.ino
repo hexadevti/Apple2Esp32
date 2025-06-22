@@ -15,6 +15,8 @@
 #define AD_ZPG  0x0B
 #define AD_ZPGX 0x0C
 #define AD_ZPGY 0x0D
+#define AD_IABX 0x0E
+#define AD_IZPG 0x0F
 
 // SR Flag Modes
 #define FL_NONE 0x00  // ---- ----
@@ -50,46 +52,45 @@ uint32_t cpuCycleCount = 0;
 uint32_t lastCpuCycleCount = 0;
 uint32_t diffCpuCycleCount = 0;
 
-
 //high nibble SR flags, low nibble address mode
-const unsigned char flags[] PROGMEM = {
-//X0               X1                X2                  X3    X4                   X5                X6                X7    X8              X9                XA               XB    XC                  XD                XE                XF   
-  AD_IMP,          AD_INDX,          UNDF,               UNDF, FL_Z|AD_ZPG,/*e*/    FL_ZN | AD_ZPG,   FL_ZNC | AD_ZPG,  UNDF, AD_IMP,         FL_ZN | AD_IMM,   FL_ZNC | AD_A,    UNDF, FL_Z|AD_ABS,/*e*/   FL_ZN | AD_ABS,   FL_ZNC | AD_ABS,  UNDF, // 0X
-  AD_REL,          FL_ZN | AD_INDY,  FL_ZN|AD_ZPG/*e*/,  UNDF, FL_Z|AD_ZPG,/*e*/    FL_ZN | AD_ZPGX,  FL_ZNC | AD_ZPGX, UNDF, AD_IMP,         FL_ZN | AD_ABSY,  FL_ZN|AD_A,/*e*/  UNDF, FL_Z|AD_ABS,/*e*/   FL_ZN | AD_ABSX,  FL_ZNC | AD_ABSX, UNDF, // 1X
-  AD_ABS,          FL_ZN | AD_INDX,  UNDF,               UNDF, FL_Z | AD_ZPG,       FL_ZN | AD_ZPG,   FL_ZNC | AD_ZPG,  UNDF, AD_IMP,         FL_ZN | AD_IMM,   FL_ZNC | AD_A,    UNDF, FL_Z | AD_ABS,      FL_ZN | AD_ABS,   FL_ZNC | AD_ABS,  UNDF, // 2X
-  AD_REL,          FL_ZN | AD_INDY,  FL_ZN|AD_ZPG/*e*/,  UNDF, FL_NVZ|AD_ZPGX/*e*/, FL_ZN | AD_ZPGX,  FL_ZNC | AD_ZPGX, UNDF, AD_IMP,         FL_ZN | AD_ABSY,  FL_ZN|AD_A,/*e*/  UNDF, FL_NVZ|AD_ABSX,/*e*/FL_ZN | AD_ABSX,  FL_ZNC | AD_ABSX, UNDF, // 3X
-  AD_IMP,          FL_ZN | AD_INDX,  UNDF,               UNDF, UNDF,                FL_ZN | AD_ZPG,   FL_ZNC | AD_ZPG,  UNDF, AD_IMP,         FL_ZN | AD_IMM,   FL_ZNC | AD_A,    UNDF, AD_ABS,             FL_ZN | AD_ABS,   FL_ZNC | AD_ABS,  UNDF, // 4X
-  AD_REL,          FL_ZN | AD_INDY,  FL_ZN|AD_ZPG/*e*/,  UNDF, UNDF,                FL_ZN | AD_ZPGX,  FL_ZNC | AD_ZPGX, UNDF, AD_IMP,         FL_ZN | AD_ABSY,  AD_IMP,/*e*/      UNDF, UNDF,               FL_ZN | AD_ABSX,  FL_ZNC | AD_ABSX, UNDF, // 5X
-  AD_IMP,          FL_ALL | AD_INDX, UNDF,               UNDF, AD_ZPG,/*e*/         FL_ALL | AD_ZPG,  FL_ZNC | AD_ZPG,  UNDF, FL_ZN | AD_IMP, FL_ALL | AD_IMM,  FL_ZNC | AD_A,    UNDF, AD_IND,             FL_ALL | AD_ABS,  FL_ZNC | AD_ABS,  UNDF, // 6X
-  AD_REL,          FL_ALL | AD_INDY, FL_ALL|AD_ZPG/*e*/, UNDF, AD_ZPGX,/*e*/        FL_ALL | AD_ZPGX, FL_ZNC | AD_ZPGX, UNDF, AD_IMP,         FL_ALL | AD_ABSY, FL_ZN|AD_IMP,/*e*/UNDF, AD_ABSX,            FL_ALL | AD_ABSX, FL_ZNC | AD_ABSX, UNDF, // 7X
-  AD_REL,/*e*/     AD_INDX,          UNDF,               UNDF, AD_ZPG,              AD_ZPG,           AD_ZPG,           UNDF, FL_ZN | AD_IMP, FL_Z|AD_IMM/*e*/, FL_ZN | AD_IMP,   UNDF, AD_ABS,             AD_ABS,           AD_ABS,           UNDF, // 8X
-  AD_REL,          AD_INDY,          AD_ZPG/*e*/,        UNDF, AD_ZPGX,             AD_ZPGX,          AD_ZPGY,          UNDF, FL_ZN | AD_IMP, AD_ABSY,          AD_IMP,           UNDF, AD_ABS,/*e*/        AD_ABSX,          AD_ABSX,/*e*/     UNDF, // 9X
-  FL_ZN | AD_IMM,  FL_ZN | AD_INDX,  FL_ZN | AD_IMM,     UNDF, FL_ZN | AD_ZPG,      FL_ZN | AD_ZPG,   FL_ZN | AD_ZPG,   UNDF, FL_ZN | AD_IMP, FL_ZN | AD_IMM,   FL_ZN | AD_IMP,   UNDF, FL_ZN | AD_ABS,     FL_ZN | AD_ABS,   FL_ZN | AD_ABS,   UNDF, // AX
-  AD_REL,          FL_ZN | AD_INDY,  FL_ZN|AD_ZPG/*e*/,  UNDF, FL_ZN | AD_ZPGX,     FL_ZN | AD_ZPGX,  FL_ZN | AD_ZPGY,  UNDF, AD_IMP,         FL_ZN | AD_ABSY,  FL_ZN | AD_IMP,   UNDF, FL_ZN | AD_ABSX,    FL_ZN | AD_ABSX,  FL_ZN | AD_ABSY,  UNDF, // BX
-  FL_ZNC | AD_IMM, FL_ZNC | AD_INDX, UNDF,               UNDF, FL_ZNC | AD_ZPG,     FL_ZNC | AD_ZPG,  FL_ZN | AD_ZPG,   UNDF, FL_ZN | AD_IMP, FL_ZNC | AD_IMM,  FL_ZN | AD_IMP,   UNDF, FL_ZNC | AD_ABS,    FL_ZNC | AD_ABS,  FL_ZN | AD_ABS,   UNDF, // CX
-  AD_REL,          FL_ZNC | AD_INDY, FL_ZNC|AD_ZPG/*e*/, UNDF, UNDF,                FL_ZNC | AD_ZPGX, FL_ZN | AD_ZPGX,  UNDF, AD_IMP,         FL_ZNC | AD_ABSY, AD_IMP,/*e*/      UNDF, UNDF,               FL_ZNC | AD_ABSX, FL_ZN | AD_ABSX,  UNDF, // DX
-  FL_ZNC | AD_IMM, FL_ALL | AD_INDX, UNDF,               UNDF, FL_ZNC | AD_ZPG,     FL_ALL | AD_ZPG,  FL_ZN | AD_ZPG,   UNDF, FL_ZN | AD_IMP, FL_ALL | AD_IMM,  AD_IMP,           UNDF, FL_ZNC | AD_ABS,    FL_ALL | AD_ABS,  FL_ZN | AD_ABS,   UNDF, // EX
-  AD_REL,          FL_ALL | AD_INDY, FL_ALL|AD_ZPG/*e*/, UNDF, UNDF,                FL_ALL | AD_ZPGX, FL_ZN | AD_ZPGX,  UNDF, AD_IMP,         FL_ALL | AD_ABSY, FL_ZN|AD_IMP,/*e*/UNDF, UNDF,               FL_ALL | AD_ABSX, FL_ZN | AD_ABSX,  UNDF  // FX
+const unsigned char flagsIIe[] PROGMEM = {
+	//X0               X1                X2                    X3    X4                    X5                X6                X7    X8              X9                 XA                  XB    XC                    XD                XE                XF   
+	  AD_IMP,          AD_INDX,          UNDF,                 UNDF, FL_Z | AD_ZPG,/*e*/   FL_ZN | AD_ZPG,   FL_ZNC | AD_ZPG,  UNDF, AD_IMP,         FL_ZN | AD_IMM,    FL_ZNC | AD_A,      UNDF, FL_Z | AD_ABS,/*e*/   FL_ZN | AD_ABS,   FL_ZNC | AD_ABS,  UNDF, // 0X
+	  AD_REL,          FL_ZN | AD_INDY,  FL_ZN | AD_IZPG/*e*/, UNDF, FL_Z | AD_ZPG,/*e*/   FL_ZN | AD_ZPGX,  FL_ZNC | AD_ZPGX, UNDF, AD_IMP,         FL_ZN | AD_ABSY,   FL_ZN | AD_A,/*e*/  UNDF, FL_Z | AD_ABS,/*e*/   FL_ZN | AD_ABSX,  FL_ZNC | AD_ABSX, UNDF, // 1X
+	  AD_ABS,          FL_ZN | AD_INDX,  UNDF,                 UNDF, FL_Z | AD_ZPG,        FL_ZN | AD_ZPG,   FL_ZNC | AD_ZPG,  UNDF, AD_IMP,         FL_ZN | AD_IMM,    FL_ZNC | AD_A,      UNDF, FL_Z | AD_ABS,        FL_ZN | AD_ABS,   FL_ZNC | AD_ABS,  UNDF, // 2X
+	  AD_REL,          FL_ZN | AD_INDY,  FL_ZN | AD_IZPG/*e*/, UNDF, FL_NVZ | AD_ZPGX/*e*/,FL_ZN | AD_ZPGX,  FL_ZNC | AD_ZPGX, UNDF, AD_IMP,         FL_ZN | AD_ABSY,   FL_ZN | AD_A,/*e*/  UNDF, FL_NVZ | AD_ABSX,/*e*/FL_ZN | AD_ABSX,  FL_ZNC | AD_ABSX, UNDF, // 3X
+	  AD_IMP,          FL_ZN | AD_INDX,  UNDF,                 UNDF, UNDF,                 FL_ZN | AD_ZPG,   FL_ZNC | AD_ZPG,  UNDF, AD_IMP,         FL_ZN | AD_IMM,    FL_ZNC | AD_A,      UNDF, AD_ABS,               FL_ZN | AD_ABS,   FL_ZNC | AD_ABS,  UNDF, // 4X
+	  AD_REL,          FL_ZN | AD_INDY,  FL_ZN | AD_IZPG/*e*/, UNDF, UNDF,                 FL_ZN | AD_ZPGX,  FL_ZNC | AD_ZPGX, UNDF, AD_IMP,         FL_ZN | AD_ABSY,   AD_IMP,/*e*/        UNDF, UNDF,                 FL_ZN | AD_ABSX,  FL_ZNC | AD_ABSX, UNDF, // 5X
+	  AD_IMP,          FL_ALL | AD_INDX, UNDF,                 UNDF, AD_ZPG,/*e*/          FL_ALL | AD_ZPG,  FL_ZNC | AD_ZPG,  UNDF, FL_ZN | AD_IMP, FL_ALL | AD_IMM,   FL_ZNC | AD_A,      UNDF, AD_IND,               FL_ZNC | AD_ABS,  FL_ZNC | AD_ABS,  UNDF, // 6X
+	  AD_REL,          FL_ALL | AD_INDY, FL_ALL | AD_IZPG/*e*/,UNDF, AD_ZPGX,/*e*/         FL_ALL | AD_ZPGX, FL_ZNC | AD_ZPGX, UNDF, AD_IMP,         FL_ALL | AD_ABSY,  FL_ZN | AD_IMP,/*e*/UNDF, AD_IABX,/*e*/         FL_ALL | AD_ABSX, FL_ZNC | AD_ABSX, UNDF, // 7X
+	  AD_REL,/*e*/     AD_INDX,          UNDF,                 UNDF, AD_ZPG,               AD_ZPG,           AD_ZPG,           UNDF, FL_ZN | AD_IMP, FL_Z | AD_IMM/*e*/,FL_ZN | AD_IMP,     UNDF, AD_ABS,               AD_ABS,           AD_ABS,           UNDF, // 8X
+	  AD_REL,          AD_INDY,          AD_IZPG/*e*/,         UNDF, AD_ZPGX,              AD_ZPGX,          AD_ZPGY,          UNDF, FL_ZN | AD_IMP, AD_ABSY,           AD_IMP,             UNDF, AD_ABS,/*e*/          AD_ABSX,          AD_ABSX,/*e*/     UNDF, // 9X
+	  FL_ZN | AD_IMM,  FL_ZN | AD_INDX,  FL_ZN | AD_IMM,       UNDF, FL_ZN | AD_ZPG,       FL_ZN | AD_ZPG,   FL_ZN | AD_ZPG,   UNDF, FL_ZN | AD_IMP, FL_ZN | AD_IMM,    FL_ZN | AD_IMP,     UNDF, FL_ZN | AD_ABS,       FL_ZN | AD_ABS,   FL_ZN | AD_ABS,   UNDF, // AX
+	  AD_REL,          FL_ZN | AD_INDY,  FL_ZN | AD_IZPG/*e*/, UNDF, FL_ZN | AD_ZPGX,      FL_ZN | AD_ZPGX,  FL_ZN | AD_ZPGY,  UNDF, AD_IMP,         FL_ZN | AD_ABSY,   FL_ZN | AD_IMP,     UNDF, FL_ZN | AD_ABSX,      FL_ZN | AD_ABSX,  FL_ZN | AD_ABSY,  UNDF, // BX
+	  FL_ZNC | AD_IMM, FL_ZNC | AD_INDX, UNDF,                 UNDF, FL_ZNC | AD_ZPG,      FL_ZNC | AD_ZPG,  FL_ZN | AD_ZPG,   UNDF, FL_ZN | AD_IMP, FL_ZNC | AD_IMM,   FL_ZN | AD_IMP,     UNDF, FL_ZNC | AD_ABS,      FL_ZNC | AD_ABS,  FL_ZN | AD_ABS,   UNDF, // CX
+	  AD_REL,          FL_ZNC | AD_INDY, FL_ZNC | AD_IZPG/*e*/,UNDF, UNDF,                 FL_ZNC | AD_ZPGX, FL_ZN | AD_ZPGX,  UNDF, AD_IMP,         FL_ZNC | AD_ABSY,  AD_IMP,/*e*/        UNDF, UNDF,                 FL_ZNC | AD_ABSX, FL_ZN | AD_ABSX,  UNDF, // DX
+	  FL_ZNC | AD_IMM, FL_ALL | AD_INDX, UNDF,                 UNDF, FL_ZNC | AD_ZPG,      FL_ALL | AD_ZPG,  FL_ZN | AD_ZPG,   UNDF, FL_ZN | AD_IMP, FL_ALL | AD_IMM,   AD_IMP,             UNDF, FL_ZNC | AD_ABS,      FL_ALL | AD_ABS,  FL_ZN | AD_ABS,   UNDF, // EX
+	  AD_REL,          FL_ALL | AD_INDY, FL_ALL | AD_IZPG/*e*/,UNDF, UNDF,                 FL_ALL | AD_ZPGX, FL_ZN | AD_ZPGX,  UNDF, AD_IMP,         FL_ALL | AD_ABSY,  FL_ZN | AD_IMP,/*e*/UNDF, UNDF,                 FL_ALL | AD_ABSX, FL_ZN | AD_ABSX,  UNDF  // FX
 };
 
-// const unsigned char flags[] = {
-//   AD_IMP, AD_INDX, UNDF, UNDF, UNDF, FL_ZN | AD_ZPG, FL_ZNC | AD_ZPG, UNDF, AD_IMP, FL_ZN | AD_IMM, FL_ZNC | AD_A, UNDF, UNDF, FL_ZN | AD_ABS, FL_ZNC | AD_ABS, UNDF,
-//   AD_REL, FL_ZN | AD_INDY, UNDF, UNDF, UNDF, FL_ZN | AD_ZPGX, FL_ZNC | AD_ZPGX, UNDF, AD_IMP, FL_ZN | AD_ABSY, UNDF, UNDF, UNDF, FL_ZN | AD_ABSX, FL_ZNC | AD_ABSX, UNDF,
-//   AD_ABS, FL_ZN | AD_INDX, UNDF, UNDF, FL_Z | AD_ZPG, FL_ZN | AD_ZPG, FL_ZNC | AD_ZPG, UNDF, AD_IMP, FL_ZN | AD_IMM, FL_ZNC | AD_A, UNDF, FL_Z | AD_ABS, FL_ZN | AD_ABS, FL_ZNC | AD_ABS, UNDF,
-//   AD_REL, FL_ZN | AD_INDY, UNDF, UNDF, UNDF, FL_ZN | AD_ZPGX, FL_ZNC | AD_ZPGX, UNDF, AD_IMP, FL_ZN | AD_ABSY, UNDF, UNDF, UNDF, FL_ZN | AD_ABSX, FL_ZNC | AD_ABSX, UNDF,
-//   AD_IMP, FL_ZN | AD_INDX, UNDF, UNDF, UNDF, FL_ZN | AD_ZPG, FL_ZNC | AD_ZPG, UNDF, AD_IMP, FL_ZN | AD_IMM, FL_ZNC | AD_A, UNDF, AD_ABS, FL_ZN | AD_ABS, FL_ZNC | AD_ABS, UNDF,
-//   AD_REL, FL_ZN | AD_INDY, UNDF, UNDF, UNDF, FL_ZN | AD_ZPGX, FL_ZNC | AD_ZPGX, UNDF, AD_IMP, FL_ZN | AD_ABSY, UNDF, UNDF, UNDF, FL_ZN | AD_ABSX, FL_ZNC | AD_ABSX, UNDF,
-//   AD_IMP, FL_ALL | AD_INDX, UNDF, UNDF, UNDF, FL_ALL | AD_ZPG, FL_ZNC | AD_ZPG, UNDF, FL_ZN | AD_IMP, FL_ALL | AD_IMM, FL_ZNC | AD_A, UNDF, AD_IND, FL_ALL | AD_ABS, FL_ZNC | AD_ABS, UNDF,
-//   AD_REL, FL_ALL | AD_INDY, UNDF, UNDF, UNDF, FL_ALL | AD_ZPGX, FL_ZNC | AD_ZPGX, UNDF, AD_IMP, FL_ALL | AD_ABSY, UNDF, UNDF, UNDF, FL_ALL | AD_ABSX, FL_ZNC | AD_ABSX, UNDF,
-//   UNDF, AD_INDX, UNDF, UNDF, AD_ZPG, AD_ZPG, AD_ZPG, UNDF, FL_ZN | AD_IMP, UNDF, FL_ZN | AD_IMP, UNDF, AD_ABS, AD_ABS, AD_ABS, UNDF,
-//   AD_REL, AD_INDY, UNDF, UNDF, AD_ZPGX, AD_ZPGX, AD_ZPGY, UNDF, FL_ZN | AD_IMP, AD_ABSY, AD_IMP, UNDF, UNDF, AD_ABSX, UNDF, UNDF,
-//   FL_ZN | AD_IMM, FL_ZN | AD_INDX, FL_ZN | AD_IMM, UNDF, FL_ZN | AD_ZPG, FL_ZN | AD_ZPG, FL_ZN | AD_ZPG, UNDF, FL_ZN | AD_IMP, FL_ZN | AD_IMM, FL_ZN | AD_IMP, UNDF, FL_ZN | AD_ABS, FL_ZN | AD_ABS, FL_ZN | AD_ABS, UNDF,
-//   AD_REL, FL_ZN | AD_INDY, UNDF, UNDF, FL_ZN | AD_ZPGX, FL_ZN | AD_ZPGX, FL_ZN | AD_ZPGY, UNDF, AD_IMP, FL_ZN | AD_ABSY, FL_ZN | AD_IMP, UNDF, FL_ZN | AD_ABSX, FL_ZN | AD_ABSX, FL_ZN | AD_ABSY, UNDF,
-//   FL_ZNC | AD_IMM, FL_ZNC | AD_INDX, UNDF, UNDF, FL_ZNC | AD_ZPG, FL_ZNC | AD_ZPG, FL_ZN | AD_ZPG, UNDF, FL_ZN | AD_IMP, FL_ZNC | AD_IMM, FL_ZN | AD_IMP, UNDF, FL_ZNC | AD_ABS, FL_ZNC | AD_ABS, FL_ZN | AD_ABS, UNDF,
-//   AD_REL, FL_ZNC | AD_INDY, UNDF, UNDF, UNDF, FL_ZNC | AD_ZPGX, FL_ZN | AD_ZPGX, UNDF, AD_IMP, FL_ZNC | AD_ABSY, UNDF, UNDF, UNDF, FL_ZNC | AD_ABSX, FL_ZN | AD_ABSX, UNDF,
-//   FL_ZNC | AD_IMM, FL_ALL | AD_INDX, UNDF, UNDF, FL_ZNC | AD_ZPG, FL_ALL | AD_ZPG, FL_ZN | AD_ZPG, UNDF, FL_ZN | AD_IMP, FL_ALL | AD_IMM, AD_IMP, UNDF, FL_ZNC | AD_ABS, FL_ALL | AD_ABS, FL_ZN | AD_ABS, UNDF,
-//   AD_REL, FL_ALL | AD_INDY, UNDF, UNDF, UNDF, FL_ALL | AD_ZPGX, FL_ZN | AD_ZPGX, UNDF, AD_IMP, FL_ALL | AD_ABSY, UNDF, UNDF, UNDF, FL_ALL | AD_ABSX, FL_ZN | AD_ABSX, UNDF
-// };
+const unsigned char flagsIIplus[] PROGMEM = {
+  AD_IMP, AD_INDX, UNDF, UNDF, UNDF, FL_ZN | AD_ZPG, FL_ZNC | AD_ZPG, UNDF, AD_IMP, FL_ZN | AD_IMM, FL_ZNC | AD_A, UNDF, UNDF, FL_ZN | AD_ABS, FL_ZNC | AD_ABS, UNDF,
+  AD_REL, FL_ZN | AD_INDY, UNDF, UNDF, UNDF, FL_ZN | AD_ZPGX, FL_ZNC | AD_ZPGX, UNDF, AD_IMP, FL_ZN | AD_ABSY, UNDF, UNDF, UNDF, FL_ZN | AD_ABSX, FL_ZNC | AD_ABSX, UNDF,
+  AD_ABS, FL_ZN | AD_INDX, UNDF, UNDF, FL_Z | AD_ZPG, FL_ZN | AD_ZPG, FL_ZNC | AD_ZPG, UNDF, AD_IMP, FL_ZN | AD_IMM, FL_ZNC | AD_A, UNDF, FL_Z | AD_ABS, FL_ZN | AD_ABS, FL_ZNC | AD_ABS, UNDF,
+  AD_REL, FL_ZN | AD_INDY, UNDF, UNDF, UNDF, FL_ZN | AD_ZPGX, FL_ZNC | AD_ZPGX, UNDF, AD_IMP, FL_ZN | AD_ABSY, UNDF, UNDF, UNDF, FL_ZN | AD_ABSX, FL_ZNC | AD_ABSX, UNDF,
+  AD_IMP, FL_ZN | AD_INDX, UNDF, UNDF, UNDF, FL_ZN | AD_ZPG, FL_ZNC | AD_ZPG, UNDF, AD_IMP, FL_ZN | AD_IMM, FL_ZNC | AD_A, UNDF, AD_ABS, FL_ZN | AD_ABS, FL_ZNC | AD_ABS, UNDF,
+  AD_REL, FL_ZN | AD_INDY, UNDF, UNDF, UNDF, FL_ZN | AD_ZPGX, FL_ZNC | AD_ZPGX, UNDF, AD_IMP, FL_ZN | AD_ABSY, UNDF, UNDF, UNDF, FL_ZN | AD_ABSX, FL_ZNC | AD_ABSX, UNDF,
+  AD_IMP, FL_ALL | AD_INDX, UNDF, UNDF, UNDF, FL_ALL | AD_ZPG, FL_ZNC | AD_ZPG, UNDF, FL_ZN | AD_IMP, FL_ALL | AD_IMM, FL_ZNC | AD_A, UNDF, AD_IND, FL_ALL | AD_ABS, FL_ZNC | AD_ABS, UNDF,
+  AD_REL, FL_ALL | AD_INDY, UNDF, UNDF, UNDF, FL_ALL | AD_ZPGX, FL_ZNC | AD_ZPGX, UNDF, AD_IMP, FL_ALL | AD_ABSY, UNDF, UNDF, UNDF, FL_ALL | AD_ABSX, FL_ZNC | AD_ABSX, UNDF,
+  UNDF, AD_INDX, UNDF, UNDF, AD_ZPG, AD_ZPG, AD_ZPG, UNDF, FL_ZN | AD_IMP, UNDF, FL_ZN | AD_IMP, UNDF, AD_ABS, AD_ABS, AD_ABS, UNDF,
+  AD_REL, AD_INDY, UNDF, UNDF, AD_ZPGX, AD_ZPGX, AD_ZPGY, UNDF, FL_ZN | AD_IMP, AD_ABSY, AD_IMP, UNDF, UNDF, AD_ABSX, UNDF, UNDF,
+  FL_ZN | AD_IMM, FL_ZN | AD_INDX, FL_ZN | AD_IMM, UNDF, FL_ZN | AD_ZPG, FL_ZN | AD_ZPG, FL_ZN | AD_ZPG, UNDF, FL_ZN | AD_IMP, FL_ZN | AD_IMM, FL_ZN | AD_IMP, UNDF, FL_ZN | AD_ABS, FL_ZN | AD_ABS, FL_ZN | AD_ABS, UNDF,
+  AD_REL, FL_ZN | AD_INDY, UNDF, UNDF, FL_ZN | AD_ZPGX, FL_ZN | AD_ZPGX, FL_ZN | AD_ZPGY, UNDF, AD_IMP, FL_ZN | AD_ABSY, FL_ZN | AD_IMP, UNDF, FL_ZN | AD_ABSX, FL_ZN | AD_ABSX, FL_ZN | AD_ABSY, UNDF,
+  FL_ZNC | AD_IMM, FL_ZNC | AD_INDX, UNDF, UNDF, FL_ZNC | AD_ZPG, FL_ZNC | AD_ZPG, FL_ZN | AD_ZPG, UNDF, FL_ZN | AD_IMP, FL_ZNC | AD_IMM, FL_ZN | AD_IMP, UNDF, FL_ZNC | AD_ABS, FL_ZNC | AD_ABS, FL_ZN | AD_ABS, UNDF,
+  AD_REL, FL_ZNC | AD_INDY, UNDF, UNDF, UNDF, FL_ZNC | AD_ZPGX, FL_ZN | AD_ZPGX, UNDF, AD_IMP, FL_ZNC | AD_ABSY, UNDF, UNDF, UNDF, FL_ZNC | AD_ABSX, FL_ZN | AD_ABSX, UNDF,
+  FL_ZNC | AD_IMM, FL_ALL | AD_INDX, UNDF, UNDF, FL_ZNC | AD_ZPG, FL_ALL | AD_ZPG, FL_ZN | AD_ZPG, UNDF, FL_ZN | AD_IMP, FL_ALL | AD_IMM, AD_IMP, UNDF, FL_ZNC | AD_ABS, FL_ALL | AD_ABS, FL_ZN | AD_ABS, UNDF,
+  AD_REL, FL_ALL | AD_INDY, UNDF, UNDF, UNDF, FL_ALL | AD_ZPGX, FL_ZN | AD_ZPGX, UNDF, AD_IMP, FL_ALL | AD_ABSY, UNDF, UNDF, UNDF, FL_ALL | AD_ABSX, FL_ZN | AD_ABSX, UNDF
+};
 
 const int cycles[] PROGMEM = { 7, 6, 1, 0, 0, 3, 5, 0, 3, 2, 2, 0, 0, 4, 6, 0, 
                        2, 5, 1, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0, 
@@ -123,6 +124,14 @@ unsigned short value16, value16_2, result;
 
 bool debug = false;
 
+void cpuReset()
+{
+  IIEMemoryBankReadRAM_ROM = false;
+  
+  PC = read16(0xFFFC);
+  STP = 0xFD;
+}
+
 void setflags() {
   // Mask out affected flags
   switch (opflags & 0xF0) {
@@ -135,7 +144,7 @@ void setflags() {
   
   // if (lastPC >= 0x5d00 && lastPC < 0x5e00) {
   //   sprintf(buf, "setflag: opflag=%02X result=%02X opflags & 0x80=%02X result & 0x80=%02X", opflags, result, opflags & 0x80, result & 0x80);
-  //   printlog(buf);
+  //   printLog(buf);
   // }
   
   // Set various status flags
@@ -156,22 +165,18 @@ void push8(unsigned char pushval) {
 }
 
 unsigned short pull16() {
-  value16 = read8(STP_BASE + (++STP)) | ((unsigned short)read8(STP_BASE + (++STP)) << 8);
-  return value16;
-}
+  STP++;
+	value16 = read8(STP_BASE + (STP));
+	STP++;
+	value16 = value16 | ((unsigned short)read8(STP_BASE + (STP)) << 8);
+	return value16;}
 
 unsigned char pull8() {
   return read8(STP_BASE + (++STP));
 }
 
-void cpuReset()
-{
-  PC = read16(0xFFFC);
-  STP = 0xFD;
-}
-
-
-void run() {
+void cpuLoop() {
+	
   // Load the reset vector
   PC = read16(0xFFFC);
   STP = 0xFD;
@@ -201,14 +206,13 @@ void run() {
 
       lastCpuCycleCount = cpuCycleCount;
     }
-
+    
     if (joystick) processJoystick(0.4);
 
     lastPC = PC;
 
-    opflags = flags[opcode];
+    opflags = AppleIIe ? flagsIIe[opcode] : flagsIIplus[opcode];
 
-    
     // Addressing modes
     switch (opflags & 0x0F) {
       case AD_IMP:
@@ -221,6 +225,12 @@ void run() {
         argument_addr = read16(PC) + (unsigned short)X;
         PC += 2;
         break;
+      case AD_IABX:
+		    argument_addr = read16(PC) + (unsigned short)X;
+		    value16 = (argument_addr + 1 & 0xFF00) | ((argument_addr + 1) & 0x00FF);
+		    argument_addr = (unsigned short)read8(argument_addr) | ((unsigned short)read8(value16) << 8);
+		    PC += 2;
+		    break;
       case AD_ABSY:
         argument_addr = read16(PC) + (unsigned short)Y;
         PC += 2;
@@ -229,11 +239,11 @@ void run() {
         argument_addr = PC++;
         break;
       case AD_IND:
-        argument_addr = read16(PC);
-        value16 = (argument_addr & 0xFF00) | ((argument_addr + 1) & 0x00FF);  // Page wrap
-        argument_addr = (unsigned short)read8(argument_addr) | ((unsigned short)read8(value16) << 8);
-        PC += 2;
-        break;
+		    argument_addr = read16(PC);
+		    value16 = (argument_addr + 1 & 0xFF00) | ((argument_addr + 1) & 0x00FF);
+		    argument_addr = (unsigned short)read8(argument_addr) | ((unsigned short)read8(value16) << 8);
+		    PC += 2;
+		    break;
       case AD_INDX:
         argument_addr = ((unsigned short)read8(PC++) + (unsigned short)X) & 0xFF;
         value16 = (argument_addr & 0xFF00) | ((argument_addr + 1) & 0x00FF);  // Page wrap
@@ -252,6 +262,11 @@ void run() {
       case AD_ZPG:
         argument_addr = (unsigned short)read8(PC++);
         break;
+      case AD_IZPG:
+		    argument_addr = (unsigned short)read8(PC++);
+		    value16 = (argument_addr + 1 & 0xFF00) | ((argument_addr + 1) & 0x00FF);
+		    argument_addr = (unsigned short)read8(argument_addr) | ((unsigned short)read8(value16) << 8);
+		    break;
       case AD_ZPGX:
         argument_addr = ((unsigned short)read8(PC++) + (unsigned short)X) & 0xFF;
         break;
@@ -260,15 +275,6 @@ void run() {
         break;
     }
 
-    
-    // if (lastPC == 0x800 && argument_addr == 0xbf00)
-    //   debug = true;
-
-    // if (debug) {
-    // //if (lastPC >= 0x800 && lastPC < 0x900) {
-    //   printCPUStatus();
-    // }
-    
     //opcodes
     switch (opcode) {
       //ADC
@@ -290,18 +296,14 @@ void run() {
             result = (unsigned short)(result & 0x0F) + (unsigned short)(A & 0xF0) + (unsigned short)(value16 & 0xF0);
           else
             result = (unsigned short)(result & 0x0F) + (unsigned short)(A & 0xF0) + (unsigned short)(value16 & 0xF0) + 0x10;
-          
+
           if (result == 0) // Zero Flag
             SR |= 0x02;
           else
             SR &= 0xfd;
-          
-          if (result < 0x80) // Negative
-            SR |= 0x80;
-          else
-            SR &= 0x7f;
-          
-          if ((((A ^ result) & 0x80) > 0) && !(((A ^ result) & 0x80) > 0)) // Overflow
+
+          //if ((((A ^ result) & 0x80) > 0) && !(((A ^ result) & 0x80) > 0)) // Overflow
+          if (((A ^ result) & 0x80) > 0)
             SR |= 0x40;
           else
             SR &= 0xbf;
@@ -317,11 +319,32 @@ void run() {
         else
         { // Binary
           result = (unsigned short)A + value16 + (unsigned short)(SR & SR_CARRY);
+          if (!(((A ^ value16) & 0x80) > 0))
+            SR |= 0x40;
+          else
+            SR &= 0xbf;
+
+          if (result >= 0x100)
+          {
+            SR |= 0x01;
+            if (result >= 0x180)
+              SR &= 0xbf;
+          }
+          else
+          {
+            SR &= 0xfe;
+            if (result < 0x80)
+              SR &= 0xbf;
+          }
         }
         setflags();
         A = result & 0xFF;
-        break;
-      //AND
+        if ((A & 0x80) == 0x80) // Negative
+          SR |= 0x80;
+        else
+          SR &= 0x7f;
+    		break;
+		    //AND
       case 0x29:
       case 0x25:
       case 0x35:
@@ -362,8 +385,9 @@ void run() {
         break;
       //BEQ
       case 0xF0:
-        if ((SR & SR_ZERO)) PC += argument_addr;
-        break;
+		if ((SR & SR_ZERO))
+			PC += argument_addr;
+		break;
       //BNE
       case 0xD0:
         if (!(SR & SR_ZERO)) PC += argument_addr;
@@ -371,21 +395,34 @@ void run() {
       //BIT
       case 0x24:
       case 0x2C:
-      case 0x89: //e
       case 0x34: //e
       case 0x3C: //e
         value8 = read8(argument_addr);
         result = A & value8;
         setflags();
         SR = (SR & 0x3F) | (value8 & 0xC0);
+        if (result == 0) // Zero Flag
+          SR |= 0x02;
+        else
+          SR &= 0xfd;
         break;
       //BMI
+      case 0x89: //e
+        value8 = read8(argument_addr);
+        result = A & value8;
+        if (result == 0) // Zero Flag
+          SR |= 0x02;
+        else
+          SR &= 0xfd;
+        break;
+		//BMI
       case 0x30:
         if ((SR & SR_NEG)) PC += argument_addr;
         break;
       //BPL
       case 0x10:
-        if (!(SR & SR_NEG)) PC += argument_addr;
+        if (!(SR & SR_NEG))
+         PC += argument_addr;
         break;
       //BRK
       case 0x00:
@@ -459,13 +496,17 @@ void run() {
       case 0xD6:
       case 0xCE:
       case 0xDE:
-      case 0x3A: //e
         value16 = (unsigned short)read8(argument_addr);
         result = value16 - 1;
         setflags();
         write8(argument_addr, result & 0xFF);
         break;
-      //DEX
+          case 0x3A: //e
+        result = A - 1;
+        setflags();
+        A = result;
+        break;
+		//DEX
       case 0xCA:
         result = --X;
         setflags();
@@ -495,13 +536,17 @@ void run() {
       case 0xF6:
       case 0xEE:
       case 0xFE:
-      case 0x1A: //e
         value16 = (unsigned short)read8(argument_addr);
         result = value16 + 1;
         setflags();
         write8(argument_addr, result & 0xFF);
         break;
-      //INX
+		  //INX
+      case 0x1A: //e
+        result = A + 1;
+        setflags();
+        A = result;
+        break;
       case 0xE8:
         result = ++X;
         setflags();
@@ -564,7 +609,7 @@ void run() {
         setflags();
         A = result & 0xFF;
         break;
-      //LSR
+		//LSR
       case 0x46:
       case 0x56:
       case 0x4E:
@@ -575,10 +620,7 @@ void run() {
         setflags();
         write8(argument_addr, result & 0xFF);
         break;
-      //NOP
-      case 0xEA:
-        break;
-      //ORA
+		//ORA
       case 0x09:
       case 0x05:
       case 0x15:
@@ -695,32 +737,24 @@ void run() {
       case 0xF1:
       case 0xF2:
         if (SR & SR_DEC) { // Decimal
-          value16 = (unsigned short)read8(argument_addr);
+            value16 = (unsigned short)read8(argument_addr);
+          if (!(((A ^ value16) & 0x80) > 0))
+            SR |= 0x40;
+          else
+            SR &= 0xbf;
           unsigned short value2 = (unsigned short)(A - value16 - (!(SR & 0x01 > 0)));
           result = (unsigned short)((unsigned short)(A & 0x0F) - (unsigned short)(value16 & 0x0F) - (unsigned short)(!(SR & 0x01 > 0)));
-          if ((result & 0x10) > 0) 
-              result = ((result - 0x06) & 0x0F) | ((A & 0xF0) - (value16 & 0xF0) - 0x10);
+          if ((result & 0x10) > 0)
+            result = ((result - 0x06) & 0x0F) | ((A & 0xF0) - (value16 & 0xF0) - 0x10);
           else
-              result = (result & 0x0F) | ((A & 0xF0) - (value16 & 0xF0));
+            result = (result & 0x0F) | ((A & 0xF0) - (value16 & 0xF0));
           if ((result & 0x100) > 0)
-              result -= 0x60;
+            result -= 0x60;
 
           if ((unsigned short)value2 < (unsigned short)0x0100) // carry
             SR |= 0x01;
           else
             SR &= 0xfe;
-          if (((value2 & 0xFF) & 0x80) > 0) // Negative
-            SR |= 0x80;
-          else
-            SR &= 0x7f;
-          if (!(((value2 & 0xFF) & 0xFF) > 0)) // Zero
-            SR |= 0x02;
-          else
-            SR &= 0xfd;
-          if ((((A ^ value2) & 0x80) > 0) && (((A ^ value16) & 0x80) > 0)) // overflow
-            SR |= 0x40;
-          else
-            SR &= 0xbf;
         }
         else {
           value16 = ((unsigned short)read8(argument_addr)) ^ 0x00FF;
@@ -728,8 +762,16 @@ void run() {
           setflags();
         }
         A = result & 0xFF;
+        if ((A & 0x80) > 0) // Negative
+          SR |= 0x80;
+        else
+          SR &= 0x7f;
+        if (!((A & 0xFF) > 0)) // Zero
+          SR |= 0x02;
+        else
+          SR &= 0xfd;
         break;
-      //SEC
+		//SEC
       case 0x38:
         SR |= SR_CARRY;
         break;
@@ -825,16 +867,88 @@ void run() {
         write8(argument_addr, value8);
         setflags();
         break;
+        //NOP
+      case 0x02:
+        PC++;
+        break;
+      case 0x22:
+        PC++;
+        break;
+      case 0x42:
+        PC++;
+        break;
+      case 0x62:
+        PC++;
+        break;
+      case 0x82:
+        PC++;
+        break;
+      case 0xc2:
+        PC++;
+        break;
+      case 0xe2:
+        PC++;
+        break;
+      case 0xea:
+        //PC++;
+        break;
+      case 0x03:
+        break;
+      case 0x13:
+        break;
+      case 0x23:
+        break;
+      case 0x33:
+        break;
+      case 0x43:
+        break;
+      case 0x53:
+        break;
+      case 0x63:
+        break;
+      case 0x73:
+        break;
+      case 0x83:
+        break;
+      case 0x93:
+        break;
+      case 0xa3:
+        break;
+      case 0xb3:
+        break;
+      case 0xc3:
+        break;
+      case 0xd3:
+        break;
+      case 0xe3:
+        break;
+      case 0xf3:
+        break;
+      case 0x44:
+        PC++;
+        break;
+      case 0x54:
+        PC++;
+        break;
+      case 0xd4:
+        PC++;
+        break;
+      case 0xf4:
+        PC++;
+        break;
+      case 0x5c:
+        PC++;
+        PC++;
+        break;
+      case 0xdc:
+        PC++;
+        PC++;
+        break;
+      case 0xfc:
+        PC++;
+        PC++;
+        break;
     }
     
   }
-}
-
-void printCPUStatus() {
-  char sFlags[8]; 
-      for (int f = 0;f<8;f++) {
-        sFlags[7-f] = (SR & (1 << f)) != 0 ? '1' : '0';
-      }
-      sprintf(buf, "[PC]%04X: %02X ,[Addr]%04X(%02X): A=%02X X=%02X Y=%02X FL=%02X(%s) OPFlag=%02X, cycleCount=%d, diffCycleCount=%d", lastPC, opcode, argument_addr, read8(argument_addr), A, X, Y, SR, sFlags, opflags, cycleCount, diffCpuCycleCount);
-      printlog(buf);
 }

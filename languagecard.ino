@@ -5,7 +5,7 @@ void languagecardWrite(ushort address, byte b)
     {
         if (address >= 0xd000 && address < 0xe000)
         {
-            if (memoryBankBankSelect1_2)
+            if (MemoryBankBankSelect1_2)
                 memoryBankSwitchedRAM2_1[address - 0xd000] = b;
             else
                 memoryBankSwitchedRAM2_2[address - 0xd000] = b;
@@ -13,7 +13,7 @@ void languagecardWrite(ushort address, byte b)
         else
             memoryBankSwitchedRAM1[address - 0xe000] = b;
     }
-    ProcessSwitch(address, b);
+    processSwitch(address, b);
 }
 
 char languagecardRead(ushort address)
@@ -21,7 +21,7 @@ char languagecardRead(ushort address)
     char ret = 0;
     if (address >= 0xd000 && address < 0xe000)
     {
-        if (memoryBankBankSelect1_2)
+        if (MemoryBankBankSelect1_2)
             ret = memoryBankSwitchedRAM2_1[address - 0xd000];
         else
             ret = memoryBankSwitchedRAM2_2[address - 0xd000];
@@ -29,10 +29,10 @@ char languagecardRead(ushort address)
     else if (address >= 0xd000)
         ret = memoryBankSwitchedRAM1[address - 0xe000];
 
-    return ProcessSwitch(address, ret);
+    return processSwitch(address, ret);
 }
 
-char ProcessSwitch(ushort address, byte b)
+char processSwitch(ushort address, byte b)
 {
     if (address >= 0xc080 && address < 0xc090)
     {
@@ -44,28 +44,28 @@ char ProcessSwitch(ushort address, byte b)
           bits[i] = (last4bits >> i) & 1;
         }
         
-        sprintf(buf, "Languege card switch: %04X", address);
+        //sprintf(buf, "Languege card switch: %04X", address);
         // Serial.println(buf);
-        memoryBankBankSelect1_2 = bits[3];
+        MemoryBankBankSelect1_2 = bits[3];
         if (bits[1] && bits[0])
         {
-            memoryBankReadRAM_ROM = true;
-            memoryBankWriteRAM_NoWrite = true;
+            MemoryBankReadRAM_ROM = true;
+            MemoryBankWriteRAM_NoWrite = true;
         }
         else if (!bits[1] && bits[0])
         {
-            memoryBankReadRAM_ROM = false;
-            memoryBankWriteRAM_NoWrite = true;
+            MemoryBankReadRAM_ROM = false;
+            MemoryBankWriteRAM_NoWrite = true;
         }
         else if (bits[1] && !bits[0])
         {
-            memoryBankReadRAM_ROM = false;
-            memoryBankWriteRAM_NoWrite = false;
+            MemoryBankReadRAM_ROM = false;
+            MemoryBankWriteRAM_NoWrite = false;
         }
         else if (!bits[1] && !bits[0])
         {
-            memoryBankReadRAM_ROM = true;
-            memoryBankWriteRAM_NoWrite = false;
+            MemoryBankReadRAM_ROM = true;
+            MemoryBankWriteRAM_NoWrite = false;
         }
     }
     return b;

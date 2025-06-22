@@ -1,4 +1,5 @@
-char processSoftSwitches(ushort address, char value, bool Read_Write = true) {
+char processSoftSwitches(ushort address, char value, bool Read_Write = true)
+{
   // Keyboard Data
   if (address == 0xC000)
   {
@@ -20,7 +21,7 @@ char processSoftSwitches(ushort address, char value, bool Read_Write = true) {
     RAMWriteOn_Off = false;
   else if (address == 0xc005)
     RAMWriteOn_Off = true;
-  else if (address == 0xc006) 
+  else if (address == 0xc006)
     IntCXRomOn_Off = false;
   else if (address == 0xc007)
     IntCXRomOn_Off = true;
@@ -47,35 +48,37 @@ char processSoftSwitches(ushort address, char value, bool Read_Write = true) {
   else if (address == 0xc00f)
     AltCharSetOn_Off = true;
   else if (address == 0xC010)
-    keyboard_strobe();
+    keyboardStrobe();
   else if (address == 0xc011)
-      return (byte)(RAMReadOn_Off ? 0xff : 0x00);
+    return (char)(IIEMemoryBankBankSelect1_2 ? 0x00 : 0xff);
+  else if (address == 0xc012)
+    return (char)(IIEMemoryBankReadRAM_ROM ? 0xff : 0x00);
   else if (address == 0xc014)
-      return (byte)(RAMWriteOn_Off ? 0xff : 0x00);
+    return (byte)(RAMWriteOn_Off ? 0xff : 0x00);
   else if (address == 0xc015)
     return (char)(IntCXRomOn_Off ? 0xff : 0x00);
   else if (address == 0xc016)
-      return (char)(AltZPOn_Off ? 0xff : 0x00);
+    return (char)(AltZPOn_Off ? 0xff : 0x00);
   else if (address == 0xc017)
-      return (char)(SlotC3RomOn_Off ? 0xff : 0x00);
+    return (char)(SlotC3RomOn_Off ? 0xff : 0x00);
   else if (address == 0xc018)
-      return (char)(Store80On_Off ? 0xff : 0x00);
+    return (char)(Store80On_Off ? 0xff : 0x00);
   else if (address == 0xc019)
-      return (char)(Vertical_blankingOn_Off ? 0xff : 0x00);
+    return (char)(Vertical_blankingOn_Off ? 0xff : 0x00);
   else if (address == 0xc01a)
-      return (char)(Graphics_Text ? 0x00 : 0xff);
+    return (char)(Graphics_Text ? 0x00 : 0xff);
   else if (address == 0xc01b)
-      return (char)(DisplayFull_Split ? 0x00 : 0xff);
+    return (char)(DisplayFull_Split ? 0x00 : 0xff);
   else if (address == 0xc01c)
-      return (char)(Page1_Page2 ? 0x00 : 0xff);
+    return (char)(Page1_Page2 ? 0x00 : 0xff);
   else if (address == 0xc01d)
-      return (char)(LoRes_HiRes ? 0x00 : 0xff);
+    return (char)(LoRes_HiRes ? 0x00 : 0xff);
   else if (address == 0xc01e)
-      return (char)(AltCharSetOn_Off ? 0xff : 0x00);
+    return (char)(AltCharSetOn_Off ? 0xff : 0x00);
   else if (address == 0xc01f)
-      return (char)(Cols40_80 ? 0x00 : 0xff);
-  else if(address == 0xC030)
-    speaker_toggle();
+    return (char)(Cols40_80 ? 0x00 : 0xff);
+  else if (address == 0xC030)
+    speakerToggle();
   else if (address == 0xc050)
     Graphics_Text = true;
   else if (address == 0xc051)
@@ -90,7 +93,8 @@ char processSoftSwitches(ushort address, char value, bool Read_Write = true) {
     Page1_Page2 = true;
     page_lock.unlock();
   }
-  else if (address == 0xc055) {
+  else if (address == 0xc055)
+  {
     page_lock.lock();
     Page1_Page2 = false;
     page_lock.unlock();
@@ -99,19 +103,23 @@ char processSoftSwitches(ushort address, char value, bool Read_Write = true) {
     LoRes_HiRes = true;
   else if (address == 0xc057)
     LoRes_HiRes = false;
-  else if (address == 0xc058)
+  else if (address == 0xc058) {
     Cols40_80 = true;
-  else if (address == 0xc059)
+  }
+  else if (address == 0xc059) {
     Cols40_80 = false;
+  }
   else if (address == 0xc05e)
   {
-    if (IOUDisOn_Off)
+    if (IOUDisOn_Off) {
       DHiResOn_Off = true;
+    }
   }
   else if (address == 0xc05f)
   {
-    if (IOUDisOn_Off)
+    if (IOUDisOn_Off) {
       DHiResOn_Off = false;
+    }
   }
   else if (address == 0xc061)
     return (char)(Pb0 ? 0x80 : 0x00);
@@ -119,8 +127,8 @@ char processSoftSwitches(ushort address, char value, bool Read_Write = true) {
     return (char)(Pb1 ? 0x80 : 0x00);
   else if (address == 0xc063)
     return (char)(Pb2 ? 0x80 : 0x00);
-      //else if (address == 0xc063)
-      //    return 0x80; // Apple II+ default. For Apple IIe it is defined by shift key pressed
+  // else if (address == 0xc063)
+  //     return 0x80; // Apple II+ default. For Apple IIe it is defined by shift key pressed
   else if (address == 0xc064)
     return (char)(Cg0 ? 0x80 : 0x00);
   else if (address == 0xc065)
@@ -131,27 +139,87 @@ char processSoftSwitches(ushort address, char value, bool Read_Write = true) {
     return (char)(Cg3 ? 0x80 : 0x00);
   else if (address == 0xc070)
   {
-      CgReset0 = true;
-      CgReset1 = true;
-      CgReset2 = true;
-      CgReset3 = true;
-      Cg0 = true;
-      Cg1 = true;
-      Cg2 = true;
-      Cg3 = true;
+    CgReset0 = true;
+    CgReset1 = true;
+    CgReset2 = true;
+    CgReset3 = true;
+    Cg0 = true;
+    Cg1 = true;
+    Cg2 = true;
+    Cg3 = true;
+  }
+  else if (address == 0xc071 || address == 0xc073 || address == 0xc075 || address == 0xc077)
+  {
+    /*if (b < mainBoard.IIEAuxBanks)
+        IIeExpansionCardBank = b;*/
+  }
+  else if (address == 0xc07f)
+  {
+    if (Read_Write)
+    {
+      return (byte)(DHiResOn_Off ? 0xff : 0x00);
+    }
+    else
+      IOUDisOn_Off = false;
+  }
+  else if (address == 0xc07e)
+  {
+    if (Read_Write)
+    {
+      return (byte)(IOUDisOn_Off ? 0x00 : 0xff);
+    }
+    else
+      IOUDisOn_Off = true;
   }
   else if (address >= 0xc080 && address < 0xc090) // Slot 0 - LanguageCard
   {
-    if (Read_Write)
-      return languagecardRead(address);
+    if (AppleIIe)
+    {
+      if (address >= 0xc080 && address < 0xc090)
+      {
+        ushort last4bits = (address & 0b00001111);
+
+        bool bits[4];
+        for (int i = 0; i < 4; i++)
+        {
+          bits[i] = (last4bits >> i) & 1;
+        }
+        IIEMemoryBankBankSelect1_2 = bits[3];
+        if (bits[1] && bits[0])
+        {
+          IIEMemoryBankReadRAM_ROM = true;
+          IIEMemoryBankWriteRAM_NoWrite = true;
+        }
+        else if (!bits[1] && bits[0])
+        {
+          IIEMemoryBankReadRAM_ROM = false;
+          IIEMemoryBankWriteRAM_NoWrite = true;
+        }
+        else if (bits[1] && !bits[0])
+        {
+          IIEMemoryBankReadRAM_ROM = false;
+          IIEMemoryBankWriteRAM_NoWrite = false;
+        }
+        else if (!bits[1] && !bits[0])
+        {
+          IIEMemoryBankReadRAM_ROM = true;
+          IIEMemoryBankWriteRAM_NoWrite = false;
+        }
+      }
+    }
     else
-      languagecardWrite(address, value);
+    {
+      if (Read_Write)
+        return languagecardRead(address);
+      else
+        languagecardWrite(address, value);
+    }
   }
   else if (address >= 0xc0e0 && address < 0xc0f0) // Slot 6 - Disk
     if (Read_Write)
-      return diskAttached ? DiskSoftSwitchesRead(address) : 0;
-    else 
-      DiskSoftSwitchesWrite(address, value);
+      return diskAttached ? diskSoftSwitchesRead(address) : 0;
+    else
+      diskSoftSwitchesWrite(address, value);
   else if (address >= 0xc0f0 && address < 0xc100) // Slot 7 - HD
   {
     if (Read_Write)
@@ -171,4 +239,3 @@ void writeSoftSwitches(ushort address, char value)
 {
   processSoftSwitches(address, value, false);
 }
-

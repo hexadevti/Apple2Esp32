@@ -21,30 +21,60 @@ size_t hdDiskImageSize ;
 ushort fileHeaderSize = 0;
 unsigned char actualBlock[512];
 std::vector<std::string> fileExtensions = { ".hdv", ".po", ".2mg" };
-
+File hdFile;
+ushort lastBlock = -1;
 
 void HDSetup()
 {
-  printlog("HS Setup...");
-  LoadHD();
-  if (HdDisk)
-    getHdFileInfo(SD);
+  if (HdDisk) {
+    hdAttached = true;
+    printLog("HD Setup...");
+    if (!FSTYPE.begin(true)) {
+      Serial.println("FSTYPE Mount Failed");
+      return;
+    }
+    sprintf(buf, "FS.freeSpace = %d bytes", FSTYPE.totalBytes() - FSTYPE.usedBytes());
+    printLog(buf);
+    if (HdDisk) {
+      getHdFileInfo(FSTYPE);
+      xTaskCreate(getBlockAsync, "getBlockAsync", 4096, NULL, 1, NULL);
+    }
+  }
 }
 
-void LoadHD() 
+void getBlockAsync(void *pvParameters) {
+  int count = 0;
+  while (running)
+  {
+    if (trackPendingSave && !DriveMotorON_OFF) {
+      if (count > 5) {
+        Serial.println("Late Save.");
+        saveImage(FSTYPE, diskTrack);
+        getTrack(FSTYPE, diskTrack, true);
+        trackPendingSave = false;
+        count = 0;
+      }
+      count++;
+    }
+    delay(10);
+  }
+  
+}
+
+void loadHD() 
 {
-  loadHDDir(SD, "/", 0);
+  loadHDDir(FSTYPE, "/", 0);
 }
 
 char HDSoftSwitchesRead(ushort address)
 {
   // sprintf(buf,"HDSoftSwitchesRead %04X", address);
-  // printlog(buf);
+  // printLog(buf);
   if (address == 0xc0f0) { 
     switch (hdCommand) {
       case 0x01:
         hdStatus = 0xb7;
-        hdStatus = LoadBlock(hdMemoryBuffer, hdBlockNumber);
+        hdStatus = loadBlock(hdMemoryBuffer, hdBlockNumber);
         return hdStatus;
       default:
         break;
@@ -92,7 +122,6 @@ void HDSoftSwitchesWrite(ushort address, char value) {
   }
 }
 
-
 void getHdFileInfo(fs::FS &fs)
 {
   if (!fs.exists(selectedHdFileName.c_str())) 
@@ -100,26 +129,21 @@ void getHdFileInfo(fs::FS &fs)
     selectedHdFileName = "";
   }
   File file = fs.open(selectedHdFileName.c_str());
-  sprintf(buf, "APPLE2ESP32 - %s", selectedHdFileName.c_str());
-  printMsg(buf, TFT_RED);
-  printlog(buf);
   size_t len = file.size();
-  Serial.print("File Size: ");
+  printLog("File Size: ");
   hdDiskImageSize = len;
   if (len % 512 > 0)
   {
     fileHeaderSize = len - floor(len / 512) * 512;
   }
   file.close();
-  Serial.print("File Header Size: ");Serial.println(fileHeaderSize);
+  printLog("File Header Size: ");Serial.println(fileHeaderSize);
 }
 
 void nextHdFile()
 {
   if (shownFile < (int)((hdFiles.size())-1)) {
     shownFile++;
-    sprintf(buf, "APPLE2ESP32 - %s",hdFiles[shownFile].c_str());
-    printMsg(buf, 0x0000ff);
   }
 }
 
@@ -127,8 +151,6 @@ void prevHdFile()
 {
   if (shownFile > 0) {
     shownFile--;
-    sprintf(buf, "APPLE2ESP32 - %s", hdFiles[shownFile].c_str());
-    printMsg(buf, 0x0000ff);
   }
 }
 
@@ -145,29 +167,32 @@ void setHdFile()
 {
   paused = true;
   selectedHdFileName = hdFiles[shownFile].c_str();
-  sprintf(buf, "APPLE2ESP32 - %s", selectedHdFileName.c_str());
-  printMsg(buf, TFT_RED);
   paused = false;
 }
 
-char LoadBlock(unsigned short address, unsigned short block)
+char loadBlock(unsigned short address, unsigned short block)
 {
-  digitalWrite(RED_LED_PIN,HIGH);
-  getBlock(SD, block);
+  //neopixelWrite(RGB_BUILTIN,RGB_BRIGHTNESS,0,0); // Red
+  digitalWrite(BLUE_LED_PIN,HIGH);
+  getBlock(FSTYPE, block);
   try
   {
+    // sprintf(buf,"Write block to memory: %d", block);
+    // printLog(buf);
     for (int i = 0; i < 512; i++)
     {
-      // sprintf(buf,"Load block %04X:%02X", (address + i), actualBlock[i]);
-      // printlog(buf);
       write8((address + i), actualBlock[i]);
     }
-    digitalWrite(RED_LED_PIN,LOW);
+    //printLog("512 bytes written");
+    //neopixelWrite(RGB_BUILTIN,0,0,0); // Off / black
+    digitalWrite(BLUE_LED_PIN,LOW);
     return 0;
   }
   catch(std::exception ex)
   {
-    digitalWrite(RED_LED_PIN,LOW);
+    //neopixelWrite(RGB_BUILTIN,0,0,0); // Off / black
+    digitalWrite(BLUE_LED_PIN,LOW);
+    //digitalWrite(LED_BUILTIN,LOW);
     return 0xb0;
   }
 }
@@ -177,38 +202,49 @@ ushort getBlockQty()
   return (ushort)((hdDiskImageSize - fileHeaderSize) / 512);
 }
 
-
 void getBlock(fs::FS &fs, ushort block) 
 {
-  size_t positionToRead = block * 512 + fileHeaderSize;
-  File file = fs.open(selectedHdFileName.c_str());
-  size_t len = file.size();;
-  uint32_t start = millis();
-  uint32_t end = start;
-  if (file) {
-    if (file.seek(positionToRead))
-    {
-      file.read(actualBlock, 512);
-      // // // Serial.print("File Read Block:");// // // Serial.println(block);
+  // sprintf(buf,"File getBlock: %d", block);
+  // printLog(buf);
+  if (block != lastBlock + 1) {
+    //printLog("New");
+    if (hdFile.available())
+      hdFile.close();
+      
+    hdFile = fs.open(selectedHdFileName.c_str());
+    if (hdFile) {
+      size_t positionToRead = block * 512 + fileHeaderSize;
+      if (hdFile.seek(positionToRead))
+      {
+        hdFile.read(actualBlock, 512);
+        //printSequence(20);
+        
+      }
     }
-    end = millis() - start;
-    file.close();
-  } else {
-    printlog("Failed to open file for reading");
   }
+  else
+  {
+    //printLog("Sequential");
+    if (hdFile.available()) {
+      hdFile.read(actualBlock, 512);
+      //printSequence(20);
+    }
+  }
+  lastBlock = block;
 }
 
 void loadHDDir(fs::FS &fs, const char *dirname, uint8_t levels) {
   // sprintf(buf,"Loading directory: %s\n", dirname);
-  // printlog(buf);
+  // printLog(buf);
+  hdFiles.clear();
 
   File root = fs.open(dirname);
   if (!root) {
-    printlog("Failed to open directory");
+    printLog("Failed to open directory");
     return;
   }
   if (!root.isDirectory()) {
-    printlog("Not a directory");
+    printLog("Not a directory");
     return;
   }
 
@@ -216,8 +252,8 @@ void loadHDDir(fs::FS &fs, const char *dirname, uint8_t levels) {
   int i = 0;
   while (file) {
     if (file.isDirectory()) {
-      // printlog("  DIR : ");
-      // printlog(file.name());
+      // printLog("  DIR : ");
+      // printLog(file.name());
       if (levels) {
         loadHDDir(fs, file.path(), levels - 1);
       }
@@ -236,7 +272,7 @@ void loadHDDir(fs::FS &fs, const char *dirname, uint8_t levels) {
       if (acepted)
       {
         // sprintf(buf, " FOUND FILE: %s SIZE: %d", file.name(), file.size());
-        // printlog(buf);
+        // printLog(buf);
         std::string str(file.name());
         hdFiles.push_back("/" + str);
       }

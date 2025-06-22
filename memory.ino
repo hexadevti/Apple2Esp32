@@ -1,3 +1,29 @@
+void memoryAlloc() {
+  ram = (unsigned char*)malloc(0xc000 * sizeof(unsigned char));
+  auxram = (unsigned char*)malloc(0xc000 * sizeof(unsigned char));
+  memoryBankSwitchedRAM1 = (unsigned char*)malloc(0x2000 * sizeof(unsigned char));
+  memoryBankSwitchedRAM2_1 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
+  memoryBankSwitchedRAM2_2 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
+  IIEAuxBankSwitchedRAM1 = (unsigned char*)malloc(0x2000 * sizeof(unsigned char));
+  IIEAuxBankSwitchedRAM2_1 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
+  IIEAuxBankSwitchedRAM2_2 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
+  IIEmemoryBankSwitchedRAM1 = (unsigned char*)malloc(0x2000 * sizeof(unsigned char));
+  IIEmemoryBankSwitchedRAM2_1 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
+  IIEmemoryBankSwitchedRAM2_2 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
+
+  memset(ram, 0, 0xc000 * sizeof(unsigned char));
+  memset(auxram, 0, 0xc000 * sizeof(unsigned char));
+  memset(memoryBankSwitchedRAM1, 0, 0x2000 * sizeof(unsigned char));
+  memset(memoryBankSwitchedRAM2_1, 0, 0x1000 * sizeof(unsigned char));
+  memset(memoryBankSwitchedRAM2_2, 0, 0x1000 * sizeof(unsigned char));
+  memset(IIEAuxBankSwitchedRAM1, 0, 0x2000 * sizeof(unsigned char));
+  memset(IIEAuxBankSwitchedRAM2_1, 0, 0x1000 * sizeof(unsigned char));
+  memset(IIEAuxBankSwitchedRAM2_2, 0, 0x1000 * sizeof(unsigned char));
+  memset(IIEmemoryBankSwitchedRAM1, 0, 0x2000 * sizeof(unsigned char));
+  memset(IIEmemoryBankSwitchedRAM2_1, 0, 0x1000 * sizeof(unsigned char));
+  memset(IIEmemoryBankSwitchedRAM2_2, 0, 0x1000 * sizeof(unsigned char));
+}
+
 unsigned char read8(unsigned short address)
 {
   unsigned char page = address >> 8;
@@ -109,7 +135,7 @@ unsigned char read8(unsigned short address)
   }
   else if (page >= 0xd0)
   {
-    if (memoryBankReadRAM_ROM)
+    if (MemoryBankReadRAM_ROM)
     {
       return languagecardRead(address);
     }
@@ -118,23 +144,23 @@ unsigned char read8(unsigned short address)
 
       if (AppleIIe)
       {
-        if (memoryBankReadRAM_ROM)
+        if (IIEMemoryBankReadRAM_ROM)
         {
           if (address >= 0xd000 && address < 0xe000)
           {
-            if (memoryBankBankSelect1_2)
+            if (IIEMemoryBankBankSelect1_2)
             {
               if (AltZPOn_Off)
                 return IIEAuxBankSwitchedRAM2_1[address - 0xd000];
               else
-                return memoryBankSwitchedRAM2_1[address - 0xd000];
+                return IIEmemoryBankSwitchedRAM2_1[address - 0xd000];
             }
             else
             {
               if (AltZPOn_Off)
                 return IIEAuxBankSwitchedRAM2_2[address - 0xd000];
               else
-                return memoryBankSwitchedRAM2_2[address - 0xd000];
+                return IIEmemoryBankSwitchedRAM2_2[address - 0xd000];
             }
           }
           else if (address >= 0xd000)
@@ -142,7 +168,7 @@ unsigned char read8(unsigned short address)
             if (AltZPOn_Off)
               return IIEAuxBankSwitchedRAM1[address - 0xe000];
             else
-              return memoryBankSwitchedRAM1[address - 0xe000];
+              return IIEmemoryBankSwitchedRAM1[address - 0xe000];
           }
         }
         else
@@ -234,19 +260,19 @@ void write8(unsigned short address, unsigned char value)
     {
       if (address >= 0xd000 && address < 0xe000)
       {
-        if (memoryBankBankSelect1_2)
+        if (IIEMemoryBankBankSelect1_2)
         {
           if (AltZPOn_Off)
             IIEAuxBankSwitchedRAM2_1[address - 0xd000] = value;
           else
-            memoryBankSwitchedRAM2_1[address - 0xd000] = value;
+            IIEmemoryBankSwitchedRAM2_1[address - 0xd000] = value;
         }
         else
         {
           if (AltZPOn_Off)
             IIEAuxBankSwitchedRAM2_2[address - 0xd000] = value;
           else
-            memoryBankSwitchedRAM2_2[address - 0xd000] = value;
+            IIEmemoryBankSwitchedRAM2_2[address - 0xd000] = value;
         }
       }
       else
@@ -254,12 +280,12 @@ void write8(unsigned short address, unsigned char value)
         if (AltZPOn_Off)
           IIEAuxBankSwitchedRAM1[address - 0xe000] = value;
         else
-          memoryBankSwitchedRAM1[address - 0xe000] = value;
+          IIEmemoryBankSwitchedRAM1[address - 0xe000] = value;
       }
     }
     else
     {
-      if (memoryBankWriteRAM_NoWrite)
+      if (MemoryBankWriteRAM_NoWrite)
         languagecardWrite(address, value);
     }
   }
