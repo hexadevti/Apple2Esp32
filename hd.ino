@@ -152,7 +152,7 @@ void setHdFile()
 
 char LoadBlock(unsigned short address, unsigned short block)
 {
-  digitalWrite(LED_PIN,HIGH);
+  digitalWrite(RED_LED_PIN,HIGH);
   getBlock(SD, block);
   try
   {
@@ -162,12 +162,12 @@ char LoadBlock(unsigned short address, unsigned short block)
       // printlog(buf);
       write8((address + i), actualBlock[i]);
     }
-    digitalWrite(LED_PIN,LOW);
+    digitalWrite(RED_LED_PIN,LOW);
     return 0;
   }
   catch(std::exception ex)
   {
-    digitalWrite(LED_PIN,LOW);
+    digitalWrite(RED_LED_PIN,LOW);
     return 0xb0;
   }
 }

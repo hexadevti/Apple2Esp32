@@ -205,8 +205,8 @@ void nextDiskFile()
   if (shownFile < (int)((diskFiles.size()) - 1))
   {
     shownFile++;
-    // sprintf(buf, "APPLE2ESP32 - %s",diskFiles[shownFile].c_str());
-    // printMsg(buf, 0x0000ff);
+    sprintf(buf, "APPLE2ESP32 - %s",diskFiles[shownFile].c_str());
+    printMsg(buf, TFT_BLUE);
   }
 }
 
@@ -215,8 +215,8 @@ void prevDiskFile()
   if (shownFile > 0)
   {
     shownFile--;
-    // sprintf(buf, "APPLE2ESP32 - %s", diskFiles[shownFile].c_str());
-    // printMsg(buf, 0x0000ff);
+    sprintf(buf, "APPLE2ESP32 - %s", diskFiles[shownFile].c_str());
+    printMsg(buf, TFT_BLUE);
   }
 }
 
@@ -688,12 +688,12 @@ char ProcessSwitchc0e0(ushort address, char value)
   else if (address == 0xc0e8)
   {
     DriveMotorON_OFF = false;
-    digitalWrite(LED_PIN, LOW);
+    digitalWrite(GREEN_LED_PIN, HIGH);
   }
   else if (address == 0xc0e9)
   {
     DriveMotorON_OFF = true;
-    digitalWrite(LED_PIN, HIGH);
+    digitalWrite(GREEN_LED_PIN, LOW);
   }
   else if (address == 0xc0ea)
     Drive1_2 = true;

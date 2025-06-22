@@ -133,13 +133,11 @@ void keyboard_bit() {
                 {
                   changeHdDisk();
                   updateOptions(true);
-                  //Serial.println("f1");
                 }
                 else if (keyboard_data[2] == 0x06) // F2
                 {
                   changeIIpIIe();
                   updateOptions(true);
-                  //Serial.println("f2");
                 }
                 else if (keyboard_data[2] == 0x04) // F3
                 {

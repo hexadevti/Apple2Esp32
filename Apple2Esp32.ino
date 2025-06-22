@@ -1,7 +1,4 @@
-//#include <ESP32Lib.h>
 #include <TFT_eSPI.h>
-// #include <Ressources/Font8x8.h>
-// #include <Ressources/Font6x8.h>
 #include "rom.h"
 #include "FS.h"
 #include "SD.h"
@@ -26,15 +23,17 @@ const int green1pin = 19;
 const int blue0pin = 4;
 const int blue1pin = 6;
 // Keyboard Pins
-const int DataPin = 32;
-const int IRQpin = 33;
+const int DataPin = 21;
+const int IRQpin = 22;
 // SD Pins
 int sck = 18;
 int miso = 19;
 int mosi = 23;
 int cs = 5;
 
-#define LED_PIN 2
+#define RED_LED_PIN 4
+#define GREEN_LED_PIN 17
+#define BLUE_LED_PIN 16
 #define JOY_MAX 20000
 #define JOY_MID 1230
 #define JOY_MIN 10
@@ -130,8 +129,6 @@ static unsigned char* IIEAuxBankSwitchedRAM1;
 static unsigned char* IIEAuxBankSwitchedRAM2_1;
 static unsigned char* IIEAuxBankSwitchedRAM2_2;
 
-
-
 static bool CgReset0 = false;
 static bool CgReset1 = false;
 static bool CgReset2 = false;
@@ -150,14 +147,18 @@ static bool Pb2 = false;
 
 void setup() {
   Serial.begin(115200);
-  pinMode(LED_PIN,OUTPUT);
+
+  pinMode(RED_LED_PIN,INPUT);
+  pinMode(GREEN_LED_PIN,OUTPUT);
+  pinMode(BLUE_LED_PIN,INPUT);
+  
   EEPROM.begin(EEPROM_SIZE);
-  EEPROM.write(HdDiskEEPROMaddress, false);
-  EEPROM.write(IIpIIeEEPROMaddress, true);
-  EEPROM.write(Fast1MhzSpeedEEPROMaddress, false);
-  EEPROM.write(JoystickEEPROMaddress, false);
-  writeStringToEEPROM(HdFileNameEEPROMaddress, "/Total Replay v5.1.hdv");
-  writeStringToEEPROM(DiskFileNameEEPROMaddress, "/ghostbusters.dsk");
+  // EEPROM.write(HdDiskEEPROMaddress, false);
+  // EEPROM.write(IIpIIeEEPROMaddress, true);
+  // EEPROM.write(Fast1MhzSpeedEEPROMaddress, false);
+  // EEPROM.write(JoystickEEPROMaddress, true);
+  // writeStringToEEPROM(HdFileNameEEPROMaddress, "/Total Replay v5.1.hdv");
+  // writeStringToEEPROM(DiskFileNameEEPROMaddress, "/teste lu de ro.DSK");
 
   HdDisk = EEPROM.readBool(HdDiskEEPROMaddress);
   AppleIIe = EEPROM.readBool(IIpIIeEEPROMaddress);
@@ -196,10 +197,10 @@ memset(IIEAuxBankSwitchedRAM2_1, 0, 0x1000 * sizeof(unsigned char));
 memset(IIEAuxBankSwitchedRAM2_2, 0, 0x1000 * sizeof(unsigned char));
 
 
-
+  joystick = true;
   SDCardSetup();
   //serialVideoSetup();
-  //keyboard_begin();
+  keyboard_begin();
   sei();
   HDSetup();
   DiskSetup();
@@ -207,6 +208,7 @@ memset(IIEAuxBankSwitchedRAM2_2, 0, 0x1000 * sizeof(unsigned char));
   // diskAttached = false;
 
   speaker_begin();
+  //analogJoystickSetup();
   printlog("Ready.");
   setCpuFrequencyMhz(240);
 
