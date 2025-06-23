@@ -1,6 +1,7 @@
-//#include <ESPAsyncWebServer.h>
-//#include <Update.h>
-//#include <ESPmDNS.h>
+#include <TFT_eSPI.h>
+#include <ESPAsyncWebServer.h>
+#include <Update.h>
+#include <ESPmDNS.h>
 #include <LittleFS.h>
 #include "FS.h"
 #include "SD.h"
@@ -30,11 +31,24 @@ bool opened = false;
 static String filelist = "";
 static int freeSpace = 0;
 
-// VGA Config
+// Video Config
 TFT_eSPI tft = TFT_eSPI();
 static const uint16_t screenWidth  = 240;
 static const uint16_t screenHeight = 320;
 static std::mutex page_lock;
+
+int margin_x = 20;
+int margin_x_dhgr = 20;
+int margin_x_80cols = 30;
+
+int margin_y = 24;
+int text_margin_x = 2;
+int text_margin_y = 3;
+
+
+// Keyboard pins
+#define DataPin 21
+#define IRQpin 22
 
 // LittleFS
 #define U_PART U_SPIFFS
@@ -42,9 +56,9 @@ static std::mutex page_lock;
 
 // SD Config
 #define sck 18
-#define miso 8
-#define mosi 3
-#define cs 46
+#define miso 19
+#define mosi 23
+#define cs 5
 std::vector<std::string> hdFiles;
 std::vector<std::string> diskFiles;
 
@@ -53,6 +67,12 @@ std::vector<std::string> diskFiles;
 #define JOY_MID 1230
 #define JOY_MIN 10
 #define EEPROM_SIZE 1024
+
+// Led Config
+//#define RED_LED_PIN 4
+#define GREEN_LED_PIN 17
+//#define BLUE_LED_PIN 16
+
 
 // Fetures default Config
 static bool running = true;

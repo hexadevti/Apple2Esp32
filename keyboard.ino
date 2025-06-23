@@ -131,28 +131,29 @@ void keyboard_bit() {
                 }
                 else if (keyboard_data[2] == 0x05) // F1
                 {
-                  changeHdDisk();
-                  updateOptions(true);
+                  HdDisk = !HdDisk;
+                  updateOptions(true, true);
+                  
                 }
                 else if (keyboard_data[2] == 0x06) // F2
                 {
-                  changeIIpIIe();
-                  updateOptions(true);
+                  AppleIIe = !AppleIIe;
+                  updateOptions(true, false);
                 }
                 else if (keyboard_data[2] == 0x04) // F3
                 {
-                  fast1MhzSpeed();
-                  updateOptions(true);
+                  Fast1MhzSpeed = !Fast1MhzSpeed;
+                  updateOptions(true, false);
                 }
                 else if (keyboard_data[2] == 0x0c) // F4
                 {
-                  pauseRunning();
-                  updateOptions(true);
+                  paused = !paused;
+                  updateOptions(true, false);
                 }
                 else if (keyboard_data[2] == 0x03) // F5
                 {
-                  joystickOnOff();
-                  updateOptions(true);
+                  joystick = !joystick;
+                  updateOptions(true, false);
                 }
                 
                 keymem = 0;
@@ -203,7 +204,7 @@ void keyboard_bit() {
                   nextDiskFile();
                 else
                   nextHdFile();
-                updateOptions(true);
+                updateOptions(true, false);
               
               //Serial.println("down");
             }
@@ -213,7 +214,7 @@ void keyboard_bit() {
                 prevDiskFile();
               else
                 prevHdFile();
-              updateOptions(false);
+              updateOptions(false, false);
               //Serial.println("up");
             }
             keymem = 0;

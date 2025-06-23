@@ -1,16 +1,20 @@
-const uint16_t colors[] PROGMEM = {TFT_BLACK, TFT_GREEN, TFT_PURPLE, TFT_WHITE, TFT_BLACK, tft.color565(255,20,0), TFT_SKYBLUE, TFT_WHITE};
-const int colors16[] PROGMEM = {0x000000, 0x3300dd, 0x990000, 0xdd22dd, 0x227700, 0x444444, 0xff2222, 0xcc8844, 0x004477, 0x0044dd, 0x888888, 0x6677dd, 0x00dd11, 0x00ffff, 0x88ee33, 0xffffff};
+const uint16_t colors[8] PROGMEM = {TFT_BLACK, TFT_GREEN, TFT_PURPLE, TFT_WHITE, TFT_BLACK, tft.color565(255, 20, 0), TFT_SKYBLUE, TFT_WHITE};
+const uint16_t colors16[16] PROGMEM = { tft.color565(0, 0, 0), tft.color565(147, 11, 124), tft.color565(98, 76, 0), tft.color565(249, 86, 29), 
+  tft.color565(0, 118, 12), tft.color565(126, 126, 126), tft.color565(67, 200, 0), tft.color565(220, 205, 22), 
+  tft.color565(31, 53, 211), tft.color565(187, 54, 255), tft.color565(126, 126, 126), tft.color565(255, 129, 236), 
+  tft.color565(7, 168, 224), tft.color565(157, 172, 255), tft.color565(93, 247, 132), tft.color565(255, 255, 255)
+};
 int flashCount = 0;
 int width = 280;
 int height = 192;
 
 void videoSetup()
 {
-  printlog("Video Setup...");
-  tft.begin();        /*初始化*/
-  tft.setRotation(1); /* 旋转 */
+  printLog("Video Setup...");
+  tft.begin();
+  tft.setRotation(1);
   tft.invertDisplay(true);
-  tft.initDMA();      /* 初始化DMA */
+  tft.initDMA(); 
   tft.fillRect(0, 0, 320, 240, TFT_BLACK);
 
   tft.fillRect(20, 24, 280, 192, TFT_BLACK);
@@ -52,26 +56,34 @@ void graphicFlashCharacters(void *pvParameters)
   bool inversed = false;
   while (true)
   {
-    if (OptionsWindow) {
+    if (OptionsWindow)
+    {
       tft.fillRect(40, 40, 240, 160, 0);
       tft.drawRect(41, 41, 238, 158, TFT_RED);
-      
+
       while (OptionsWindow)
       {
         vTaskDelay(pdMS_TO_TICKS(20));
       }
-      
     }
-    else {
-      tft.setAddrWindow(margin_x, margin_y, 280, 192); // Set the area to draw
-      
+    else
+    {
+      if (AppleIIe && !Cols40_80)
+        tft.setAddrWindow(0, margin_y, 320, 192); // Set the area to draw
+      else
+        tft.setAddrWindow(margin_x, margin_y, 280, 192); // Set the area to draw
       page_lock.lock();
-      
+
       tft.startWrite();
-      
-      int x = margin_x;
-      int y = margin_y;
       Vertical_blankingOn_Off = false; // IIe video problem with Total Replay
+
+      int x;
+      if (Cols40_80)
+        x = margin_x;
+      else
+        x = margin_x_80cols;
+      x = DHiResOn_Off ? margin_x_dhgr : margin_x;
+      int y = margin_y;
       ushort textPage = Page1_Page2 ? 0x400 : 0x800;
       ushort graphicsPage = Page1_Page2 ? 0x2000 : 0x4000;
       for (int b = 0; b < 3; b++)
@@ -94,20 +106,117 @@ void graphicFlashCharacters(void *pvParameters)
                     int secondColor = value & 0b00001111;
                     if (j < 4)
                     {
-                      if (!optionsScreenBlank(x,y))
+                      if (!optionsScreenBlank(x, y))
                         tft.writeColor(colors16[secondColor], 1);
-                      //  vga.dotFast(x, y, // vga.RGB(colors16[secondColor]));
                     }
                     else
                     {
-                      if (!optionsScreenBlank(x,y))
+                      if (!optionsScreenBlank(x, y))
                         tft.writeColor(colors16[firstColor], 1);
-                      //  vga.dotFast(x, y, // vga.RGB(colors16[firstColor]));
                     }
                     x++;
                   }
                 }
                 y++;
+              }
+            }
+            else if (DHiResOn_Off)
+            {
+              if (videoColor) 
+              {
+                for (int block = 0; block < 8; block++)
+                {
+                  bool line[0x50 * 7];
+                  int lineId = 0;
+                  bool last7bits = false;
+                  for (ushort c = 0; c < 0x50; c++)
+                  {
+                    char chr;
+                    if (c % 2 == 0)
+                    {
+                      chr = auxram[(ushort)((0x2000 + (b * 0x28) + (l * 0x80) + c / 2) + block * 0x400)];
+                    }
+                    else
+                    {
+                      chr = ram[(ushort)((0x2000 + (b * 0x28) + (l * 0x80) + (c - 1) / 2) + block * 0x400)];
+                    }
+                    bool blockline[8];
+                    for (int i = 0; i < 8; i++)
+                      blockline[7 - i] = (chr & (1 << i)) != 0;
+
+                    for (int i = 7; i > 0; i--)
+                    {
+                      line[lineId] = blockline[i];
+                      lineId++;
+                    }
+                  }
+                  for (int i = 0; i < 0x50 * 7; i = i + 4)
+                  {
+                    char co = (char)(line[i] ? (char)8 : (char)0) + (line[i + 1] ? (char)4 : (char)0) + (line[i + 2] ? (char)2 : (char)0) + (line[i + 3] ? (char)1 : (char)0);
+                    //tft.writeColor(colors16[co], 1);
+                    x++;
+                  }
+                  //x = margin_x_dhgr;
+                  y++;
+                }
+              }
+              else // monochrome
+              {
+                for (int block = 0; block < 8; block++)
+                {
+                  bool line[0x50 * 7];
+                  int lineId = 0;
+                  bool last7bits = false;
+                  for (ushort c = 0; c < 0x50; c++)
+                  {
+                    char chr;
+                    if (c % 2 == 0)
+                    {
+                      chr = auxram[(ushort)((0x2000 + (b * 0x28) + (l * 0x80) + c / 2) + block * 0x400)];
+                    }
+                    else
+                    {
+                      chr = ram[(ushort)((0x2000 + (b * 0x28) + (l * 0x80) + (c - 1) / 2) + block * 0x400)];
+                    }
+                    bool blockline[8];
+                    for (int i = 0; i < 8; i++)
+                      blockline[7 - i] = (chr & (1 << i)) != 0;
+
+                    for (int i = 7; i > 0; i--)
+                    {
+                      uint16_t color = 0;
+
+                      if (i % 2 != 0)
+                      {
+                        if (i == 7)
+                        {
+                          if (blockline[i] && last7bits)
+                            color = tft.color565(255, 255, 255);
+                          else if (blockline[i] != last7bits)
+                            color = tft.color565(127, 127, 127);
+                          else
+                            color = tft.color565(0, 0, 0);
+                        }
+                        else
+                        {
+                          if (blockline[i] && blockline[i + 1])
+                            color = tft.color565(255, 255, 255);
+                          else if (blockline[i] != blockline[i + 1])
+                            color = tft.color565(127, 127, 127);
+                          else
+                            color = tft.color565(0, 0, 0);
+                        }
+
+                        tft.writeColor(color, 1);
+
+                        if (i == 1)
+                          last7bits = blockline[i];
+                        x++;
+                      }
+                    }
+                  }
+                  y++;
+                }
               }
             }
             else // hires
@@ -151,8 +260,7 @@ void graphicFlashCharacters(void *pvParameters)
                     {
                       if (!optionsScreenBlank(x, y))
                         tft.writeColor(colors[pixels[id]], 1);
-                        // vga.dotFast(x, y, colors[pixels[id]]);
-                        x++;
+                      x++;
                     }
                     std::copy(std::begin(blockline), std::end(blockline), std::begin(blocklineAnt));
                   }
@@ -166,17 +274,12 @@ void graphicFlashCharacters(void *pvParameters)
                         color = TFT_WHITE;
                       else
                         color = TFT_BLACK;
-                        
-                        if (!optionsScreenBlank(x, y)) {
-                          tft.writeColor(color, 1);
-                          //tft.drawPixel(x,y, color);
-                        }
 
-                        // vga.dotFast(x, y, color);
-
-                        // sprintf(buf, "%04x: %02x",x,color);
-                        // printlog(buf);
-                        x++;
+                      if (!optionsScreenBlank(x, y))
+                      {
+                        tft.writeColor(color, 1);
+                      }
+                      x++;
                     }
                   }
                 }
@@ -185,7 +288,7 @@ void graphicFlashCharacters(void *pvParameters)
               }
             }
           }
-          else // Text modes
+          else if (Cols40_80) // Text modes
           {
             for (int i = 0; i < 8; i++) // char lines
             {
@@ -200,13 +303,52 @@ void graphicFlashCharacters(void *pvParameters)
                   bool inverted = false;
                   if (!AppleIIe)
                     inverted = chr >= 0x40 && chr < 0x80 && inversed;
-                  // if (optionsScreenBlank(x, y)) {
-                  //   tft.writeColor(TFT_BLACK, 1);
-                  // } else {
+                  if (!optionsScreenBlank(x, y))
                     tft.writeColor(bpixel ? (inverted ? TFT_BLACK : TFT_WHITE) : (inverted ? TFT_WHITE : TFT_BLACK), 1);
-                  //}
-                    x++;
+                  x++;
                 }
+              }
+              y++;
+            }
+          }
+          else if (AppleIIe && !Cols40_80)
+          {
+            for (int i = 0; i < 8; i++)
+            {
+              for (int j = 0; j < 0x50; j++)
+              {
+                char chr;
+                if (j % 2 == 0)
+                {
+                  chr = auxram[0, (ushort)(0x400 + (b * 0x28) + (l * 0x80) + j / 2)];
+                }
+                else
+                {
+                  chr = ram[(ushort)(0x400 + (b * 0x28) + (l * 0x80) + (j - 1) / 2)];
+                }
+                bool last7bits = false;
+                for (int k = 0; k < 7; k++)
+                {
+                  ushort addr = (chr * 7 * 8) + (i * 7) + k;
+                  bool bpixel = AppleIIeFontPixels[addr];
+                  uint16_t color = 0;
+                  if (k % 2 == 0)
+                  {
+                    if (bpixel && last7bits)
+                      color = tft.color565(255, 255, 255);
+                    else if (bpixel != last7bits)
+                      color = tft.color565(127, 127, 127);
+                    else
+                      color = tft.color565(0, 0, 0);
+                    
+                    if (!optionsScreenBlank(x, y))
+                      tft.writeColor(color, 1);
+
+                    x++;
+                  }
+                  last7bits = bpixel;
+                }
+                
               }
               y++;
             }
@@ -221,7 +363,7 @@ void graphicFlashCharacters(void *pvParameters)
       flashCount++;
       if (flashCount > 7)
       {
-        
+
         inversed = !inversed;
         flashCount = 0;
       }
@@ -246,18 +388,18 @@ void printOptionsBackground(int color)
 {
   // tft.fillRect(40, 40, 240, 160, 0);
   // tft.drawRect(41, 41, 238, 158, TFT_RED);
-  //vga.setFont(Font6x8);
-  //vga.setTextColor(// vga.RGB(color), // vga.RGB(0));
-  //vga.setCursor(44, 188);
-  //sprintf(buf, " %s | %s | %s | %s | %s", HdDisk ? " HD " : "DISK", AppleIIe ? "IIe" : "II+", Fast1MhzSpeed ? "Fast" : "1Mhz", paused ? "Paused " : "Running", joystick ? "Joy On " : "Joy Off");
-  //vga.print(buf);
+  // vga.setFont(Font6x8);
+  // vga.setTextColor(// tft.color565(color), // tft.color565(0));
+  // vga.setCursor(44, 188);
+  // sprintf(buf, " %s | %s | %s | %s | %s", HdDisk ? " HD " : "DISK", AppleIIe ? "IIe" : "II+", Fast1MhzSpeed ? "Fast" : "1Mhz", paused ? "Paused " : "Running", joystick ? "Joy On " : "Joy Off");
+  // vga.print(buf);
 }
 
 void printOptionsText(const char *text)
 {
   // vga.fillRect(42, 42, 236, 147, 0);
   // vga.setCursor(44, 44);
-  // vga.setTextColor(// vga.RGB(0xffffff), // vga.RGB(0));
+  // vga.setTextColor(// tft.color565(0xffffff), // tft.color565(0));
   // vga.print(text);
 }
 
@@ -274,9 +416,9 @@ void printOptionsTextEx(char text[])
   // vga.println("12345678901234567890123456789");
   // vga.println("12345678901234567890123456789");
   // vga.println("12345678901234567890123456789");
-  // vga.setTextColor(// vga.RGB(0), // vga.RGB(0xff0000));
+  // vga.setTextColor(// tft.color565(0), // tft.color565(0xff0000));
   // vga.println("12345678901234567890123456789");
-  // vga.setTextColor(// vga.RGB(0xff0000), // vga.RGB(0));
+  // vga.setTextColor(// tft.color565(0xff0000), // tft.color565(0));
   // vga.println("12345678901234567890123456789");
   // vga.println("12345678901234567890123456789");
   // vga.println("12345678901234567890123456789");

@@ -13,7 +13,7 @@ void epromSetup() {
     Serial.println("New Device");
     int e1 = EEPROM.writeBool(HdDiskEEPROMaddress, false);
     int e2 = EEPROM.writeBool(IIpIIeEEPROMaddress, false);
-    int e3 = EEPROM.writeBool(Fast1MhzSpeedEEPROMaddress, true);
+    int e3 = EEPROM.writeBool(Fast1MhzSpeedEEPROMaddress, false);
     int e4 = EEPROM.writeBool(JoystickEEPROMaddress, true);
     int e8 = EEPROM.writeBool(VideoColorEEPROMaddress, true);
     int e7 = writeStringToEEPROM(NewDeviceConfigEEPROMaddress, "ok");
@@ -27,6 +27,7 @@ void epromSetup() {
   Fast1MhzSpeed = EEPROM.readBool(Fast1MhzSpeedEEPROMaddress);
   joystick = EEPROM.readBool(JoystickEEPROMaddress);
   videoColor = EEPROM.readBool(VideoColorEEPROMaddress);
+
   
   if (HdDisk) {
     int size = readStringFromEEPROM(HdFileNameEEPROMaddress, &selectedHdFileName);
@@ -37,7 +38,12 @@ void epromSetup() {
     sprintf(buf, "EEPROM selectedDiskFileName value: %s", selectedDiskFileName.c_str());
     printLog(buf);
   }
-  
+  HdDisk = true;
+  AppleIIe = true;
+  videoColor = true;
+  Fast1MhzSpeed = true;
+  selectedDiskFileName = "/karateka.dsk";
+  selectedHdFileName = "/Total Replay v5.1.hdv";
   
   sprintf(buf, "EEPROM values %d,%d,%d,%d,%d,%s,%s,%s", HdDisk,AppleIIe,Fast1MhzSpeed,joystick,videoColor,selectedHdFileName.c_str(),selectedDiskFileName.c_str(),NewDeviceConfig.c_str());
   printLog(buf);
