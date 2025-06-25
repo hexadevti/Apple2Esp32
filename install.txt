@@ -1,9 +1,10 @@
 
-Valid values to ESP#@-WROOM-DA Monule
+ESP32S3 Dev Module
 
 Esp32 by espressif
 2.0.17
 
-bitluni ESP32Lib
-0.3.4
-
+ESPAsyncWebServer 3.1.0
+AsyncTCP 1.1.4
+ESP32-S3_VGA_by_spikepavel 
+EspUsbHost 1.0.1
