@@ -93,7 +93,7 @@ void keyboard_bit()
               {
                 ESP.restart();
               }
-              else if (keyboard_data[2] == 0x04) // CTRL-F6
+              else if (keyboard_data[2] == 0x0b) // CTRL-F6
               {
                 demo();
               }
@@ -142,65 +142,45 @@ void keyboard_bit()
                 else if (keyboard_data[2] == 0x05) // F1
                 {
                   HdDisk = !HdDisk;
-                  updateOptions(true, true);
+                  updateOptions(true);
                 }
                 else if (keyboard_data[2] == 0x06) // F2
                 {
                   AppleIIe = !AppleIIe;
-                  updateOptions(true, false);
+                  updateOptions(true);
                 }
                 else if (keyboard_data[2] == 0x04) // F3
                 {
                   Fast1MhzSpeed = !Fast1MhzSpeed;
-                  updateOptions(true, false);
+                  updateOptions(true);
                 }
                 else if (keyboard_data[2] == 0x0c) // F4
                 {
                   paused = !paused;
-                  updateOptions(true, false);
+                  updateOptions(true);
                 }
                 else if (keyboard_data[2] == 0x03) // F5
                 {
                   joystick = !joystick;
-                  updateOptions(true, false);
+                  updateOptions(true);
                 }
-                else if (keyboard_data[2] == 0x04) // F6
+                else if (keyboard_data[2] == 0x0b) // F6
                 {
                   videoColor = !videoColor;
-                  updateOptions(true, false);
+                  updateOptions(true);
                 }
-                else if (keyboard_data[2] == 0x72) // Down Arrow
-                {
-                  if (!HdDisk)
-                    nextDiskFile();
-                  else
-                    nextHdFile();
-                  updateOptions(true, false);
-
-                  // Serial.println("down");
-                }
-                else if (keyboard_data[2] == 0x75) // Up Arrow
-                {
-                  if (!HdDisk)
-                    prevDiskFile();
-                  else
-                    prevHdFile();
-                  updateOptions(false, false);
-                  // Serial.println("up");
-                }
-
                 keymem = 0;
               }
             }
 
-            //  Serial.print("keyboard_data:");
-            //  Serial.println(keyboard_data[2]);
-            //  Serial.print("shift:");
-            //  Serial.println((shift_enabled) ? "1" : "0");
-            //  Serial.print("ctrl:");
-            //  Serial.println((ctrl_enabled) ? "1" : "0");
-            //  Serial.print("key:");
-            //  Serial.println(keymem);
+             Serial.print("keyboard_data:");
+             Serial.println(keyboard_data[2]);
+             Serial.print("shift:");
+             Serial.println((shift_enabled) ? "1" : "0");
+             Serial.print("ctrl:");
+             Serial.println((ctrl_enabled) ? "1" : "0");
+             Serial.print("key:");
+             Serial.println(keymem);
           }
         }
         else if (keyboard_data[0] != 0xF0 && keyboard_data[1] == 0xE0)
@@ -240,9 +220,8 @@ void keyboard_bit()
                 nextDiskFile();
               else
                 nextHdFile();
-              updateOptions(true, false);
+              updateOptions(true);
 
-              // Serial.println("down");
             }
             else if (keyboard_data[2] == 0x75) // Up Arrow
             {
@@ -250,8 +229,7 @@ void keyboard_bit()
                 prevDiskFile();
               else
                 prevHdFile();
-              updateOptions(false, false);
-              // Serial.println("up");
+              updateOptions(false);
             }
             keymem = 0;
           }

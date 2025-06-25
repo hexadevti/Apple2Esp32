@@ -1,3 +1,64 @@
+void updateOptions(bool downDirection) {
+  if (OptionsWindow) {
+    //printOptionsBackground(0xff0000);
+    std::string result = "";
+    int sel = 0;
+    int skip = 0;
+    //vga.fillRect(42, 42, 236, 147, 0);
+    //vga.setCursor(44, 44);
+    std::vector<std::string> files;
+    if (!HdDisk) 
+    {
+      files = diskFiles;
+    }
+    else
+    {
+      files = hdFiles;
+    }
+    if (shownFile > files.size())
+      shownFile = 0;
+    if (downDirection) {
+      if (shownFile >= firstShowFile + 17) {
+        firstShowFile = shownFile - 17;
+      }
+    }
+    else
+    {
+      if (shownFile < firstShowFile && firstShowFile > 0)
+        firstShowFile--;
+    }
+    
+    int shown = 0;
+    // sprintf(buf, "sel: %d, firstShowFile: %d, shownFile: %d", sel, firstShowFile, shownFile);
+    // Serial.println(buf);
+    int id = 0;
+    for (auto &&i : files)
+    {
+      if (id < firstShowFile)
+      {
+        id++;
+        continue;
+      }
+      if (shown > 17)
+        break;        
+      // if (id == shownFile)
+      //   vga.setTextColor(vga.RGB(0), vga.RGB(0xffffff));
+      // else
+      //   vga.setTextColor(vga.RGB(0xffffff), vga.RGB(0));
+      if (i.size() > 39)
+        i = i.substr(0, 33) + "..." + i.substr(i.size()-3,3);  
+      //vga.println(i.c_str());
+      
+      shown++;
+      id++;
+      
+    }
+    // sprintf(buf, "sel: %d, skip: %d, skiped: %d, shownFile: %d", sel, skip, skiped, shownFile);
+    // Serial.println(buf);
+  }
+}
+
+
 void updateOptions(bool downDirection, bool reload) {
     if (OptionsWindow) {
       printLoading(0xff, 0, 0);
@@ -76,7 +137,8 @@ void updateOptions(bool downDirection, bool reload) {
   
 void showHideOptionsWindow() {
 OptionsWindow = !OptionsWindow;
-updateOptions(true, OptionsWindow);
+//updateOptions(true, OptionsWindow);
+updateOptions(true);
 }
 
 void printMsg(char msg[], int r, int g, int b)

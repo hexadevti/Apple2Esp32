@@ -35,6 +35,7 @@ void HDSetup()
     }
     sprintf(buf, "FS.freeSpace = %d bytes", FSTYPE.totalBytes() - FSTYPE.usedBytes());
     printLog(buf);
+    loadHD();
     if (HdDisk) {
       getHdFileInfo(FSTYPE);
       xTaskCreate(getBlockAsync, "getBlockAsync", 4096, NULL, 1, NULL);
@@ -63,7 +64,7 @@ void getBlockAsync(void *pvParameters) {
 
 void loadHD() 
 {
-  loadHDDir(FSTYPE, "/", 0);
+  loadHDDir(FSTYPE, "/", 1);
 }
 
 char HDSoftSwitchesRead(ushort address)

@@ -53,7 +53,7 @@ void diskSetup()
       Serial.println("FSTYPE Mount Failed");
       return;
     }
-    //listDir(FSTYPE, "/", 1);
+    loadDisk();
     sprintf(buf, "FS.freeSpace = %d bytes", FSTYPE.totalBytes() - FSTYPE.usedBytes());
     printLog(buf);
     if (!HdDisk)
@@ -86,7 +86,7 @@ void saveTrackAsync(void *pvParameters) {
 
 void loadDisk()
 {
-  loadDiskDir(FSTYPE, "/", 0);
+  loadDiskDir(FSTYPE, "/", 1);
 }
 
 void addPhase(uint8_t phase)
@@ -264,6 +264,7 @@ void nextDiskFile()
   {
     shownFile++;
   }
+  Serial.printf("Selected File: %s\n", diskFiles[shownFile].c_str());
 }
 
 void prevDiskFile()
@@ -272,6 +273,7 @@ void prevDiskFile()
   {
     shownFile--;
   }
+  Serial.printf(" Selected File: %s\n", diskFiles[shownFile].c_str());
 }
 
 void saveDiskFile()
@@ -336,8 +338,8 @@ void loadDiskDir(fs::FS &fs, const char *dirname, uint8_t levels)
 
       if (acepted)
       {
-        //sprintf(buf, " FOUND FILE: %s SIZE: %d", file.name(), file.size());
-        //printLog(buf);
+        sprintf(buf, " FOUND FILE: %s SIZE: %d", file.name(), file.size());
+        printLog(buf);
         std::string str(file.name());
         diskFiles.push_back("/" + str);
       }
