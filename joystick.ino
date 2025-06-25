@@ -83,8 +83,8 @@ void analogJoystickTask(void *pvParameters)
 
         timerpdl0 = analog_x * 0.625;
         timerpdl1 = analog_y * 0.625;
-        sprintf(buf, "analog x=%d y=%d btn=%d", analog_x, analog_y, digital_button);
-        Serial.println(buf);
+        // sprintf(buf, "analog x=%d y=%d btn=%d", analog_x, analog_y, digital_button);
+        // Serial.println(buf);
         // sprintf(buf, "timer %f %f", timerpdl0, timerpdl1);
         // Serial.println(buf);
         delay(100);

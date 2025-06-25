@@ -38,11 +38,11 @@ void epromSetup() {
     sprintf(buf, "EEPROM selectedDiskFileName value: %s", selectedDiskFileName.c_str());
     printLog(buf);
   }
-  HdDisk = true;
+  HdDisk = false;
   AppleIIe = true;
   videoColor = true;
   Fast1MhzSpeed = true;
-  selectedDiskFileName = "/karateka.dsk";
+  selectedDiskFileName = "/teste lu de ro.dsk";
   selectedHdFileName = "/Total Replay v5.1.hdv";
   
   sprintf(buf, "EEPROM values %d,%d,%d,%d,%d,%s,%s,%s", HdDisk,AppleIIe,Fast1MhzSpeed,joystick,videoColor,selectedHdFileName.c_str(),selectedDiskFileName.c_str(),NewDeviceConfig.c_str());

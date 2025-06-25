@@ -1,7 +1,7 @@
 #include <TFT_eSPI.h>
-#include <ESPAsyncWebServer.h>
-#include <Update.h>
-#include <ESPmDNS.h>
+//#include <ESPAsyncWebServer.h>
+// #include <Update.h>
+// #include <ESPmDNS.h>
 #include <LittleFS.h>
 #include "FS.h"
 #include "SD.h"
@@ -20,16 +20,16 @@
 #include <vector>
 
 // WebServer/Wifi Config
-const char* host = "apple2";
-const char* ssid = "LUCIANO-ESCRITORIO";
-const char* password = "lrbf246!";
-const char* PARAM = "file";
-AsyncWebServer server(80);
+// const char* host = "apple2";
+// const char* ssid = "LUCIANO-ESCRITORIO";
+// const char* password = "lrbf246!";
+// const char* PARAM = "file";
+// AsyncWebServer server(80);
 size_t content_len;
-File file;
-bool opened = false;
-static String filelist = "";
-static int freeSpace = 0;
+// File file;
+// bool opened = false;
+// static String filelist = "";
+// static int freeSpace = 0;
 
 // Video Config
 TFT_eSPI tft = TFT_eSPI();

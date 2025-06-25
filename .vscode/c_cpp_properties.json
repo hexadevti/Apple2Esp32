@@ -4,8 +4,7 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
-                "C:/Users/lucia/Documents/Arduino/libraries/TFT_eSPI/**",
-                "${workspaceFolder}/include/**",
+                "C:/Users/lucia/Documents/Arduino/libraries/TFT_eSPI/**"
             ],
             "defines": [
                 "_DEBUG",

@@ -68,22 +68,18 @@ void graphicFlashCharacters(void *pvParameters)
     }
     else
     {
-      if (AppleIIe && !Cols40_80)
+      if (AppleIIe && !Cols40_80 && !DHiResOn_Off)
         tft.setAddrWindow(0, margin_y, 320, 192); // Set the area to draw
-      else
-        tft.setAddrWindow(margin_x, margin_y, 280, 192); // Set the area to draw
+      else 
+        tft.setAddrWindow(margin_x, margin_y, 280, 192); 
+
       page_lock.lock();
 
       tft.startWrite();
       Vertical_blankingOn_Off = false; // IIe video problem with Total Replay
 
-      int x;
-      if (Cols40_80)
-        x = margin_x;
-      else
-        x = margin_x_80cols;
-      x = DHiResOn_Off ? margin_x_dhgr : margin_x;
-      int y = margin_y;
+      int x = 0;
+      int y = 0;
       ushort textPage = Page1_Page2 ? 0x400 : 0x800;
       ushort graphicsPage = Page1_Page2 ? 0x2000 : 0x4000;
       for (int b = 0; b < 3; b++)
@@ -96,7 +92,7 @@ void graphicFlashCharacters(void *pvParameters)
             {
               for (int j = 0; j < 8; j++)
               {
-                x = margin_x;
+                x = 0;
                 for (int c = 0; c < 0x28; c++)
                 {
                   for (int k = 0; k < 7; k++)
@@ -126,9 +122,11 @@ void graphicFlashCharacters(void *pvParameters)
               {
                 for (int block = 0; block < 8; block++)
                 {
-                  bool line[0x50 * 7];
-                  int lineId = 0;
-                  bool last7bits = false;
+                  uint8_t rep = 2;
+                  uint8_t val = 0;
+                  uint8_t prevVal = 0;
+                  uint8_t currVal = 0;
+                  uint8_t prevCount = 0;
                   for (ushort c = 0; c < 0x50; c++)
                   {
                     char chr;
@@ -140,23 +138,56 @@ void graphicFlashCharacters(void *pvParameters)
                     {
                       chr = ram[(ushort)((0x2000 + (b * 0x28) + (l * 0x80) + (c - 1) / 2) + block * 0x400)];
                     }
-                    bool blockline[8];
-                    for (int i = 0; i < 8; i++)
-                      blockline[7 - i] = (chr & (1 << i)) != 0;
+                    
+                    // if (prevCount == 0) {
+                    //   if (prevCont > 0) {
+                    //     val = prevVal | ((0b0000000 & chr) << 4);
+                    //     tft.writeColor(colors16[val], rep);
+                    //   }
+                    //   currVal = (0b0001111 & chr);
+                    //   tft.writeColor(colors16[currVal], rep);
+                    //   prevVal = (0b1110000 & chr) >> 4;
+                    //   prevCount = 1;
+                    // } 
+                    // else if (prevCount == 1) {
+                    //   val = prevVal | ((0b0000001 & chr) << 3);
+                    //   tft.writeColor(colors16[val], rep);
+                    //   currVal = (0b0011110 & chr) >> 1;
+                    //   tft.writeColor(colors16[currVal], rep);
+                    //   prevVal = (0b1100000 & chr) >> 5;
+                    //   prevCount = 2;
+                    // } 
+                    // else if (prevCount == 2) {
+                    //   val = prevVal | ((0b0000011 & chr) << 2);
+                    //   tft.writeColor(colors16[val], rep);
+                    //   currVal = (0b0111100 & chr) >> 2;
+                    //   tft.writeColor(colors16[currVal], rep);
+                    //   prevVal = (0b1000000 & chr) >> 6;
+                    //   prevCount = 3;
+                    // } 
+                    // else if (prevCount == 3) {
+                    //   val = prevVal | ((0b0000111 & chr) << 1);
+                    //   tft.writeColor(colors16[val], rep);
+                    //   currVal = (0b1111000 & chr) >> 3;
+                    //   tft.writeColor(colors16[currVal], rep);
+                    //   prevVal = 0;
+                    //   prevCount = 0;
+                    // } 
 
-                    for (int i = 7; i > 0; i--)
-                    {
-                      line[lineId] = blockline[i];
-                      lineId++;
+
+                    val = prevVal | (((0xf >> (4 - prevCount)) & chr) << (4 - prevCount));
+                    if (prevCount > 0) {
+                      tft.writeColor(colors16[val], rep); 
+                      x++;
                     }
-                  }
-                  for (int i = 0; i < 0x50 * 7; i = i + 4)
-                  {
-                    char co = (char)(line[i] ? (char)8 : (char)0) + (line[i + 1] ? (char)4 : (char)0) + (line[i + 2] ? (char)2 : (char)0) + (line[i + 3] ? (char)1 : (char)0);
-                    //tft.writeColor(colors16[co], 1);
+                    currVal = ((0xf << prevCount) & chr) >> prevCount;
+                    tft.writeColor(colors16[currVal], rep); 
                     x++;
+                    prevVal = ((0xf << (4 + prevCount)) & chr) >> (4 + prevCount);
+                    prevCount++;
+                    if (prevCount == 4) prevCount = 0;
+
                   }
-                  //x = margin_x_dhgr;
                   y++;
                 }
               }
@@ -164,8 +195,6 @@ void graphicFlashCharacters(void *pvParameters)
               {
                 for (int block = 0; block < 8; block++)
                 {
-                  bool line[0x50 * 7];
-                  int lineId = 0;
                   bool last7bits = false;
                   for (ushort c = 0; c < 0x50; c++)
                   {
@@ -283,7 +312,7 @@ void graphicFlashCharacters(void *pvParameters)
                     }
                   }
                 }
-                x = margin_x;
+                x = 0;
                 y++;
               }
             }
@@ -292,7 +321,7 @@ void graphicFlashCharacters(void *pvParameters)
           {
             for (int i = 0; i < 8; i++) // char lines
             {
-              x = margin_x;
+              x = 0;
               for (int c = 0; c < 0x28; c++)
               {
                 for (int k = 0; k < 7; k++) // char cols
