@@ -172,8 +172,9 @@ void setHdFile()
 
 char loadBlock(unsigned short address, unsigned short block)
 {
-  neopixelWrite(RGB_BUILTIN,RGB_BRIGHTNESS,0,0); // Red
-  //digitalWrite(LED_BUILTIN,HIGH);
+  
+  digitalWrite(GREEN_LED_PIN, HIGH);
+  
   getBlock(FSTYPE, block);
   try
   {
@@ -184,14 +185,14 @@ char loadBlock(unsigned short address, unsigned short block)
       write8((address + i), actualBlock[i]);
     }
     //printLog("512 bytes written");
-    neopixelWrite(RGB_BUILTIN,0,0,0); // Off / black
-    //digitalWrite(LED_BUILTIN,LOW);
+    digitalWrite(GREEN_LED_PIN, LOW);
+    
     return 0;
   }
   catch(std::exception ex)
   {
-    neopixelWrite(RGB_BUILTIN,0,0,0); // Off / black
-    //digitalWrite(LED_BUILTIN,LOW);
+    digitalWrite(GREEN_LED_PIN, LOW);
+    
     return 0xb0;
   }
 }

@@ -1,8 +1,7 @@
+#include <TFT_eSPI.h>
 #include <ESPAsyncWebServer.h>
 #include <Update.h>
 #include <ESPmDNS.h>
-#include "VGA.h"
-#include "FONT_6x8.h"
 #include <LittleFS.h>
 #include "FS.h"
 #include "SD.h"
@@ -33,19 +32,19 @@ static String filelist = "";
 
 static int freeSpace = 0;
 
-// VGA Config
-VGA vga;
-const PinConfig pins(-1,-1,-1,16,17,  -1,-1,-1,-1,7,15,  -1,-1,-1,5,6,  14,13);
-//Mode mode = Mode::MODE_320x240x60;
-Mode mode(16, 96, 48, 640, 4, 2, 30, 240, 23760000, 0, 0, 2);
-int pixels_per_dot = 2;
-int margin_x = 30;
-int margin_x_dhgr = 14;
-int margin_x_80cols = 30;
-int margin_y = 24;
-int text_margin_x = 2;
-int text_margin_y = 3;
+// Video Config
+TFT_eSPI tft = TFT_eSPI();
+static const uint16_t screenWidth  = 240;
+static const uint16_t screenHeight = 320;
 static std::mutex page_lock;
+
+int margin_x = 20;
+int margin_y = 24;
+
+// Keyboard pins
+#define DataPin 21
+#define IRQpin 22
+
 
 // LittleFS
 #define U_PART U_SPIFFS
@@ -53,9 +52,9 @@ static std::mutex page_lock;
 
 // SD Config
 #define sck 18
-#define miso 8
-#define mosi 3
-#define cs 46
+#define miso 19
+#define mosi 23
+#define cs 5
 std::vector<std::string> hdFiles;
 std::vector<std::string> diskFiles;
 
@@ -79,6 +78,11 @@ static bool serialVideoAttached = false;
 static bool serialKeyboardAttached = false;
 static bool videoColor = true;
 static bool wifiConnected = false;
+
+// Led Config
+//#define RED_LED_PIN 4
+#define GREEN_LED_PIN 17
+//#define BLUE_LED_PIN 16
 
 // Log Config
 char buf[0xff];
@@ -152,7 +156,7 @@ static unsigned char* IIEmemoryBankSwitchedRAM2_1;
 static unsigned char* IIEmemoryBankSwitchedRAM2_2;
 
 //Speaker Config
-#define SPEAKER_PIN 4
+#define SPEAKER_PIN 26
 boolean speaker_state = false;
 
 // Other Cofig

@@ -2,9 +2,9 @@
 
 void setup() {
   logSetup();
+  epromSetup();
   memoryAlloc();
   videoSetup();
-  epromSetup();
   SDCardSetup();
   keyboardSetup();
   //sei();
@@ -12,8 +12,9 @@ void setup() {
   diskSetup();
   speakerSetup();
   //setCpuFrequencyMhz(240);
-  wifiSetup();
-  analogJoystickSetup();
+  //wifiSetup();
+  joystickSetup(false);
+  
   printLog("Ready.");
 }
 

@@ -740,15 +740,13 @@ char processSwitchc0e0(ushort address, char value)
   else if (address == 0xc0e8)
   {
     DriveMotorON_OFF = false;
-    neopixelWrite(RGB_BUILTIN,0,0,0); // Off / black
     
-    //digitalWrite(LED_BUILTIN, LOW);
+    digitalWrite(GREEN_LED_PIN, LOW);
   }
   else if (address == 0xc0e9)
   {
     DriveMotorON_OFF = true;
-    neopixelWrite(RGB_BUILTIN,RGB_BRIGHTNESS,0,0); // Red
-    //digitalWrite(LED_BUILTIN, HIGH);
+    digitalWrite(GREEN_LED_PIN, HIGH);
   }
   else if (address == 0xc0ea)
     Drive1_2 = true;

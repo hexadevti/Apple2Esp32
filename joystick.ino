@@ -5,8 +5,10 @@ int joystickCycles3 = 0;
 
 int analog_x = 0;
 int analog_y = 0;
-int analog_x_pin = 1;
-int analog_y_pin = 2;
+int digital_button;
+#define analog_x_pin 35
+#define analog_y_pin 4
+#define digitat_button_pin 34
 
 void processJoystick(float speedAdjust) {
     if (joystick) {
@@ -49,19 +51,26 @@ void processJoystick(float speedAdjust) {
     }
 }
 
-void analogJoystickSetup()
+void joystickSetup(bool analog)
 {
-  if (joystick)
-  {
-    timerpdl0 = JOY_MID;
-    timerpdl1 = JOY_MID;
+    if (joystick)
+    {
+      timerpdl0 = JOY_MID;
+      timerpdl1 = JOY_MID;
+    }
+    else
+    {
+      timerpdl0 = JOY_MAX;
+      timerpdl1 = JOY_MAX;
+    }
+
+  if (analog) {
+      pinMode(analog_x_pin, INPUT);
+      pinMode(analog_y_pin, INPUT);
+      pinMode(digitat_button_pin, INPUT);
+    
+      xTaskCreate(analogJoystickTask, "analogJoystickTask", 4096, NULL, 1, NULL);
   }
-  else
-  {
-    timerpdl0 = JOY_MAX;
-    timerpdl1 = JOY_MAX;
-  }
-  xTaskCreate(analogJoystickTask, "analogJoystickTask", 4096, NULL, 1, NULL);
 }
 
 void analogJoystickTask(void *pvParameters)
@@ -70,13 +79,15 @@ void analogJoystickTask(void *pvParameters)
     {
         analog_x = analogRead(analog_x_pin);
         analog_y = analogRead(analog_y_pin);
+        digital_button = analogRead(digitat_button_pin);
+
         timerpdl0 = analog_x * 0.625;
         timerpdl1 = analog_y * 0.625;
-        //sprintf(buf, "analog %d %d", analog_x, analog_y);
-        //Serial.println(buf);
-        //sprintf(buf, "timer %f %f", timerpdl0, timerpdl1);
-        //Serial.println(buf);
-        delay(10);
+        // sprintf(buf, "analog x=%d y=%d btn=%d", analog_x, analog_y, digital_button);
+        // Serial.println(buf);
+        // sprintf(buf, "timer %f %f", timerpdl0, timerpdl1);
+        // Serial.println(buf);
+        delay(100);
     }
     
 }
