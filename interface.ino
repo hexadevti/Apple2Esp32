@@ -54,8 +54,8 @@ void updateOptions(bool downDirection, bool reload) {
         // else
         //   vga.setTextColor(vga.rgb(0xff, 0xff, 0xff), vga.rgb(0,0,0));
   
-        // if (i.size() > 39)
-        //   i = i.substr(0, 33) + "..." + i.substr(i.size()-3,3);  
+        if (i.size() > 39)
+          i = i.substr(0, 33) + "..." + i.substr(i.size()-3,3);  
         //   vga.println(i.c_str());
         
         shown++;

@@ -54,8 +54,9 @@ void printStatus(char msg[], uint16_t color)
 void graphicFlashCharacters(void *pvParameters)
 {
   bool inversed = false;
-  while (true)
+  while (running)
   {
+    while (paused) { vTaskDelay(pdMS_TO_TICKS(20)); }
     if (OptionsWindow)
     {
       tft.fillRect(40, 40, 240, 160, 0);

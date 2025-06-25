@@ -38,13 +38,7 @@ static const uint16_t screenHeight = 320;
 static std::mutex page_lock;
 
 int margin_x = 20;
-int margin_x_dhgr = 20;
-int margin_x_80cols = 30;
-
 int margin_y = 24;
-int text_margin_x = 2;
-int text_margin_y = 3;
-
 
 // Keyboard pins
 #define DataPin 21

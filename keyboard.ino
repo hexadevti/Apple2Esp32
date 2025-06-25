@@ -37,9 +37,10 @@ void keyboardStrobe() {
 }
 
 
-void keyboard_begin() {
+void keyboardBegin() {
   pinMode(DataPin, INPUT_PULLUP);
   attachInterrupt(IRQpin, keyboard_bit, FALLING);
+  
 }
 
 void keyboard_bit() {
@@ -91,6 +92,9 @@ void keyboard_bit() {
               }
               else if (keyboard_data[2] == 0x76) // CTRL-ESC
               {
+                paused = true;
+                listDir(FSTYPE, "/", 0);
+                paused = false;
                 showHideOptionsWindow();
                 keymem = 0;
               }

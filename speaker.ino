@@ -1,4 +1,4 @@
-void speaker_begin() {
+void speakerBegin() {
   pinMode(SPEAKER_PIN, OUTPUT);
   digitalWrite(SPEAKER_PIN, LOW);
 }

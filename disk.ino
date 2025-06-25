@@ -86,7 +86,8 @@ void saveTrackAsync(void *pvParameters) {
 
 void loadDisk()
 {
-  loadDiskDir(FSTYPE, "/", 0);
+  listDir(FSTYPE, "/", 0);
+  //loadDiskDir(FSTYPE, "/", 0);
 }
 
 void addPhase(uint8_t phase)
@@ -292,11 +293,12 @@ void setDiskFile()
 
 void loadDiskDir(fs::FS &fs, const char *dirname, uint8_t levels)
 {
-  // sprintf(buf, "Loading directory: %s\n", dirname);
-  // printLog(buf);
+  
+  sprintf(buf, "Loading directory: %s\n", dirname);
+  printLog(buf);
   diskFiles.clear();
-
   File root = fs.open(dirname);
+  
   if (!root)
   {
     printLog("Failed to open directory");
@@ -307,8 +309,9 @@ void loadDiskDir(fs::FS &fs, const char *dirname, uint8_t levels)
     printLog("Not a directory");
     return;
   }
-
+  printLog("before");
   File file = root.openNextFile();
+  printLog("after");
   int i = 0;
   while (file)
   {

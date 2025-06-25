@@ -156,7 +156,7 @@ void testFileIO(fs::FS &fs, const char *path) {
 
 void SDCardSetup()
 {
-  printLog("SD Card Setup");
+  Serial.println("SD Card Setup");
   SPI.begin(sck, miso, mosi, cs);
   delay(500);
   int sdMountRetry = 0;
