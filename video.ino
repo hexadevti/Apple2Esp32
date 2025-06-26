@@ -57,18 +57,7 @@ void graphicFlashCharacters(void *pvParameters)
   while (running)
   {
     while (paused) { vTaskDelay(pdMS_TO_TICKS(20)); }
-    if (OptionsWindow)
-    {
-      tft.fillRect(40, 40, 240, 160, 0);
-      tft.drawRect(41, 41, 238, 158, TFT_RED);
-
-      while (OptionsWindow)
-      {
-        vTaskDelay(pdMS_TO_TICKS(20));
-      }
-    }
-    else
-    {
+    
       if (AppleIIe && !Cols40_80 && !DHiResOn_Off)
         tft.setAddrWindow(0, margin_y, 320, 192); // Set the area to draw
       else 
@@ -397,7 +386,7 @@ void graphicFlashCharacters(void *pvParameters)
         inversed = !inversed;
         flashCount = 0;
       }
-    }
+    
   }
 }
 

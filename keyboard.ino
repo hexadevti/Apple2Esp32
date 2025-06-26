@@ -139,48 +139,50 @@ void keyboard_bit()
                   diskChanged = true;
                   showHideOptionsWindow();
                 }
-                else if (keyboard_data[2] == 0x05) // F1
+                keymem = 0;
+              }
+                if (keyboard_data[2] == 0x05) // F1
                 {
                   HdDisk = !HdDisk;
-                  updateOptions(true);
+                  //updateOptions(true);
                 }
                 else if (keyboard_data[2] == 0x06) // F2
                 {
                   AppleIIe = !AppleIIe;
-                  updateOptions(true);
+                  //updateOptions(true);
                 }
                 else if (keyboard_data[2] == 0x04) // F3
                 {
                   Fast1MhzSpeed = !Fast1MhzSpeed;
-                  updateOptions(true);
+                  //updateOptions(true);
                 }
                 else if (keyboard_data[2] == 0x0c) // F4
                 {
                   paused = !paused;
-                  updateOptions(true);
+                  //updateOptions(true);
                 }
                 else if (keyboard_data[2] == 0x03) // F5
                 {
                   joystick = !joystick;
-                  updateOptions(true);
+                  //updateOptions(true);
                 }
                 else if (keyboard_data[2] == 0x0b) // F6
                 {
                   videoColor = !videoColor;
-                  updateOptions(true);
+                  //updateOptions(true);
                 }
-                keymem = 0;
-              }
+                
+              
             }
 
-             Serial.print("keyboard_data:");
-             Serial.println(keyboard_data[2]);
-             Serial.print("shift:");
-             Serial.println((shift_enabled) ? "1" : "0");
-             Serial.print("ctrl:");
-             Serial.println((ctrl_enabled) ? "1" : "0");
-             Serial.print("key:");
-             Serial.println(keymem);
+            //  Serial.print("keyboard_data:");
+            //  Serial.println(keyboard_data[2]);
+            //  Serial.print("shift:");
+            //  Serial.println((shift_enabled) ? "1" : "0");
+            //  Serial.print("ctrl:");
+            //  Serial.println((ctrl_enabled) ? "1" : "0");
+            //  Serial.print("key:");
+            //  Serial.println(keymem);
           }
         }
         else if (keyboard_data[0] != 0xF0 && keyboard_data[1] == 0xE0)
