@@ -93,10 +93,6 @@ void keyboard_bit()
               {
                 ESP.restart();
               }
-              else if (keyboard_data[2] == 0x0b) // CTRL-F6
-              {
-                demo();
-              }
               else if (keyboard_data[2] == 0x76) // CTRL-ESC
               {
                 showHideOptionsWindow();
@@ -144,32 +140,32 @@ void keyboard_bit()
                 if (keyboard_data[2] == 0x05) // F1
                 {
                   HdDisk = !HdDisk;
-                  //updateOptions(true);
+                  printOptionsBackground();
                 }
                 else if (keyboard_data[2] == 0x06) // F2
                 {
                   AppleIIe = !AppleIIe;
-                  //updateOptions(true);
+                  printOptionsBackground();
                 }
                 else if (keyboard_data[2] == 0x04) // F3
                 {
                   Fast1MhzSpeed = !Fast1MhzSpeed;
-                  //updateOptions(true);
+                  printOptionsBackground();
                 }
                 else if (keyboard_data[2] == 0x0c) // F4
                 {
                   paused = !paused;
-                  //updateOptions(true);
+                  printOptionsBackground();
                 }
                 else if (keyboard_data[2] == 0x03) // F5
                 {
                   joystick = !joystick;
-                  //updateOptions(true);
+                  printOptionsBackground();
                 }
                 else if (keyboard_data[2] == 0x0b) // F6
                 {
                   videoColor = !videoColor;
-                  //updateOptions(true);
+                  printOptionsBackground();
                 }
                 
               
@@ -222,8 +218,8 @@ void keyboard_bit()
                 nextDiskFile();
               else
                 nextHdFile();
-              updateOptions(true);
 
+              listFiles(true);
             }
             else if (keyboard_data[2] == 0x75) // Up Arrow
             {
@@ -231,7 +227,7 @@ void keyboard_bit()
                 prevDiskFile();
               else
                 prevHdFile();
-              updateOptions(false);
+              listFiles(false);
             }
             keymem = 0;
           }

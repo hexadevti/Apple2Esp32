@@ -10,6 +10,7 @@ void memoryAlloc() {
   IIEmemoryBankSwitchedRAM1 = (unsigned char*)malloc(0x2000 * sizeof(unsigned char));
   IIEmemoryBankSwitchedRAM2_1 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
   IIEmemoryBankSwitchedRAM2_2 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
+  menuScreen = (unsigned char*)malloc(0x400 * sizeof(unsigned char));
 
   memset(ram, 0, 0xc000 * sizeof(unsigned char));
   memset(auxram, 0, 0xc000 * sizeof(unsigned char));
@@ -22,6 +23,7 @@ void memoryAlloc() {
   memset(IIEmemoryBankSwitchedRAM1, 0, 0x2000 * sizeof(unsigned char));
   memset(IIEmemoryBankSwitchedRAM2_1, 0, 0x1000 * sizeof(unsigned char));
   memset(IIEmemoryBankSwitchedRAM2_2, 0, 0x1000 * sizeof(unsigned char));
+  memset(menuScreen, 0xa0, 0x400 * sizeof(unsigned char));
 }
 
 unsigned char read8(unsigned short address)

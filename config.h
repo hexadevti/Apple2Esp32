@@ -102,7 +102,7 @@ String selectedHdFileName;
 String NewDeviceConfig;
 byte selectedHdFile;
 int firstShowFile = 0;
-int shownFile;
+int shownFile = 0xff;
 
 // Softswitches Config
 static bool Graphics_Text = false;
@@ -154,6 +154,7 @@ static unsigned char* IIEAuxBankSwitchedRAM2_2;
 static unsigned char* IIEmemoryBankSwitchedRAM1;
 static unsigned char* IIEmemoryBankSwitchedRAM2_1;
 static unsigned char* IIEmemoryBankSwitchedRAM2_2;
+static unsigned char* menuScreen;
 
 //Speaker Config
 #define SPEAKER_PIN 26

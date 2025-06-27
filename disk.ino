@@ -316,8 +316,8 @@ void loadDiskDir(fs::FS &fs, const char *dirname, uint8_t levels)
   {
     if (file.isDirectory())
     {
-      printLog("  DIR : ");
-      printLog(file.name());
+      // printLog("  DIR : ");
+      // printLog(file.name());
       if (levels)
       {
         loadDiskDir(fs, file.path(), levels - 1);
@@ -338,8 +338,8 @@ void loadDiskDir(fs::FS &fs, const char *dirname, uint8_t levels)
 
       if (acepted)
       {
-        sprintf(buf, " FOUND FILE: %s SIZE: %d", file.name(), file.size());
-        printLog(buf);
+        //sprintf(buf, " FOUND FILE: %s SIZE: %d", file.name(), file.size());
+        //printLog(buf);
         std::string str(file.name());
         diskFiles.push_back("/" + str);
       }
