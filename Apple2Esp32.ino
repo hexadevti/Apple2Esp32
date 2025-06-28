@@ -1,21 +1,19 @@
 #include "config.h"
 
 void setup() {
-  
+  pinMode(GREEN_LED_PIN, OUTPUT);
   logSetup();
   epromSetup();
   memoryAlloc();
   videoSetup();
   SDCardSetup();
   keyboardSetup();
-  //sei();
   HDSetup();
   diskSetup();
   speakerSetup();
-  //setCpuFrequencyMhz(240);
+  setCpuFrequencyMhz(240);
   //wifiSetup();
   joystickSetup(false);
-  
   printLog("Ready.");
 }
 

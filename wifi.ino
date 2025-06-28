@@ -1,7 +1,9 @@
 void wifiSetup() {
     if (!wifiConnected)
     {
+      printLog("1");
         WiFi.begin(ssid, password);
+        printLog("2");
         xTaskCreate(wifiConnect, "wifiConnect", 4096, NULL, 1, NULL);
     }
 }
@@ -61,6 +63,7 @@ void wifiConnect(void *pvParameters)
         delay(500);
         printLog(".");
       }
+      printLog("4");
       wifiConnected = true;
       Serial.println("");
       printLog("Connected to ");

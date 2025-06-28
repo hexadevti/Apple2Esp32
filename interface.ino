@@ -57,32 +57,38 @@ void listFiles(bool downDirection)
     if (shownFile != 0xff && shownFile < firstShowFile && firstShowFile > 0)
       firstShowFile--;
   }
-
-  int shown = 0;
-  
   int id = 0;
+  if (shownFile == 0xff) {
+    if ((HdDisk && selectedHdFileName == "/") || (!HdDisk && selectedDiskFileName == "/")) {
+      shownFile = 0;
+    } 
+    else {
+      for (auto &&i : files)
+      {
+        if (i.compare(HdDisk ? selectedHdFileName.c_str() : selectedDiskFileName.c_str()) == 0) {
+          shownFile = id;
+          if (shownFile > pageSize)
+            firstShowFile = shownFile - pageSize;
+          break;
+        }
+        id++;
+      }
+    }
+  }
+  id = 0;
+  int shown = 0;
+  sprintf(buf, "firstShowFile: %d, shownFile: %d, filename: %s", firstShowFile, shownFile, HdDisk ? selectedHdFileName.c_str() : selectedDiskFileName.c_str());
+  Serial.println(buf);
+  
   for (auto &&i : files)
   {
-     
-    if (shownFile == 0xff && i.compare(HdDisk ? selectedHdFileName.c_str() : selectedDiskFileName.c_str()) == 0) {
-      shownFile = id;
-      if (shownFile > pageSize)
-        firstShowFile = shownFile - pageSize;
-      listFiles(downDirection);
-      //  sprintf(buf, "firstShowFile: %d, shownFile: %d", firstShowFile, shownFile);
-      //  Serial.println(buf);
-    } 
-    else if (shownFile == 0xff && ((HdDisk && selectedHdFileName == "/") || (!HdDisk && selectedDiskFileName == "/")))
-    {
-      shownFile = 0;
-    }
     if (id < firstShowFile)
     {
       id++;
       continue;
     }
     if (shown > pageSize)
-    break;
+      break;
     setCursor(startX, startY + 2 + id - firstShowFile);
     // sprintf(buf, "i: %s, selectedDiskFileName: %s", i.c_str(), selectedDiskFileName.c_str());
     // Serial.println(buf);
