@@ -18,6 +18,7 @@
 #include <thread>
 #include <mutex>
 #include <vector>
+#include <condition_variable>
 
 // WebServer/Wifi Config
 const char* host = "apple2";
@@ -69,6 +70,7 @@ static bool running = true;
 static bool paused = false;
 static bool AppleIIe = true;
 static bool OptionsWindow = false;
+static bool initializedHdDisk = false;
 static bool HdDisk = false;
 static bool Fast1MhzSpeed = true;
 static bool joystick = true;
@@ -101,8 +103,8 @@ String selectedDiskFileName;
 String selectedHdFileName;
 String NewDeviceConfig;
 byte selectedHdFile;
-int firstShowFile = 0;
-int shownFile = 0xff;
+uint8_t firstShowFile = 0;
+uint8_t shownFile = 0xff;
 
 // Softswitches Config
 static bool Graphics_Text = false;
@@ -125,7 +127,7 @@ static bool DHiResOn_Off = false;
 static bool IIEMemoryBankBankSelect1_2 = true;
 static bool IIEMemoryBankReadRAM_ROM = false;
 static bool IIEMemoryBankWriteRAM_NoWrite = false;
-static int IIeExpansionCardBank = 0;
+static uint8_t IIeExpansionCardBank = 0;
 static bool MemoryBankBankSelect1_2 = true;
 static bool MemoryBankReadRAM_ROM = false;
 static bool MemoryBankWriteRAM_NoWrite = false;

@@ -102,14 +102,20 @@ void keyboard_bit()
               {
                 if (OptionsWindow)
                 {
-                  if (HdDisk)
-                    setHdFile();
-                  else
-                    setDiskFile();
-                  if (HdDisk)
-                    saveHdFile();
-                  else
-                    saveDiskFile();
+                  if (HdDisk == initializedHdDisk) {
+                    if (HdDisk) {
+                      setHdFile();
+                      saveHdFile();
+                    }
+                    else {
+                      setDiskFile();
+                      saveDiskFile();
+                    }
+                  }
+                  else {
+                    saveEEPROM();
+                    EEPROM.commit();
+                  }
                   ESP.restart();
                 }
               }

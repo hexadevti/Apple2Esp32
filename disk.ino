@@ -9,7 +9,6 @@ bool diskChanged = false;
 bool trackChanged = false;
 std::vector<std::string> diskFileExtensions = {".dsk", ".DSK", ".po", ".PO", ".do", ".DO"};
 
-
 bool Drive1_2 = true;
 
 int pointer = 0;
@@ -47,13 +46,16 @@ volatile bool trackPendingSave = false;
 void diskSetup()
 {
   diskAttached = (HdDisk == 0);
-  if (diskAttached) {
+  if (diskAttached)
+  {
+    initializedHdDisk = false;
     printLog("DiskII Setup...");
-    if (!FSTYPE.begin(true)) {
+    if (!FSTYPE.begin(true))
+    {
       Serial.println("FSTYPE Mount Failed");
       return;
     }
-    loadDisk();
+    xTaskCreate(loadDiskAsync, "loadDiskAsync", 4096, NULL, 0, NULL);
     sprintf(buf, "FS.freeSpace = %d bytes", FSTYPE.totalBytes() - FSTYPE.usedBytes());
     printLog(buf);
     if (!HdDisk)
@@ -65,12 +67,15 @@ void diskSetup()
   }
 }
 
-void saveTrackAsync(void *pvParameters) {
+void saveTrackAsync(void *pvParameters)
+{
   int count = 0;
   while (running)
   {
-    if (trackPendingSave && !DriveMotorON_OFF) {
-      if (count > 5) {
+    if (trackPendingSave && !DriveMotorON_OFF)
+    {
+      if (count > 5)
+      {
         Serial.println("Late Save.");
         saveImage(FSTYPE, diskTrack);
         getTrack(FSTYPE, diskTrack, true);
@@ -81,7 +86,6 @@ void saveTrackAsync(void *pvParameters) {
     }
     delay(10);
   }
-  
 }
 
 void loadDisk()
@@ -142,21 +146,20 @@ void addPhase(uint8_t phase)
     track--;
   }
 
-  //getTrack(FSTYPE, track, false);
+  // getTrack(FSTYPE, track, false);
   if (track != diskTrack)
   {
     sprintf(buf, "Track changed: %d ", track);
     printLog(buf);
-    if (trackPendingSave) {
+    if (trackPendingSave)
+    {
       saveImage(FSTYPE, diskTrack);
       getTrack(FSTYPE, diskTrack, true);
       trackPendingSave = false;
     }
     diskTrack = track;
     trackChanged = true;
-    
   }
-
 }
 
 bool identifyDosProdos()
@@ -171,7 +174,7 @@ bool identifyDosProdos()
 
 void getDiskFileInfo(fs::FS &fs)
 {
-  // if (!fs.exists(selectedDiskFileName.c_str())) 
+  // if (!fs.exists(selectedDiskFileName.c_str()))
   // {
   //   selectedDiskFileName = "";
   // }
@@ -225,7 +228,7 @@ void saveImage(fs::FS &fs, int track)
   Serial.println(buf);
   int positionToWrite = getOffset(track, 0);
   uint8_t *sourceDiskData = (uint8_t *)ps_malloc(trackRawSize * 35);
-  uint8_t *tempDiskData = (uint8_t *)ps_malloc(trackRawSize * 35); 
+  uint8_t *tempDiskData = (uint8_t *)ps_malloc(trackRawSize * 35);
   File file = fs.open(selectedDiskFileName.c_str(), FILE_READ);
   file.read(sourceDiskData, trackRawSize * 35);
   file.close();
@@ -234,28 +237,32 @@ void saveImage(fs::FS &fs, int track)
   //     printLog(buf);
   // }
 
-  
-    for (int i = 0; i < positionToWrite; i++) {
-      tempDiskData[i] = sourceDiskData[i];
-    }
-    for (int i = positionToWrite; i < trackRawSize + positionToWrite; i++) {
-      tempDiskData[i] = trackRawData[i-positionToWrite];
-    }    
-    for (int i = trackRawSize + positionToWrite; i < trackRawSize * 35; i++) {
-      tempDiskData[i] = sourceDiskData[i];
-    }
-    // for (int i = 0; i < 1000; i++) {
-    //   sprintf(buf, "%02X", tempDiskData[i]);
-    //   printLog(buf);
-    // }
-    file = fs.open(selectedDiskFileName.c_str(), FILE_WRITE);
-    if (file) {
-      file.write(tempDiskData, trackRawSize * 35);
-      file.close();
-    }
-    else {
-     Serial.println("File failed to open");
-    }
+  for (int i = 0; i < positionToWrite; i++)
+  {
+    tempDiskData[i] = sourceDiskData[i];
+  }
+  for (int i = positionToWrite; i < trackRawSize + positionToWrite; i++)
+  {
+    tempDiskData[i] = trackRawData[i - positionToWrite];
+  }
+  for (int i = trackRawSize + positionToWrite; i < trackRawSize * 35; i++)
+  {
+    tempDiskData[i] = sourceDiskData[i];
+  }
+  // for (int i = 0; i < 1000; i++) {
+  //   sprintf(buf, "%02X", tempDiskData[i]);
+  //   printLog(buf);
+  // }
+  file = fs.open(selectedDiskFileName.c_str(), FILE_WRITE);
+  if (file)
+  {
+    file.write(tempDiskData, trackRawSize * 35);
+    file.close();
+  }
+  else
+  {
+    Serial.println("File failed to open");
+  }
 }
 
 void nextDiskFile()
@@ -264,7 +271,7 @@ void nextDiskFile()
   {
     shownFile++;
   }
-  Serial.printf("Selected File: %s\n", diskFiles[shownFile].c_str());
+  // Serial.printf("Selected File: %s\n", diskFiles[shownFile].c_str());
 }
 
 void prevDiskFile()
@@ -273,7 +280,7 @@ void prevDiskFile()
   {
     shownFile--;
   }
-  Serial.printf(" Selected File: %s\n", diskFiles[shownFile].c_str());
+  // Serial.printf(" Selected File: %s\n", diskFiles[shownFile].c_str());
 }
 
 void saveDiskFile()
@@ -290,6 +297,46 @@ void setDiskFile()
   paused = true;
   selectedDiskFileName = diskFiles[shownFile].c_str();
   paused = false;
+}
+
+void loadDiskAsync(void *pvParameters)
+{
+
+  File root = FSTYPE.open("/");
+  if (!root)
+  {
+    printLog("Failed to open directory");
+    return;
+  }
+  if (!root.isDirectory())
+  {
+    printLog("Not a directory");
+    return;
+  }
+  File file = root.openNextFile();
+  while (file)
+  {
+    if (!file.isDirectory())
+    {
+      std::string fileName = file.name();
+      for (int j = 0; j < diskFileExtensions.size(); j++)
+      {
+        if ((int)fileName.find(diskFileExtensions[j].c_str()) > 0)
+        {
+          std::string str(file.name());
+          diskFiles.push_back("/" + str);
+        }
+      }
+    }
+    file = root.openNextFile();
+  }
+  file.close();
+  root.close();
+
+  while(true){
+
+  }
+  
 }
 
 void loadDiskDir(fs::FS &fs, const char *dirname, uint8_t levels)
@@ -338,8 +385,8 @@ void loadDiskDir(fs::FS &fs, const char *dirname, uint8_t levels)
 
       if (acepted)
       {
-        //sprintf(buf, " FOUND FILE: %s SIZE: %d", file.name(), file.size());
-        //printLog(buf);
+        // sprintf(buf, " FOUND FILE: %s SIZE: %d", file.name(), file.size());
+        // printLog(buf);
         std::string str(file.name());
         diskFiles.push_back("/" + str);
       }
@@ -631,10 +678,10 @@ char diskSoftSwitchesRead(ushort address)
         diskChanged = false;
         trackChanged = false;
       }
-      
+
       if (pointer > trackEncodedSize - 1)
         pointer = 0;
-      
+
       //   sprintf(buf, "Disk Track: %d, Disk Read: %04X, Pointer: %d, Data: %02X", diskTrack, address, pointer, trackEncodedData[pointer]);
       //   printLog(buf);
       //  sprintf(buf, "(%04x)[R]%04X: %02X", PC, address, trackEncodedData[pointer]);
@@ -660,7 +707,8 @@ void diskSoftSwitchesWrite(ushort address, char value)
       {
         sprintf(buf, "Preparing Track: %d, Sector: %d", diskTrack, sec);
         printLog(buf);
-        if (lastTrack == diskTrack && lastSec == sec) {
+        if (lastTrack == diskTrack && lastSec == sec)
+        {
           saveImage(FSTYPE, diskTrack);
           getTrack(FSTYPE, diskTrack, true);
         }
@@ -683,7 +731,6 @@ void diskSoftSwitchesWrite(ushort address, char value)
             getTrack(FSTYPE, diskTrack, true);
             trackPendingSave = false;
           }
-          
         }
         // saveImage(FSTYPE, diskTrack);
         // getTrack(FSTYPE, diskTrack, true);
@@ -742,7 +789,7 @@ char processSwitchc0e0(ushort address, char value)
   else if (address == 0xc0e8)
   {
     DriveMotorON_OFF = false;
-    
+
     digitalWrite(GREEN_LED_PIN, LOW);
   }
   else if (address == 0xc0e9)

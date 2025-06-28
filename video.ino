@@ -59,6 +59,8 @@ void graphicFlashCharacters(void *pvParameters)
 
     if (!OptionsWindow && AppleIIe && !Cols40_80 && !DHiResOn_Off)
       tft.setAddrWindow(0, margin_y, 320, 192); // Set the area to draw
+    else if (!OptionsWindow && AppleIIe && DHiResOn_Off && !videoColor)
+      tft.setAddrWindow(0, margin_y, 320, 192); // Set the area to draw
     else
       tft.setAddrWindow(margin_x, margin_y, 280, 192);
 
@@ -99,27 +101,6 @@ void graphicFlashCharacters(void *pvParameters)
         {
           if ((Graphics_Text && DisplayFull_Split) || (Graphics_Text && !DisplayFull_Split && (b < 2 || (b == 2 && l < 4))))
           {
-            // if (OptionsWindow)
-            // {
-            //   for (int i = 0; i < 8; i++) // char lines
-            //   {
-            //     x = 0;
-            //     for (int c = 0; c < 0x28; c++)
-            //     {
-            //       for (int k = 0; k < 7; k++) // char cols
-            //       {
-            //         char chr;
-            //         chr = menuScreen[(ushort)((b * 0x28) + (l * 0x80) + c)];
-            //         ushort addr = (chr * 7 * 8) + (i * 7) + k;
-            //         bool bpixel = AppleIIeFontPixels[addr];
-            //         tft.writeColor(bpixel ? TFT_WHITE : TFT_BLACK, 1);
-            //         x++;
-            //       }
-            //     }
-            //     y++;
-            //   }
-            // }
-            // else
             if (LoRes_HiRes)
             {
               for (int j = 0; j < 8; j++)

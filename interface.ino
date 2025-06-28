@@ -14,9 +14,7 @@ void print(const char * txt, bool inverted = false) {
   size_t length = std::strlen(txt);
 
   uint16_t addr = cursorY * 40 + cursorX;
-  //Serial.printf("txt size = %d", length);
   for (size_t i = 0; i < length; i++) {
-    //Serial.printf("char %d = %02x\n", i, txt[i]);
     char currChar = txt[i];
     if (inverted && currChar < 0x60 && currChar >= 0x40) currChar-=0x40;
     menuScreen[addr+i] = currChar+(inverted ? 0 : 0x80);
@@ -30,12 +28,10 @@ void print(const char * txt, bool inverted = false) {
 
 void listFiles(bool downDirection)
 {
-  uint8_t sel = 0;
-  uint8_t skip = 0;
   uint8_t startX = 0;
   uint8_t startY = 0;
-  uint8_t pageSize = 10;
-  uint8_t fileNameMax = 38;
+  uint8_t pageSize = 6;
+  uint8_t fileNameMax = 40;
   setCursor(startX, startY);
   print("Available files:");
   std::vector<std::string> files;
@@ -58,20 +54,27 @@ void listFiles(bool downDirection)
   }
   else
   {
-    if (shownFile < firstShowFile && firstShowFile > 0)
+    if (shownFile != 0xff && shownFile < firstShowFile && firstShowFile > 0)
       firstShowFile--;
   }
+
   int shown = 0;
-  // sprintf(buf, "sel: %d, firstShowFile: %d, shownFile: %d", sel, firstShowFile, shownFile);
-  // Serial.println(buf);
   
   int id = 0;
   for (auto &&i : files)
   {
-    if (shownFile == 0xff && i.compare(selectedDiskFileName.c_str()) == 0) {
+     
+    if (shownFile == 0xff && i.compare(HdDisk ? selectedHdFileName.c_str() : selectedDiskFileName.c_str()) == 0) {
       shownFile = id;
-      // sprintf(buf, "i: %s, selectedDiskFileName: %s", i.c_str(), selectedDiskFileName.c_str());
-      // Serial.println(buf);
+      if (shownFile > pageSize)
+        firstShowFile = shownFile - pageSize;
+      listFiles(downDirection);
+      //  sprintf(buf, "firstShowFile: %d, shownFile: %d", firstShowFile, shownFile);
+      //  Serial.println(buf);
+    } 
+    else if (shownFile == 0xff && ((HdDisk && selectedHdFileName == "/") || (!HdDisk && selectedDiskFileName == "/")))
+    {
+      shownFile = 0;
     }
     if (id < firstShowFile)
     {
@@ -83,10 +86,6 @@ void listFiles(bool downDirection)
     setCursor(startX, startY + 2 + id - firstShowFile);
     // sprintf(buf, "i: %s, selectedDiskFileName: %s", i.c_str(), selectedDiskFileName.c_str());
     // Serial.println(buf);
-    if (id == shownFile)
-      print("> ");
-    else
-      print("  ");
 
     if (i.size() > fileNameMax)
       i = i.substr(0, fileNameMax-6) + "..." + i.substr(i.size() - 3, 3);
@@ -115,32 +114,32 @@ void printOptionsBackground()
   setCursor(0,19);
   print(" DISK ", !HdDisk);
 
-  setCursor(7,17);
+  setCursor(8,17);
   print("< F2 >");
-  setCursor(7,18);
+  setCursor(8,18);
   print(" IIe  ", AppleIIe);
-  setCursor(7,19);
+  setCursor(8,19);
   print(" II+  ", !AppleIIe);
 
-  setCursor(14,17);
+  setCursor(16,17);
   print("< F3 >");
-  setCursor(14,18);
+  setCursor(16,18);
   print(" Fast ", Fast1MhzSpeed);
-  setCursor(14,19);
+  setCursor(16,19);
   print(" 1Mhz ", !Fast1MhzSpeed);
 
-  setCursor(21,17);
+  setCursor(24,17);
   print("< F4 >");
-  setCursor(21,18);
+  setCursor(24,18);
   print(" Stop ", paused);
-  setCursor(21,19);
+  setCursor(24,19);
   print(" Run  ", !paused);
 
-  setCursor(28,17);
+  setCursor(32,17);
   print("< F5 >");
-  setCursor(28,18);
+  setCursor(32,18);
   print(" Joy  ", joystick);
-  setCursor(28,19);
+  setCursor(32,19);
   print(" Off ", !joystick);
 
   setCursor(0,21);
@@ -150,12 +149,12 @@ void printOptionsBackground()
   setCursor(0,23);
   print(" Mono ", !videoColor);
 
-  setCursor(7,21);
+  setCursor(8,21);
   print("<ESC> Exit from menu");
-  setCursor(7,22);
-  print("<Return> Select Disk");
-  setCursor(7,23);
-  print("<Crtl> + <Return> Save and Reboot");
+  setCursor(8,22);
+  print("<Enter> Select Disk");
+  setCursor(8,23);
+  print("<Crtl> + <Enter> Save and Reboot");
 
 }
   

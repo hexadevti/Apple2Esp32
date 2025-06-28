@@ -28,6 +28,7 @@ void HDSetup()
 {
   if (HdDisk) {
     hdAttached = true;
+    initializedHdDisk = true;
     printLog("HD Setup...");
     if (!FSTYPE.begin(true)) {
       Serial.println("FSTYPE Mount Failed");

@@ -1,6 +1,7 @@
 #include "config.h"
 
 void setup() {
+  
   logSetup();
   epromSetup();
   memoryAlloc();
