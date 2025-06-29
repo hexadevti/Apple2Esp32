@@ -4,6 +4,7 @@ const uint16_t colors16[16] PROGMEM = {tft.color565(0, 0, 0), tft.color565(147, 
                                        tft.color565(31, 53, 211), tft.color565(187, 54, 255), tft.color565(126, 126, 126), tft.color565(255, 129, 236),
                                        tft.color565(7, 168, 224), tft.color565(157, 172, 255), tft.color565(93, 247, 132), tft.color565(255, 255, 255)};
 int flashCount = 0;
+int touchCount = 0;
 int width = 280;
 int height = 192;
 
@@ -29,31 +30,10 @@ void videoSetup()
   xTaskCreate(graphicFlashCharacters, "graphicFlashCharacters", 1024, NULL, 1, NULL);
 }
 
-void printMsg(char msg[], uint16_t color)
-{
-  tft.setTextFont(1);
-  tft.setTextSize(1);
-  tft.setTextColor(color, TFT_BLACK);
-  tft.setCursor(10, 0);
-  tft.print("                                                                         ");
-  tft.setCursor(10, 0);
-  tft.println(msg);
-}
-
-void printStatus(char msg[], uint16_t color)
-{
-  // tft.setTextFont(1);
-  // tft.setTextSize(1);
-  // tft.setTextColor(color, TFT_BLACK);
-  // tft.setCursor(5, 224);
-  // tft.print("                                                                   ");
-  // tft.setCursor(5, 224);
-  // tft.print(msg);
-}
-
 void graphicFlashCharacters(void *pvParameters)
 {
   bool inversed = false;
+  
   while (running)
   {
 
@@ -406,6 +386,12 @@ void graphicFlashCharacters(void *pvParameters)
     {
       inversed = !inversed;
       flashCount = 0;
+    }
+    touchCount++;
+    if (touchCount > 3) {
+      // bool pressed = tft.getTouchRaw(&tx, &ty);
+      // Serial.printf("tx = %d, ty = %d\n", tx, ty);
+      // touchCount = 0;
     }
   }
 }

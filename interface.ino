@@ -110,6 +110,27 @@ void showHideOptionsWindow() {
   printOptionsBackground();
 }
 
+void printMsg(char msg[], uint16_t color)
+{
+  tft.setTextFont(1);
+  tft.setTextSize(1);
+  tft.setTextColor(color, TFT_BLACK);
+  tft.setCursor(10, 0);
+  tft.print("                                                                         ");
+  tft.setCursor(10, 0);
+  tft.println(msg);
+}
+
+void printStatus(char msg[], uint16_t color)
+{
+  // tft.setTextFont(1);
+  // tft.setTextSize(1);
+  // tft.setTextColor(color, TFT_BLACK);
+  // tft.setCursor(5, 224);
+  // tft.print("                                                                   ");
+  // tft.setCursor(5, 224);
+  // tft.print(msg);
+}
 
 void printOptionsBackground()
 {

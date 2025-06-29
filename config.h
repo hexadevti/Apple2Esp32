@@ -1,11 +1,11 @@
+#include "FS.h"
+#include <SPI.h>
 #include <TFT_eSPI.h>
 #include <ESPAsyncWebServer.h>
 #include <Update.h>
 #include <ESPmDNS.h>
 #include <LittleFS.h>
-#include "FS.h"
 #include "SD.h"
-#include "SPI.h"
 #include <EEPROM.h>
 #include "rom.h"
 
@@ -41,8 +41,7 @@ static std::mutex page_lock;
 
 int margin_x = 20;
 int margin_y = 24;
-
-
+uint16_t tx = 0, ty = 0; // To store the touch coordinates
 
 // LittleFS
 #define U_PART U_SPIFFS

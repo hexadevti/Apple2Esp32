@@ -78,13 +78,26 @@ void analogJoystickTask(void *pvParameters)
     {
         analog_x = analogRead(ANALOG_X_PIN);
         analog_y = analogRead(ANALOG_Y_PIN);
-        digital_button1 = digitalRead(DIGITAL_BUTTON1_PIN);
+        digital_button1 = analogRead(DIGITAL_BUTTON1_PIN);
         digital_button2 = digitalRead(DIGITAL_BUTTON2_PIN);
 
         timerpdl0 = (4095-analog_y) * 0.625;
         timerpdl1 = (4095-analog_x) * 0.625;
-        Pb0 = !digital_button1;
-        Pb1 = !digital_button2;
+        if (digital_button1 > 3000) {
+            Pb0 = false;
+            Pb1 = false;
+        } else if (digital_button1 > 1800 && digital_button1 < 2000) {
+            Pb0 = true;
+            Pb1 = false;    
+        } else if (digital_button1 > 200 && digital_button1 < 300) {
+            Pb0 = false;
+            Pb1 = true;    
+        } else {
+            Pb0 = true;
+            Pb1 = true;    
+        }
+        //Pb0 = !digital_button1;
+        //Pb1 = !digital_button2;
         // sprintf(buf, "analog x=%d y=%d, btn1=%d, btn2=%d", analog_x, analog_y, digital_button1, digital_button2);
         // Serial.println(buf);
         // sprintf(buf, "timer %f %f", timerpdl0, timerpdl1);
