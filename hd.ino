@@ -175,7 +175,7 @@ void setHdFile()
 char loadBlock(unsigned short address, unsigned short block)
 {
   
-  digitalWrite(GREEN_LED_PIN, HIGH);
+  digitalWrite(GREEN_LED_PIN, LOW);
   
   getBlock(FSTYPE, block);
   try
@@ -187,13 +187,13 @@ char loadBlock(unsigned short address, unsigned short block)
       write8((address + i), actualBlock[i]);
     }
     //printLog("512 bytes written");
-    digitalWrite(GREEN_LED_PIN, LOW);
+    digitalWrite(GREEN_LED_PIN, HIGH);
     
     return 0;
   }
   catch(std::exception ex)
   {
-    digitalWrite(GREEN_LED_PIN, LOW);
+    digitalWrite(GREEN_LED_PIN, HIGH);
     
     return 0xb0;
   }

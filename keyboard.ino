@@ -40,13 +40,13 @@ void keyboardStrobe()
 
 void keyboardSetup()
 {
-  pinMode(DataPin, INPUT_PULLUP);
-  attachInterrupt(IRQpin, keyboard_bit, FALLING);
+  pinMode(KEYBOARD_DATA_PIN, INPUT_PULLUP);
+  attachInterrupt(KEYBOARD_IRQ_PIN, keyboard_bit, FALLING);
 }
 
 void keyboard_bit()
 {
-  if (digitalRead(DataPin))
+  if (digitalRead(KEYBOARD_DATA_PIN))
     keyboard_data[2] |= _BV(keyboard_buf_indx);
   else
     keyboard_data[2] &= ~(_BV(keyboard_buf_indx));
@@ -160,7 +160,7 @@ void keyboard_bit()
                 }
                 else if (keyboard_data[2] == 0x0c) // F4
                 {
-                  paused = !paused;
+                  sound = !sound;
                   printOptionsBackground();
                 }
                 else if (keyboard_data[2] == 0x03) // F5

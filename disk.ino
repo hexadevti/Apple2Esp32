@@ -790,12 +790,12 @@ char processSwitchc0e0(ushort address, char value)
   {
     DriveMotorON_OFF = false;
 
-    digitalWrite(GREEN_LED_PIN, LOW);
+    digitalWrite(GREEN_LED_PIN, HIGH);
   }
   else if (address == 0xc0e9)
   {
     DriveMotorON_OFF = true;
-    digitalWrite(GREEN_LED_PIN, HIGH);
+    digitalWrite(GREEN_LED_PIN, LOW);
   }
   else if (address == 0xc0ea)
     Drive1_2 = true;

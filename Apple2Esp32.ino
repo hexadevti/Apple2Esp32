@@ -13,7 +13,7 @@ void setup() {
   speakerSetup();
   setCpuFrequencyMhz(240);
   //wifiSetup();
-  joystickSetup(false);
+  joystickSetup(true);
   printLog("Ready.");
 }
 

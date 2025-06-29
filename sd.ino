@@ -1,10 +1,10 @@
 void SDCardSetup()
 {
   Serial.println("SD Card Setup");
-  SPI.begin(sck, miso, mosi, cs);
+  SPI.begin(SD_SCK_PIN, SD_MISO_PIN, SD_MOSI_PIN, SD_CS_PIN);
   delay(500);
   int sdMountRetry = 0;
-  while (!SD.begin(cs) && sdMountRetry < 10) {
+  while (!SD.begin(SD_CS_PIN) && sdMountRetry < 10) {
     printLog("Card Mount Failed");
     delay(100);
     sdMountRetry++;

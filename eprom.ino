@@ -16,6 +16,7 @@ void epromSetup() {
     int e3 = EEPROM.writeBool(Fast1MhzSpeedEEPROMaddress, true);
     int e4 = EEPROM.writeBool(JoystickEEPROMaddress, true);
     int e8 = EEPROM.writeBool(VideoColorEEPROMaddress, true);
+    int e9 = EEPROM.writeBool(SoundEEPROMaddress, true);
     int e7 = writeStringToEEPROM(NewDeviceConfigEEPROMaddress, "ok");
     int e5 = writeStringToEEPROM(HdFileNameEEPROMaddress, "/");
     int e6 = writeStringToEEPROM(DiskFileNameEEPROMaddress, "/karateka.dsk");
@@ -27,7 +28,8 @@ void epromSetup() {
   Fast1MhzSpeed = EEPROM.readBool(Fast1MhzSpeedEEPROMaddress);
   joystick = EEPROM.readBool(JoystickEEPROMaddress);
   videoColor = EEPROM.readBool(VideoColorEEPROMaddress);
-  
+  sound = EEPROM.readBool(SoundEEPROMaddress);
+    
   if (HdDisk) {
     int size = readStringFromEEPROM(HdFileNameEEPROMaddress, &selectedHdFileName);
     sprintf(buf, "EEPROM selectedHdFile value: %s", selectedHdFileName.c_str());
@@ -39,7 +41,7 @@ void epromSetup() {
   }
   
   
-  sprintf(buf, "EEPROM values %d,%d,%d,%d,%d,%s,%s,%s", HdDisk,AppleIIe,Fast1MhzSpeed,joystick,videoColor,selectedHdFileName.c_str(),selectedDiskFileName.c_str(),NewDeviceConfig.c_str());
+  sprintf(buf, "EEPROM values %d,%d,%d,%d,%d,%d,%s,%s,%s", HdDisk,AppleIIe,Fast1MhzSpeed,joystick,videoColor,sound,selectedHdFileName.c_str(),selectedDiskFileName.c_str(),NewDeviceConfig.c_str());
   printLog(buf);
   
 }
@@ -74,5 +76,6 @@ void saveEEPROM() {
     EEPROM.writeBool(Fast1MhzSpeedEEPROMaddress, Fast1MhzSpeed);
     EEPROM.writeBool(JoystickEEPROMaddress, joystick);
     EEPROM.writeBool(VideoColorEEPROMaddress, videoColor);
+    EEPROM.writeBool(SoundEEPROMaddress, sound);
   }
   

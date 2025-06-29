@@ -12,7 +12,7 @@ void videoSetup()
   printLog("Video Setup...");
 
   tft.begin();
-  tft.setRotation(1);
+  tft.setRotation(3);
   tft.invertDisplay(true);
   tft.initDMA();
   tft.fillRect(0, 0, 320, 240, TFT_BLACK);
@@ -399,7 +399,7 @@ void graphicFlashCharacters(void *pvParameters)
     tft.endWrite();
     Vertical_blankingOn_Off = true;
     page_lock.unlock();
-    vTaskDelay(pdMS_TO_TICKS(20));
+    vTaskDelay(pdMS_TO_TICKS(10));
     tft.invertDisplay(true);
     flashCount++;
     if (flashCount > 7)

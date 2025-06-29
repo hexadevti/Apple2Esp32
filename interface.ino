@@ -137,9 +137,9 @@ void printOptionsBackground()
   setCursor(24,17);
   print("< F4 >");
   setCursor(24,18);
-  print(" Stop ", paused);
+  print(" Loud ", sound);
   setCursor(24,19);
-  print(" Run  ", !paused);
+  print(" Mute ", !sound);
 
   setCursor(32,17);
   print("< F5 >");

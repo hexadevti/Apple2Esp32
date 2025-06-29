@@ -42,9 +42,6 @@ static std::mutex page_lock;
 int margin_x = 20;
 int margin_y = 24;
 
-// Keyboard pins
-#define DataPin 21
-#define IRQpin 22
 
 
 // LittleFS
@@ -52,14 +49,28 @@ int margin_y = 24;
 #define FSTYPE SD 
 
 // SD Config
-#define sck 18
-#define miso 19
-#define mosi 23
-#define cs 5
 std::vector<std::string> hdFiles;
 std::vector<std::string> diskFiles;
 
+// Board Pins
+#define SD_SCK_PIN 18
+#define SD_MISO_PIN 19
+#define SD_MOSI_PIN 23
+#define SD_CS_PIN 5
+#define ANALOG_X_PIN 35
+#define ANALOG_Y_PIN 4
+#define DIGITAL_BUTTON1_PIN 34
+#define DIGITAL_BUTTON2_PIN 16
+//#define RED_LED_PIN 4
+#define GREEN_LED_PIN 17
+//#define BLUE_LED_PIN 16
+#define SPEAKER_PIN 26
+#define KEYBOARD_DATA_PIN 21
+#define KEYBOARD_IRQ_PIN 22
+
+
 // Joystick Config
+
 #define JOY_MAX 20000
 #define JOY_MID 1230
 #define JOY_MIN 10
@@ -68,6 +79,7 @@ std::vector<std::string> diskFiles;
 // Fetures default Config
 static bool running = true;
 static bool paused = false;
+static bool sound = true;
 static bool AppleIIe = true;
 static bool OptionsWindow = false;
 static bool initializedHdDisk = false;
@@ -81,10 +93,6 @@ static bool serialKeyboardAttached = false;
 static bool videoColor = true;
 static bool wifiConnected = false;
 
-// Led Config
-//#define RED_LED_PIN 4
-#define GREEN_LED_PIN 17
-//#define BLUE_LED_PIN 16
 
 // Log Config
 char buf[0xff];
@@ -96,6 +104,7 @@ int logLineCount = 1;
 #define Fast1MhzSpeedEEPROMaddress 2
 #define JoystickEEPROMaddress 3
 #define VideoColorEEPROMaddress 4
+#define SoundEEPROMaddress 5
 #define NewDeviceConfigEEPROMaddress 50
 #define DiskFileNameEEPROMaddress 128
 #define HdFileNameEEPROMaddress 256
@@ -159,7 +168,7 @@ static unsigned char* IIEmemoryBankSwitchedRAM2_2;
 static unsigned char* menuScreen;
 
 //Speaker Config
-#define SPEAKER_PIN 26
+
 boolean speaker_state = false;
 
 // Other Cofig
