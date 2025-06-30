@@ -30,7 +30,7 @@ void listFiles(bool downDirection)
 {
   uint8_t startX = 0;
   uint8_t startY = 0;
-  uint8_t pageSize = 6;
+  uint8_t pageSize = 8;
   uint8_t fileNameMax = 40;
   setCursor(startX, startY);
   print("Available files:");
@@ -77,8 +77,8 @@ void listFiles(bool downDirection)
   }
   id = 0;
   int shown = 0;
-  sprintf(buf, "firstShowFile: %d, shownFile: %d, filename: %s", firstShowFile, shownFile, HdDisk ? selectedHdFileName.c_str() : selectedDiskFileName.c_str());
-  Serial.println(buf);
+  // sprintf(buf, "firstShowFile: %d, shownFile: %d, filename: %s", firstShowFile, shownFile, HdDisk ? selectedHdFileName.c_str() : selectedDiskFileName.c_str());
+  // Serial.println(buf);
   
   for (auto &&i : files)
   {
@@ -134,54 +134,81 @@ void printStatus(char msg[], uint16_t color)
 
 void printOptionsBackground()
 {
-  setCursor(0,17);
+  setCursor(0,12);
   print("< F1 >");
-  setCursor(0,18);
+  setCursor(0,13);
   print(" HD   ", HdDisk);
-  setCursor(0,19);
+  setCursor(0,14);
   print(" DISK ", !HdDisk);
 
-  setCursor(8,17);
+  setCursor(8,12);
   print("< F2 >");
-  setCursor(8,18);
+  setCursor(8,13);
   print(" IIe  ", AppleIIe);
-  setCursor(8,19);
+  setCursor(8,14);
   print(" II+  ", !AppleIIe);
 
-  setCursor(16,17);
+  setCursor(16,12);
   print("< F3 >");
-  setCursor(16,18);
+  setCursor(16,13);
   print(" Fast ", Fast1MhzSpeed);
-  setCursor(16,19);
+  setCursor(16,14);
   print(" 1Mhz ", !Fast1MhzSpeed);
 
-  setCursor(24,17);
+  setCursor(24,12);
   print("< F4 >");
-  setCursor(24,18);
+  setCursor(24,13);
   print(" Loud ", sound);
-  setCursor(24,19);
+  setCursor(24,14);
   print(" Mute ", !sound);
 
-  setCursor(32,17);
+  setCursor(32,12);
   print("< F5 >");
-  setCursor(32,18);
+  setCursor(32,13);
   print(" Joy  ", joystick);
-  setCursor(32,19);
+  setCursor(32,14);
   print(" Off ", !joystick);
 
-  setCursor(0,21);
+  setCursor(0,16);
   print("< F6 >");
-  setCursor(0,22);
+  setCursor(0,17);
   print(" Col. ", videoColor);
-  setCursor(0,23);
+  setCursor(0,18);
   print(" Mono ", !videoColor);
 
-  setCursor(8,21);
+  setCursor(8,16);
+  print("< F7 >");
+  setCursor(8,17);
+  print(" DAC ", dacSound);
+  setCursor(8,18);
+  print(" DIG ", !dacSound);
+
+  setCursor(0,20);
   print("<ESC> Exit from menu");
-  setCursor(8,22);
+  setCursor(0,21);
   print("<Enter> Select Disk");
-  setCursor(8,23);
-  print("<Crtl> + <Enter> Save and Reboot");
+  setCursor(0,22);
+  print("<Crtl> + <Enter> Save");
+  setCursor(0,23);
+  print(" and Reboot");
+
+  setCursor(22,20);
+  print("<F11> Volume Down");
+  setCursor(22,21);
+  print("<F12> Volume Up");
+  setCursor(22,22);
+  print("[");
+  for (int v = 0; v <= 0xf0; v+=0x10) {
+    if (!dacSound) {
+      print("#");
+    }
+    else if (v == 0) { }
+    else if (v <= volume)
+      print("#");
+    else
+      print(" ");
+  }
+  print("]");
 
 }
   

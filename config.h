@@ -8,6 +8,7 @@
 #include "SD.h"
 #include <EEPROM.h>
 #include "rom.h"
+#include <driver/dac.h>
 
 #include <string>
 #include <bitset>
@@ -58,8 +59,7 @@ std::vector<std::string> diskFiles;
 #define SD_CS_PIN 5
 #define ANALOG_X_PIN 35
 #define ANALOG_Y_PIN 4
-#define DIGITAL_BUTTON1_PIN 34
-#define DIGITAL_BUTTON2_PIN 16
+#define DIGITAL_BUTTON12_PIN 34
 //#define RED_LED_PIN 4
 #define GREEN_LED_PIN 17
 //#define BLUE_LED_PIN 16
@@ -79,6 +79,7 @@ std::vector<std::string> diskFiles;
 static bool running = true;
 static bool paused = false;
 static bool sound = true;
+static bool dacSound = false;
 static bool AppleIIe = true;
 static bool OptionsWindow = false;
 static bool initializedHdDisk = false;
@@ -91,7 +92,7 @@ static bool serialVideoAttached = false;
 static bool serialKeyboardAttached = false;
 static bool videoColor = true;
 static bool wifiConnected = false;
-
+static uint8_t volume = 0x40;
 
 // Log Config
 char buf[0xff];
@@ -104,6 +105,8 @@ int logLineCount = 1;
 #define JoystickEEPROMaddress 3
 #define VideoColorEEPROMaddress 4
 #define SoundEEPROMaddress 5
+#define VolumeEEPROMaddress 6
+#define dacSoundEEPROMaddress 7
 #define NewDeviceConfigEEPROMaddress 50
 #define DiskFileNameEEPROMaddress 128
 #define HdFileNameEEPROMaddress 256

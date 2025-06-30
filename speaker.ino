@@ -1,9 +1,13 @@
 void speakerSetup() {
-  pinMode(SPEAKER_PIN, OUTPUT);
-  digitalWrite(SPEAKER_PIN, LOW);
+  if (!dacSound)
+    pinMode(SPEAKER_PIN, OUTPUT);
+  //digitalWrite(SPEAKER_PIN, LOW);
 }
 
 void speakerToggle() {
   speaker_state = !speaker_state;
-  digitalWrite(SPEAKER_PIN, speaker_state ? (sound ? HIGH : LOW) : LOW);
+  if (dacSound)
+    dacWrite(SPEAKER_PIN, speaker_state ? (sound ? volume : 0) : 0);
+  else
+    digitalWrite(SPEAKER_PIN, speaker_state ? (sound ? HIGH : LOW) : LOW);
 }

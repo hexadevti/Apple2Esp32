@@ -6,7 +6,7 @@ int joystickCycles3 = 0;
 int analog_x = 0;
 int analog_y = 0;
 int digital_button1;
-int digital_button2;
+
 
 void processJoystick(float speedAdjust) {
     if (joystick) {
@@ -65,8 +65,7 @@ void joystickSetup(bool analog)
   if (analog) {
       pinMode(ANALOG_X_PIN, INPUT);
       pinMode(ANALOG_Y_PIN, INPUT);
-      pinMode(DIGITAL_BUTTON1_PIN, INPUT);
-      pinMode(DIGITAL_BUTTON2_PIN, INPUT);
+      pinMode(DIGITAL_BUTTON12_PIN, INPUT);
     
       xTaskCreate(analogJoystickTask, "analogJoystickTask", 4096, NULL, 1, NULL);
   }
@@ -78,8 +77,7 @@ void analogJoystickTask(void *pvParameters)
     {
         analog_x = analogRead(ANALOG_X_PIN);
         analog_y = analogRead(ANALOG_Y_PIN);
-        digital_button1 = analogRead(DIGITAL_BUTTON1_PIN);
-        digital_button2 = digitalRead(DIGITAL_BUTTON2_PIN);
+        digital_button1 = analogRead(DIGITAL_BUTTON12_PIN);
 
         timerpdl0 = (4095-analog_y) * 0.625;
         timerpdl1 = (4095-analog_x) * 0.625;

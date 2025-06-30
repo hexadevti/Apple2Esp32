@@ -173,12 +173,45 @@ void keyboard_bit()
                   videoColor = !videoColor;
                   printOptionsBackground();
                 }
+                else if (keyboard_data[2] == 0x83) // F7
+                {
+                  dacSound = !dacSound;
+                  speakerSetup();
+                  printOptionsBackground();
+                }
+                else if (keyboard_data[2] == 0x0a) // F8
+                {
+                  printOptionsBackground();
+                }
+                else if (keyboard_data[2] == 0x01) // F9
+                {
+                  printOptionsBackground();
+                }
+                else if (keyboard_data[2] == 0x09) // F10
+                {
+                  printOptionsBackground();
+                }
+                else if (keyboard_data[2] == 0x78) // F11
+                {
+                  if (volume > 0) {
+                    volume -= 0x10;
+                    if (volume > 0xf0)
+                      volume = 0;
+                  }
+                  printOptionsBackground();
+                }
+                else if (keyboard_data[2] == 0x07) // F12
+                {
+                  if (volume < 0xf0)
+                    volume += 0x10;
+                  printOptionsBackground();
+                }
                 
               
             }
 
             //  Serial.print("keyboard_data:");
-            //  Serial.println(keyboard_data[2]);
+            //  Serial.printf("%02x\n",keyboard_data[2]);
             //  Serial.print("shift:");
             //  Serial.println((shift_enabled) ? "1" : "0");
             //  Serial.print("ctrl:");
