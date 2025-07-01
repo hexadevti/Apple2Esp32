@@ -32,8 +32,7 @@ void listFiles(bool downDirection)
   uint8_t startY = 0;
   uint8_t pageSize = 8;
   uint8_t fileNameMax = 40;
-  setCursor(startX, startY);
-  print("Available files:");
+ 
   std::vector<std::string> files;
   if (!HdDisk)
   {
@@ -134,50 +133,52 @@ void printStatus(char msg[], uint16_t color)
 
 void printOptionsBackground()
 {
+  setCursor(0, 0);
+  print("Available files:", fnSelected == 0);
   setCursor(0,12);
-  print("< F1 >");
+  print("< F1 >", fnSelected == 1);
   setCursor(0,13);
   print(" HD   ", HdDisk);
   setCursor(0,14);
   print(" DISK ", !HdDisk);
 
   setCursor(8,12);
-  print("< F2 >");
+  print("< F2 >", fnSelected == 2);
   setCursor(8,13);
   print(" IIe  ", AppleIIe);
   setCursor(8,14);
   print(" II+  ", !AppleIIe);
 
   setCursor(16,12);
-  print("< F3 >");
+  print("< F3 >", fnSelected == 3);
   setCursor(16,13);
   print(" Fast ", Fast1MhzSpeed);
   setCursor(16,14);
   print(" 1Mhz ", !Fast1MhzSpeed);
 
   setCursor(24,12);
-  print("< F4 >");
+  print("< F4 >", fnSelected == 4);
   setCursor(24,13);
   print(" Loud ", sound);
   setCursor(24,14);
   print(" Mute ", !sound);
 
   setCursor(32,12);
-  print("< F5 >");
+  print("< F5 >", fnSelected == 5);
   setCursor(32,13);
   print(" Joy  ", joystick);
   setCursor(32,14);
-  print(" Off ", !joystick);
+  print(" Key(J) ", !joystick);
 
   setCursor(0,16);
-  print("< F6 >");
+  print("< F6 >", fnSelected == 6);
   setCursor(0,17);
   print(" Col. ", videoColor);
   setCursor(0,18);
   print(" Mono ", !videoColor);
 
   setCursor(8,16);
-  print("< F7 >");
+  print("< F7 >", fnSelected == 7);
   setCursor(8,17);
   print(" DAC ", dacSound);
   setCursor(8,18);

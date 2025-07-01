@@ -19,14 +19,9 @@ const unsigned char scancode_to_apple[] = {
     0xB0, 0xAE, 0xB2, 0xB5, 0xB6, 0xB8, 0x9B, 0x00, 0x00, 0xAB, 0xB3, 0xAD, 0xAA, 0xB9, 0x00, 0x00  //$F0 7
 };
 
-// keyboard scan buffer
-unsigned short keyboard_data[3] = {0, 0, 0};
-unsigned char keyboard_buf_indx = 0, keyboard_mbyte = 0;
-boolean shift_enabled = false;
-boolean ctrl_enabled = false;
 
 // In apple II scancode format
-volatile unsigned char keymem = 0;
+
 
 unsigned char keyboard_read()
 {
@@ -210,9 +205,9 @@ void keyboard_bit()
               
             }
 
-            //  Serial.print("keyboard_data:");
-            //  Serial.printf("%02x\n",keyboard_data[2]);
-            //  Serial.print("shift:");
+             Serial.print("keyboard_data:");
+             Serial.printf("%02x\n",keyboard_data[2]);
+             //Serial.print("shift:");
             //  Serial.println((shift_enabled) ? "1" : "0");
             //  Serial.print("ctrl:");
             //  Serial.println((ctrl_enabled) ? "1" : "0");

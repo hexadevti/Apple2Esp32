@@ -57,8 +57,8 @@ std::vector<std::string> diskFiles;
 #define SD_MISO_PIN 19
 #define SD_MOSI_PIN 23
 #define SD_CS_PIN 5
-#define ANALOG_X_PIN 35
-#define ANALOG_Y_PIN 4
+#define ANALOG_X_PIN 4
+#define ANALOG_Y_PIN 35
 #define DIGITAL_BUTTON12_PIN 34 // joystick buttons 0-3
 //#define RED_LED_PIN 4
 #define GREEN_LED_PIN 17
@@ -76,6 +76,13 @@ std::vector<std::string> diskFiles;
 // #define TFT_BL   27  // LED back-light
 // #define TOUCH_CS 33     // Chip select pin (T_CS) of touch screen
 
+// keyboard
+// keyboard scan buffer
+unsigned short keyboard_data[3] = {0, 0, 0};
+unsigned char keyboard_buf_indx = 0, keyboard_mbyte = 0;
+boolean shift_enabled = false;
+boolean ctrl_enabled = false;
+static char keymem = 0;
 
 // Joystick Config
 
@@ -83,6 +90,26 @@ std::vector<std::string> diskFiles;
 #define JOY_MID 1230
 #define JOY_MIN 10
 #define EEPROM_SIZE 1024
+static int fnSelected = 0;
+int joystickCycles0 = 0;
+int joystickCycles1 = 0;
+int joystickCycles2 = 0;
+int joystickCycles3 = 0;
+
+int analoxX = 0;
+int analogY = 0;
+int digital_button1;
+
+bool pPb0 = false;
+bool pPb1 = false;
+bool pPb2 = false;
+bool pPb3 = false;
+
+
+int joyX = 1;
+int joyY = 1;
+int pJoyX = 1;
+int pJoyY = 1;
 
 // Fetures default Config
 static bool running = true;

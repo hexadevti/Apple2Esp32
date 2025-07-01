@@ -7,8 +7,8 @@ void speakerSetup() {
 
 void speakerToggle() {
   speaker_state = !speaker_state;
-  if (dacSound)
-    dacWrite(SPEAKER_PIN, speaker_state ? volume : 0);
-  else
+  // if (dacSound)
+  //   dacWrite(SPEAKER_PIN, speaker_state ? volume : 0);
+  // else
     digitalWrite(SPEAKER_PIN, speaker_state ? HIGH : LOW);
 }
