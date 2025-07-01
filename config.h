@@ -59,13 +59,22 @@ std::vector<std::string> diskFiles;
 #define SD_CS_PIN 5
 #define ANALOG_X_PIN 35
 #define ANALOG_Y_PIN 4
-#define DIGITAL_BUTTON12_PIN 34
+#define DIGITAL_BUTTON12_PIN 34 // joystick buttons 0-3
 //#define RED_LED_PIN 4
 #define GREEN_LED_PIN 17
-//#define BLUE_LED_PIN 16
+//#define BLUE_LED_PIN 16 // unused
 #define SPEAKER_PIN 26
 #define KEYBOARD_DATA_PIN 21
 #define KEYBOARD_IRQ_PIN 22
+// #define GPIO25 25 // unused
+// #define GPIO32 32 // unused
+// #define TFT_MISO 12
+// #define TFT_MOSI 13 // In some display driver board, it might be written as "SDA" and so on.
+// #define TFT_SCLK 14
+// #define TFT_CS   15  // Chip select control pin
+// #define TFT_DC   2  // Data Command control pin
+// #define TFT_BL   27  // LED back-light
+// #define TOUCH_CS 33     // Chip select pin (T_CS) of touch screen
 
 
 // Joystick Config
@@ -189,4 +198,5 @@ static float timerpdl3 = 0;
 static bool Pb0 = false;
 static bool Pb1 = false;
 static bool Pb2 = false;
+static bool Pb3 = false;
 

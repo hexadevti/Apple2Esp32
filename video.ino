@@ -25,7 +25,6 @@ void videoSetup()
   tft.setTextSize(1);
   tft.setTextColor(TFT_WHITE, TFT_BLACK);
   tft.println("Apple //e");
-
   printMsg("APPLE2ESP32", TFT_BLUE);
   xTaskCreate(graphicFlashCharacters, "graphicFlashCharacters", 1024, NULL, 1, NULL);
 }
@@ -387,56 +386,5 @@ void graphicFlashCharacters(void *pvParameters)
       inversed = !inversed;
       flashCount = 0;
     }
-    touchCount++;
-    if (touchCount > 3) {
-      // bool pressed = tft.getTouchRaw(&tx, &ty);
-      // Serial.printf("tx = %d, ty = %d\n", tx, ty);
-      // touchCount = 0;
-    }
   }
-}
-
-void printOptionsBackground(int color)
-{
-  // tft.fillRect(40, 40, 240, 160, 0);
-  // tft.drawRect(41, 41, 238, 158, TFT_RED);
-  // // vga.setFont(Font6x8);
-  // // vga.setTextColor(// tft.color565(color), // tft.color565(0));
-  // // vga.setCursor(44, 188);
-  // sprintf(buf, " %s | %s | %s | %s | %s", HdDisk ? " HD " : "DISK", AppleIIe ? "IIe" : "II+", Fast1MhzSpeed ? "Fast" : "1Mhz", paused ? "Paused " : "Running", joystick ? "Joy On " : "Joy Off");
-  // // vga.print(buf);
-}
-
-void printOptionsText(const char *text)
-{
-  // // vga.fillRect(42, 42, 236, 147, 0);
-  // // vga.setCursor(44, 44);
-  // // vga.setTextColor(// tft.color565(0xffffff), // tft.color565(0));
-  // // vga.print(text);
-}
-
-void printOptionsTextEx(char text[])
-{
-  // // vga.setCursor(44, 44);
-  // // vga.println("12345678901234567890123456789");
-  // // vga.println("12345678901234567890123456789");
-  // // vga.println("12345678901234567890123456789");
-  // // vga.println("12345678901234567890123456789");
-  // // vga.println("12345678901234567890123456789");
-  // // vga.println("12345678901234567890123456789");
-  // // vga.println("12345678901234567890123456789");
-  // // vga.println("12345678901234567890123456789");
-  // // vga.println("12345678901234567890123456789");
-  // // vga.println("12345678901234567890123456789");
-  // // vga.setTextColor(// tft.color565(0), // tft.color565(0xff0000));
-  // // vga.println("12345678901234567890123456789");
-  // // vga.setTextColor(// tft.color565(0xff0000), // tft.color565(0));
-  // // vga.println("12345678901234567890123456789");
-  // // vga.println("12345678901234567890123456789");
-  // // vga.println("12345678901234567890123456789");
-  // // vga.println("12345678901234567890123456789");
-  // // vga.println("12345678901234567890123456789");
-  // // vga.println("12345678901234567890123456789");
-  // // vga.println("12345678901234567890123456789");
-  // // vga.println("12345678901234567890123456789");
 }

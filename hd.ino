@@ -30,10 +30,10 @@ void HDSetup()
     hdAttached = true;
     initializedHdDisk = true;
     printLog("HD Setup...");
-    if (!FSTYPE.begin(true)) {
-      Serial.println("FSTYPE Mount Failed");
-      return;
-    }
+    // if (!FSTYPE.begin(SD_CS_PIN)) {
+    //   Serial.println("FSTYPE Mount Failed");
+    //   return;
+    // }
     sprintf(buf, "FS.freeSpace = %d bytes", FSTYPE.totalBytes() - FSTYPE.usedBytes());
     printLog(buf);
     loadHD();

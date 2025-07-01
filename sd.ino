@@ -1,10 +1,10 @@
 void SDCardSetup()
 {
   Serial.println("SD Card Setup");
-  SPI.begin(SD_SCK_PIN, SD_MISO_PIN, SD_MOSI_PIN, SD_CS_PIN);
+  SPI.begin(); //SD_SCK_PIN, SD_MISO_PIN, SD_MOSI_PIN, SD_CS_PIN);
   delay(500);
   int sdMountRetry = 0;
-  while (!SD.begin(SD_CS_PIN) && sdMountRetry < 10) {
+  while (!FSTYPE.begin(SD_CS_PIN) && sdMountRetry < 10) {
     printLog("Card Mount Failed");
     delay(100);
     sdMountRetry++;
@@ -17,7 +17,7 @@ void SDCardSetup()
   }
   
 
-  uint8_t cardType = SD.cardType();
+  uint8_t cardType = FSTYPE.cardType();
 
   if (cardType == CARD_NONE) {
     printLog("No SD card attached");
@@ -35,7 +35,7 @@ void SDCardSetup()
     printLog("UNKNOWN");
   }
   
-  uint64_t cardSize = SD.cardSize() / (1024 * 1024);
+  uint64_t cardSize = FSTYPE.cardSize() / (1024 * 1024);
   sprintf(buf,"SD Card Size: %lluMB\n", cardSize);
   printLog(buf);
 }

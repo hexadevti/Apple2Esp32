@@ -77,7 +77,7 @@ char processSoftSwitches(ushort address, char value, bool Read_Write = true)
     return (char)(AltCharSetOn_Off ? 0xff : 0x00);
   else if (address == 0xc01f)
     return (char)(Cols40_80 ? 0x00 : 0xff);
-  else if (address == 0xC030)
+  else if (address == 0xC030 && sound)
     speakerToggle();
   else if (address == 0xc050)
     Graphics_Text = true;

@@ -50,11 +50,11 @@ void diskSetup()
   {
     initializedHdDisk = false;
     printLog("DiskII Setup...");
-    if (!FSTYPE.begin(true))
-    {
-      Serial.println("FSTYPE Mount Failed");
-      return;
-    }
+    // if (!FSTYPE.begin(SD_CS_PIN))
+    // {
+    //   Serial.println("FSTYPE Mount Failed");
+    //   return;
+    // }
     xTaskCreate(loadDiskAsync, "loadDiskAsync", 4096, NULL, 0, NULL);
     sprintf(buf, "FS.freeSpace = %d bytes", FSTYPE.totalBytes() - FSTYPE.usedBytes());
     printLog(buf);
