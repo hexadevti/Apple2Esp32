@@ -159,16 +159,16 @@ void printOptionsBackground()
   setCursor(24,12);
   print("< F4 >", fnSelected == 4);
   setCursor(24,13);
-  print(" Loud ", sound);
+  print(" Spkr ", sound);
   setCursor(24,14);
   print(" Mute ", !sound);
 
   setCursor(32,12);
   print("< F5 >", fnSelected == 5);
   setCursor(32,13);
-  print(" Joy  ", joystick);
+  print(" Joy ", joystick);
   setCursor(32,14);
-  print(" Key(J) ", !joystick);
+  print(" Off ", !joystick);
 
   setCursor(0,16);
   print("< F6 >", fnSelected == 6);

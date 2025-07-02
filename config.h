@@ -1,9 +1,9 @@
 #include "FS.h"
 #include <SPI.h>
 #include <TFT_eSPI.h>
-#include <ESPAsyncWebServer.h>
-#include <Update.h>
-#include <ESPmDNS.h>
+// #include <ESPAsyncWebServer.h>
+// #include <Update.h>
+// #include <ESPmDNS.h>
 #include <LittleFS.h>
 #include "SD.h"
 #include <EEPROM.h>
@@ -26,7 +26,9 @@ const char* host = "apple2";
 const char* ssid = "LUCIANO-ESCRITORIO";
 const char* password = "lrbf246!";
 const char* PARAM = "file";
-AsyncWebServer server(80);
+//AsyncWebServer server(80);
+
+
 size_t content_len;
 File file;
 bool opened = false;
@@ -86,9 +88,9 @@ static char keymem = 0;
 
 // Joystick Config
 
-#define JOY_MAX 20000
-#define JOY_MID 1230
-#define JOY_MIN 10
+#define JOY_MAX 1024
+#define JOY_MID 512
+#define JOY_MIN 0
 #define EEPROM_SIZE 1024
 static int fnSelected = 0;
 int joystickCycles0 = 0;
@@ -96,7 +98,7 @@ int joystickCycles1 = 0;
 int joystickCycles2 = 0;
 int joystickCycles3 = 0;
 
-int analoxX = 0;
+int analogX = 0;
 int analogY = 0;
 int digital_button1;
 

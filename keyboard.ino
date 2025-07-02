@@ -205,8 +205,8 @@ void keyboard_bit()
               
             }
 
-             Serial.print("keyboard_data:");
-             Serial.printf("%02x\n",keyboard_data[2]);
+            //  Serial.print("keyboard_data:");
+            //  Serial.printf("%02x\n",keyboard_data[2]);
              //Serial.print("shift:");
             //  Serial.println((shift_enabled) ? "1" : "0");
             //  Serial.print("ctrl:");
@@ -221,25 +221,28 @@ void keyboard_bit()
           if (keyboard_data[2] == 0x6B) // LEFT ARROW
           {
             keymem = 0x88; // back key
-            if (joystick)
+            if (!joystick) {
+              Serial.print("back");
               timerpdl0 = JOY_MIN;
+            }
           }
           else if (keyboard_data[2] == 0x74) // RIGHT ARROW
           {
             keymem = 0x95; // forward key
-            if (joystick)
+            if (!joystick)
               timerpdl0 = JOY_MAX;
           }
           else if (keyboard_data[2] == 0x75) // UP ARROW
           {
             keymem = 0x8b;
-            if (joystick)
+            if (!joystick)
               timerpdl1 = JOY_MIN;
+
           }
           else if (keyboard_data[2] == 0x72) // DOWN ARROW
           {
             keymem = 0x8a;
-            if (joystick)
+            if (!joystick)
               timerpdl1 = JOY_MAX;
           }
 
@@ -269,28 +272,28 @@ void keyboard_bit()
         else if (keyboard_data[1] == 0xF0 && (keyboard_data[2] == 0x12 || keyboard_data[2] == 0x59))
         {
           shift_enabled = false;
-          if (joystick)
+          if (!joystick)
             Pb1 = false;
         }
         else if (keyboard_data[1] == 0xF0 && keyboard_data[2] == 0x14)
         {
           ctrl_enabled = false;
-          if (joystick)
+          if (!joystick)
             Pb0 = false;
         }
         else if (keyboard_data[1] == 0xF0 && (keyboard_data[2] == 0x75 || keyboard_data[2] == 0x72))
         {
-          if (joystick)
+          if (!joystick)
             timerpdl1 = JOY_MID;
         }
         else if (keyboard_data[1] == 0xF0 && (keyboard_data[2] == 0x6b || keyboard_data[2] == 0x74))
         {
-          if (joystick)
+          if (!joystick)
             timerpdl0 = JOY_MID;
         }
         else
         {
-          if (joystick)
+          if (!joystick)
           {
             timerpdl0 = JOY_MID;
             timerpdl1 = JOY_MID;

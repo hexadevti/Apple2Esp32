@@ -1,78 +1,68 @@
 void processJoystick(float speedAdjust)
 {
-    if (joystick)
+    if (CgReset0)
     {
-        if (CgReset0)
-        {
-            joystickCycles0++;
-        }
-        if (CgReset1)
-        {
-            joystickCycles1++;
-        }
-        if (CgReset2)
-        {
-            joystickCycles2++;
-        }
-        if (CgReset3)
-        {
-            joystickCycles3++;
-        }
+        joystickCycles0++;
+    }
+    if (CgReset1)
+    {
+        joystickCycles1++;
+    }
+    if (CgReset2)
+    {
+        joystickCycles2++;
+    }
+    if (CgReset3)
+    {
+        joystickCycles3++;
+    }
 
-        if (joystickCycles0 >= static_cast<int>(timerpdl0 * speedAdjust))
-        {
-            joystickCycles0 = 0;
-            Cg0 = false;
-            CgReset0 = false;
-        }
+    if (joystickCycles0 >= static_cast<int>(timerpdl0 * speedAdjust))
+    {
+        joystickCycles0 = 0;
+        Cg0 = false;
+        CgReset0 = false;
+    }
 
-        if (joystickCycles1 >= static_cast<int>(timerpdl1 * speedAdjust))
-        {
-            joystickCycles1 = 0;
-            Cg1 = false;
-            CgReset1 = false;
-        }
+    if (joystickCycles1 >= static_cast<int>(timerpdl1 * speedAdjust))
+    {
+        joystickCycles1 = 0;
+        Cg1 = false;
+        CgReset1 = false;
+    }
 
-        if (joystickCycles2 >= static_cast<int>(timerpdl2 * speedAdjust))
-        {
-            joystickCycles2 = 0;
-            Cg2 = false;
-            CgReset2 = false;
-        }
+    if (joystickCycles2 >= static_cast<int>(timerpdl2 * speedAdjust))
+    {
+        joystickCycles2 = 0;
+        Cg2 = false;
+        CgReset2 = false;
+    }
 
-        if (joystickCycles3 >= static_cast<int>(timerpdl3 * speedAdjust))
-        {
-            joystickCycles3 = 0;
-            Cg3 = false;
-            CgReset3 = false;
-        }
+    if (joystickCycles3 >= static_cast<int>(timerpdl3 * speedAdjust))
+    {
+        joystickCycles3 = 0;
+        Cg3 = false;
+        CgReset3 = false;
     }
 }
 
-void joystickSetup(bool analog)
-{
-    if (joystick)
-    {
-        timerpdl0 = JOY_MID;
-        timerpdl1 = JOY_MID;
-    }
-    else
-    {
-        timerpdl0 = JOY_MAX;
-        timerpdl1 = JOY_MAX;
-    }
+int joyCenterX = 0;
+int joyCenterY = 0;
 
-    if (analog)
-    {
-        pinMode(ANALOG_X_PIN, INPUT);
-        pinMode(ANALOG_Y_PIN, INPUT);
-        pinMode(DIGITAL_BUTTON12_PIN, INPUT);
-        pPb0 = Pb0;
-        pPb1 = Pb1;
-        pPb2 = Pb2;
-        pPb3 = Pb3;
-        xTaskCreate(analogJoystickTask, "analogJoystickTask", 4096, NULL, 1, NULL);
-    }
+void joystickSetup()
+{
+    timerpdl0 = JOY_MID;
+    timerpdl1 = JOY_MID;
+    joyCenterX = 4095 - analogRead(ANALOG_X_PIN);
+    joyCenterY = 4095 - analogRead(ANALOG_Y_PIN);
+    pinMode(ANALOG_X_PIN, INPUT);
+    pinMode(ANALOG_Y_PIN, INPUT);
+    pinMode(DIGITAL_BUTTON12_PIN, INPUT);
+    pPb0 = Pb0;
+    pPb1 = Pb1;
+    pPb2 = Pb2;
+    pPb3 = Pb3;
+    xTaskCreate(analogJoystickTask, "analogJoystickTask", 4096, NULL, 1, NULL);
 }
 
 static void buttonDown(uint8_t btn)
@@ -259,12 +249,28 @@ static void analogJoystickTask(void *pvParameters)
 {
     while (running)
     {
-        analoxX = analogRead(ANALOG_X_PIN);
-        analogY = analogRead(ANALOG_Y_PIN);
+        
+        analogX = 4095 - analogRead(ANALOG_X_PIN);
+        analogY = 4095 - analogRead(ANALOG_Y_PIN);
         digital_button1 = analogRead(DIGITAL_BUTTON12_PIN);
-
-        timerpdl0 = (4095 - analoxX) * 0.625;
-        timerpdl1 = (4095 - analogY) * 0.625;
+        //Serial.printf("analog x=%d, y=%d, centerX=%d, centerY=%d\n", analogX, analogY, joyCenterX, joyCenterY);
+        // Serial.printf(" Pb0=%d, Pb1=%d Pb2=%d, Pb3=%d (%d)\n", Pb0, Pb1, Pb2, Pb3, digital_button1);
+        //Serial.printf("timer PDL(0)=%f PDL(1)=%f\n", timerpdl0, timerpdl1);
+        // Serial.println(buf);
+        if (joystick)
+        {
+            if (analogX > joyCenterX) {
+               timerpdl0 = 512 + ((analogX - joyCenterX) * 512 / (4095 - joyCenterX)) ;
+            } else {
+               timerpdl0 = 512 * analogX / joyCenterX;
+            }
+            if (analogY > joyCenterY) {
+               timerpdl1 = 512 + ((analogY - joyCenterY) * 512 / (4095 - joyCenterY)) ;
+            } else {
+               timerpdl1 = 512 * analogY / joyCenterY;
+            }
+        }
+    
         if (digital_button1 > 3000 && digital_button1 <= 4095)
         { // 0000
             Pb0 = false;
@@ -405,18 +411,18 @@ static void analogJoystickTask(void *pvParameters)
         pPb3 = Pb3;
 
         if (analogY >= 4095)
-            joyX = 0; // Up
+            joyX = 2; // Up
         else if (analogY > 0 && analogY < 4095)
             joyX = 1; // Center
         else
-            joyX = 2; // Down
+            joyX = 0; // Down
 
-        if (analoxX >= 4095)
-            joyY = 0; // Up
-        else if (analoxX > 0 && analoxX < 4095)
+        if (analogX >= 4095)
+            joyY = 2; // Up
+        else if (analogX > 0 && analogX < 4095)
             joyY = 1; // Center
         else
-            joyY = 2; // Down
+            joyY = 0; // Down
 
         if (pJoyX != joyX)
             changeDirection(0, joyX);
@@ -428,11 +434,7 @@ static void analogJoystickTask(void *pvParameters)
 
         // Pb0 = !digital_button1;
         // Pb1 = !digital_button2;
-        Serial.printf("analog x=%d y=%d, btn1=%d\n", analoxX, analogY, digital_button1);
-        // Serial.printf(" Pb0=%d, Pb1=%d Pb2=%d, Pb3=%d (%d)\n", Pb0, Pb1, Pb2, Pb3, digital_button1);
-
-        // sprintf(buf, "timer %f %f", timerpdl0, timerpdl1);
-        // Serial.println(buf);
+    
         delay(100);
     }
 }

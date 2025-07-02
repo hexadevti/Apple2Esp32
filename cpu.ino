@@ -207,7 +207,8 @@ void cpuLoop() {
       lastCpuCycleCount = cpuCycleCount;
     }
     
-    if (joystick) processJoystick(0.4);
+    // if (joystick) 
+    processJoystick(1);
 
     lastPC = PC;
 
