@@ -1,4 +1,5 @@
 void memoryAlloc() {
+  showFreeMem();
   ram = (unsigned char*)malloc(0xc000 * sizeof(unsigned char));
   auxram = (unsigned char*)malloc(0xc000 * sizeof(unsigned char));
   memoryBankSwitchedRAM1 = (unsigned char*)malloc(0x2000 * sizeof(unsigned char));
@@ -11,7 +12,9 @@ void memoryAlloc() {
   IIEmemoryBankSwitchedRAM2_1 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
   IIEmemoryBankSwitchedRAM2_2 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
   menuScreen = (unsigned char*)malloc(0x400 * sizeof(unsigned char));
-
+  sourceDiskData = (unsigned char*)malloc(trackRawSize * 35 * sizeof(unsigned char));
+  tempDiskData = (unsigned char*)malloc(trackRawSize * 35 * sizeof(unsigned char));
+  showFreeMem();
   memset(ram, 0, 0xc000 * sizeof(unsigned char));
   memset(auxram, 0, 0xc000 * sizeof(unsigned char));
   memset(memoryBankSwitchedRAM1, 0, 0x2000 * sizeof(unsigned char));
@@ -24,6 +27,17 @@ void memoryAlloc() {
   memset(IIEmemoryBankSwitchedRAM2_1, 0, 0x1000 * sizeof(unsigned char));
   memset(IIEmemoryBankSwitchedRAM2_2, 0, 0x1000 * sizeof(unsigned char));
   memset(menuScreen, 0xa0, 0x400 * sizeof(unsigned char));
+  //memset(sourceDiskData, 0, trackRawSize * 35 * sizeof(unsigned char));
+  //memset(tempDiskData, 0, trackRawSize * 35 * sizeof(unsigned char));
+  showFreeMem();
+}
+
+void showFreeMem() {
+  Serial.print("Free mem:");
+  Serial.print(heap_caps_get_free_size(MALLOC_CAP_8BIT));
+  Serial.print(" (");
+  Serial.print(heap_caps_get_free_size(MALLOC_CAP_8BIT) / sizeof(float));
+  Serial.println(" floats)");
 }
 
 unsigned char read8(unsigned short address)

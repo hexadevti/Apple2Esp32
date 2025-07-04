@@ -6,7 +6,7 @@ void setup() {
   epromSetup();
   memoryAlloc();
   videoSetup();
-  SDCardSetup();
+  FSSetup();
   keyboardSetup();
   HDSetup();
   diskSetup();

@@ -88,11 +88,6 @@ void saveTrackAsync(void *pvParameters)
   }
 }
 
-void loadDisk()
-{
-  loadDiskDir(FSTYPE, "/", 1);
-}
-
 void addPhase(uint8_t phase)
 {
   int track = diskTrack;
@@ -174,10 +169,13 @@ bool identifyDosProdos()
 
 void getDiskFileInfo(fs::FS &fs)
 {
-  // if (!fs.exists(selectedDiskFileName.c_str()))
-  // {
-  //   selectedDiskFileName = "";
-  // }
+  Serial.printf("selectedDiskFileName = %s\n", selectedDiskFileName.c_str());
+  if (!fs.exists(selectedDiskFileName.c_str()))
+  {
+    Serial.println("File not found");
+    shownFile = 0;
+
+  }
   File file = fs.open(selectedDiskFileName.c_str());
   size_t len = file.size();
   sprintf(buf, "File Size: %d", len);
@@ -227,46 +225,13 @@ void saveImage(fs::FS &fs, int track)
   sprintf(buf, "Saving Track %0d", track);
   Serial.println(buf);
   int positionToWrite = getOffset(track, 0);
-  uint8_t *sourceDiskData = (uint8_t *)ps_malloc(trackRawSize * 35);
-  uint8_t *tempDiskData = (uint8_t *)ps_malloc(trackRawSize * 35);
-  File file = fs.open(selectedDiskFileName.c_str(), FILE_READ);
-  file.read(sourceDiskData, trackRawSize * 35);
-  file.close();
-  Serial.println("-1");
-  for (int i = 0; i < 1000; i++) {
-      sprintf(buf, "%02X", sourceDiskData[i]);
-      printLog(buf);
-  }
-  Serial.println("1");
-  Serial.println(positionToWrite);
-  for (int i = 0; i < positionToWrite; i++)
-  {
-    tempDiskData[i] = sourceDiskData[i];
-  }
-  for (int i = positionToWrite; i < trackRawSize + positionToWrite; i++)
-  {
-    tempDiskData[i] = trackRawData[i - positionToWrite];
-  }
-  for (int i = trackRawSize + positionToWrite; i < trackRawSize * 35; i++)
-  {
-    tempDiskData[i] = sourceDiskData[i];
-  }
-  // for (int i = 0; i < 1000; i++) {
-  //   sprintf(buf, "%02X", tempDiskData[i]);
-  //   printLog(buf);
-  // }
-
-  Serial.println("2");
-  file = fs.open(selectedDiskFileName.c_str(), FILE_WRITE);
-  Serial.println("3");
-  if (file)
-  {
-    size_t s = file.write(tempDiskData, trackRawSize * 35);
-    Serial.println("4");
-    Serial.println(s);
-    delay(50);
+  
+  File file = fs.open(selectedDiskFileName.c_str(), "r+");
+  if (file) {
+    file.seek(positionToWrite, SeekSet);
+    size_t s = file.write(trackRawData, trackRawSize);
+    Serial.printf("size append: %d\n",s);
     file.close();
-    Serial.println("5");
   }
   else
   {
@@ -333,6 +298,7 @@ void loadDiskAsync(void *pvParameters)
         if ((int)fileName.find(diskFileExtensions[j].c_str()) > 0)
         {
           std::string str(file.name());
+          // Serial.printf("File name on disk: %s\n", str.c_str());
           diskFiles.push_back("/" + str);
         }
       }
@@ -346,65 +312,6 @@ void loadDiskAsync(void *pvParameters)
 
   }
   
-}
-
-void loadDiskDir(fs::FS &fs, const char *dirname, uint8_t levels)
-{
-  // sprintf(buf, "Loading directory: %s\n", dirname);
-  // printLog(buf);
-  diskFiles.clear();
-
-  File root = fs.open(dirname);
-  if (!root)
-  {
-    printLog("Failed to open directory");
-    return;
-  }
-  if (!root.isDirectory())
-  {
-    printLog("Not a directory");
-    return;
-  }
-
-  File file = root.openNextFile();
-  int i = 0;
-  while (file)
-  {
-    if (file.isDirectory())
-    {
-      // printLog("  DIR : ");
-      // printLog(file.name());
-      if (levels)
-      {
-        loadDiskDir(fs, file.path(), levels - 1);
-      }
-    }
-    else
-    {
-      bool acepted = false;
-      std::string fileName = file.name();
-      for (int j = 0; j < diskFileExtensions.size(); j++)
-      {
-        if ((int)fileName.find(diskFileExtensions[j].c_str()) > 0)
-        {
-          acepted = true;
-          break;
-        }
-      }
-
-      if (acepted)
-      {
-        // sprintf(buf, " FOUND FILE: %s SIZE: %d", file.name(), file.size());
-        // printLog(buf);
-        std::string str(file.name());
-        diskFiles.push_back("/" + str);
-      }
-      i++;
-    }
-    file = root.openNextFile();
-  }
-  file.close();
-  root.close();
 }
 
 int getOffset(int track, int sector)

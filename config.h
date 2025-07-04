@@ -24,6 +24,7 @@
 
 #include "BLEDevice.h"
 
+
 // BLE
 
 // The remote service we wish to connect to.
@@ -62,9 +63,15 @@ int margin_x = 20;
 int margin_y = 24;
 uint16_t tx = 0, ty = 0; // To store the touch coordinates
 
-// LittleFS
-#define U_PART U_SPIFFS
-#define FSTYPE SD 
+// LittleFS SD
+#define LITTLEFS //  SDFS or LITTLEFS
+
+#ifdef LITTLEFS
+#define FSTYPE LittleFS
+#else
+#define FSTYPE SD
+#endif
+
 
 // SD Config
 std::vector<std::string> hdFiles;
@@ -222,6 +229,10 @@ static unsigned char* IIEmemoryBankSwitchedRAM1;
 static unsigned char* IIEmemoryBankSwitchedRAM2_1;
 static unsigned char* IIEmemoryBankSwitchedRAM2_2;
 static unsigned char* menuScreen;
+static unsigned char *sourceDiskData;
+static unsigned char *tempDiskData;
+
+
 
 //Speaker Config
 

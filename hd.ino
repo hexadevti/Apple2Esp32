@@ -236,8 +236,8 @@ void getBlock(fs::FS &fs, ushort block)
 }
 
 void loadHDDir(fs::FS &fs, const char *dirname, uint8_t levels) {
-  // sprintf(buf,"Loading directory: %s\n", dirname);
-  // printLog(buf);
+  sprintf(buf,"Loading directory: %s\n", dirname);
+  printLog(buf);
   hdFiles.clear();
 
   File root = fs.open(dirname);
@@ -254,8 +254,8 @@ void loadHDDir(fs::FS &fs, const char *dirname, uint8_t levels) {
   int i = 0;
   while (file) {
     if (file.isDirectory()) {
-      // printLog("  DIR : ");
-      // printLog(file.name());
+      printLog("  DIR : ");
+      printLog(file.name());
       if (levels) {
         loadHDDir(fs, file.path(), levels - 1);
       }
@@ -273,8 +273,8 @@ void loadHDDir(fs::FS &fs, const char *dirname, uint8_t levels) {
       
       if (acepted)
       {
-        // sprintf(buf, " FOUND FILE: %s SIZE: %d", file.name(), file.size());
-        // printLog(buf);
+        sprintf(buf, " FOUND FILE: %s SIZE: %d", file.name(), file.size());
+        printLog(buf);
         std::string str(file.name());
         hdFiles.push_back("/" + str);
       }
