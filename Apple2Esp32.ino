@@ -15,6 +15,7 @@ void setup() {
   // wifiSetup();
   joystickSetup();
   printLog("Ready.");
+  
 }
 
 

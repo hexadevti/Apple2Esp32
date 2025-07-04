@@ -215,6 +215,40 @@ static void changeDirection(bool x, uint8_t dir)
                         listFiles(true);
                     }
                 }
+                else
+                {
+                    switch (fnSelected)
+                    {
+                    case 1:
+                        HdDisk = !HdDisk;
+                        break;
+                    case 2:
+                        AppleIIe = !AppleIIe;
+                        break;
+                    case 3:
+                        Fast1MhzSpeed = !Fast1MhzSpeed;
+                        break;
+                    case 4:
+                        sound = !sound;
+                        break;
+                    case 5:
+                        joystick = !joystick;
+                        break;
+                    case 6:
+                        videoColor = !videoColor;
+                        break;
+                    case 7:
+                        dacSound = !dacSound;
+                        break;
+                    case 8:
+                        break;
+                    case 9:
+                        break;
+                    case 10:
+                        break;
+                    }
+                    printOptionsBackground();
+                }
             }
         }
     }

@@ -232,11 +232,13 @@ void saveImage(fs::FS &fs, int track)
   File file = fs.open(selectedDiskFileName.c_str(), FILE_READ);
   file.read(sourceDiskData, trackRawSize * 35);
   file.close();
-  // for (int i = 0; i < 1000; i++) {
-  //     sprintf(buf, "%02X", sourceDiskData[i]);
-  //     printLog(buf);
-  // }
-
+  Serial.println("-1");
+  for (int i = 0; i < 1000; i++) {
+      sprintf(buf, "%02X", sourceDiskData[i]);
+      printLog(buf);
+  }
+  Serial.println("1");
+  Serial.println(positionToWrite);
   for (int i = 0; i < positionToWrite; i++)
   {
     tempDiskData[i] = sourceDiskData[i];
@@ -253,11 +255,18 @@ void saveImage(fs::FS &fs, int track)
   //   sprintf(buf, "%02X", tempDiskData[i]);
   //   printLog(buf);
   // }
+
+  Serial.println("2");
   file = fs.open(selectedDiskFileName.c_str(), FILE_WRITE);
+  Serial.println("3");
   if (file)
   {
-    file.write(tempDiskData, trackRawSize * 35);
+    size_t s = file.write(tempDiskData, trackRawSize * 35);
+    Serial.println("4");
+    Serial.println(s);
+    delay(50);
     file.close();
+    Serial.println("5");
   }
   else
   {

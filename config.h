@@ -21,6 +21,22 @@
 #include <vector>
 #include <condition_variable>
 
+
+#include "BLEDevice.h"
+
+// BLE
+
+// The remote service we wish to connect to.
+static BLEUUID serviceUUID((uint16_t) 0x1812);
+// The characteristic of the remote service we are interested in.
+static BLEUUID    charUUID((uint16_t) 0x2a4d);
+static bool doConnect = false;
+static bool connected = false;
+static bool doScan = false;
+static BLERemoteCharacteristic* pRemoteCharacteristic;
+static BLEAdvertisedDevice* myDevice;
+
+
 // WebServer/Wifi Config
 const char* host = "apple2";
 const char* ssid = "LUCIANO-ESCRITORIO";
