@@ -141,50 +141,50 @@ void keyboard_bit()
                 if (keyboard_data[2] == 0x05) // F1
                 {
                   HdDisk = !HdDisk;
-                  printOptionsBackground();
+                  optionsScreenRender();
                 }
                 else if (keyboard_data[2] == 0x06) // F2
                 {
                   AppleIIe = !AppleIIe;
-                  printOptionsBackground();
+                  optionsScreenRender();
                 }
                 else if (keyboard_data[2] == 0x04) // F3
                 {
                   Fast1MhzSpeed = !Fast1MhzSpeed;
-                  printOptionsBackground();
+                  optionsScreenRender();
                 }
                 else if (keyboard_data[2] == 0x0c) // F4
                 {
                   sound = !sound;
-                  printOptionsBackground();
+                  optionsScreenRender();
                 }
                 else if (keyboard_data[2] == 0x03) // F5
                 {
                   joystick = !joystick;
-                  printOptionsBackground();
+                  optionsScreenRender();
                 }
                 else if (keyboard_data[2] == 0x0b) // F6
                 {
                   videoColor = !videoColor;
-                  printOptionsBackground();
+                  optionsScreenRender();
                 }
                 else if (keyboard_data[2] == 0x83) // F7
                 {
                   dacSound = !dacSound;
                   speakerSetup();
-                  printOptionsBackground();
+                  optionsScreenRender();
                 }
                 else if (keyboard_data[2] == 0x0a) // F8
                 {
-                  printOptionsBackground();
+                  optionsScreenRender();
                 }
                 else if (keyboard_data[2] == 0x01) // F9
                 {
-                  printOptionsBackground();
+                  optionsScreenRender();
                 }
                 else if (keyboard_data[2] == 0x09) // F10
                 {
-                  printOptionsBackground();
+                  optionsScreenRender();
                 }
                 else if (keyboard_data[2] == 0x78) // F11
                 {
@@ -193,13 +193,13 @@ void keyboard_bit()
                     if (volume > 0xf0)
                       volume = 0;
                   }
-                  printOptionsBackground();
+                  optionsScreenRender();
                 }
                 else if (keyboard_data[2] == 0x07) // F12
                 {
                   if (volume < 0xf0)
                     volume += 0x10;
-                  printOptionsBackground();
+                  optionsScreenRender();
                 }
                 
               

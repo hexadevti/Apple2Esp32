@@ -17,15 +17,6 @@ void videoSetup()
   tft.invertDisplay(true);
   tft.initDMA();
   tft.fillRect(0, 0, 320, 240, TFT_BLACK);
-
-  tft.fillRect(20, 24, 280, 192, TFT_BLACK);
-
-  tft.setCursor(10, 0);
-  tft.setTextFont(1);
-  tft.setTextSize(1);
-  tft.setTextColor(TFT_WHITE, TFT_BLACK);
-  tft.println("Apple //e");
-  printMsg("APPLE2ESP32", TFT_BLUE);
   xTaskCreate(graphicFlashCharacters, "graphicFlashCharacters", 1024, NULL, 1, NULL);
 }
 
@@ -40,6 +31,8 @@ void graphicFlashCharacters(void *pvParameters)
       tft.setAddrWindow(0, margin_y, 320, 192); // Set the area to draw
     else if (!OptionsWindow && AppleIIe && DHiResOn_Off && !videoColor)
       tft.setAddrWindow(0, margin_y, 320, 192); // Set the area to draw
+    else if (OptionsWindow)
+      tft.setAddrWindow(2, 0, 315, 240);
     else
       tft.setAddrWindow(margin_x, margin_y, 280, 192);
 
@@ -56,13 +49,13 @@ void graphicFlashCharacters(void *pvParameters)
     
     if (OptionsWindow)
     {
-      for (int y = 0; y < 24; y++)
+      for (int y = 0; y < 30; y++)
       {
         for (int i = 0; i < 8; i++) // char lines
         {
-          for (int x = 0; x < 40; x++)
+          for (int x = 0; x < 45; x++)
           {
-            uint8_t chr = menuScreen[y * 40 + x];
+            uint8_t chr = menuScreen[y * 45 + x];
             for (int c = 0; c < 7; c++) // char cols
             {
               bool bpixel = AppleIIeFontPixels[(chr*7*8) + (i * 7) + c];

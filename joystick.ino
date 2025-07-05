@@ -105,7 +105,7 @@ static void buttonDown(uint8_t btn)
             case 10:
                 break;
             }
-            printOptionsBackground();
+            optionsScreenRender();
         }
         else if (btn == 1)
         {
@@ -190,7 +190,7 @@ static void changeDirection(bool x, uint8_t dir)
                     fnSelected++;
                 }
             }
-            printOptionsBackground();
+            optionsScreenRender();
         }
         else
         { // Y
@@ -247,7 +247,7 @@ static void changeDirection(bool x, uint8_t dir)
                     case 10:
                         break;
                     }
-                    printOptionsBackground();
+                    optionsScreenRender();
                 }
             }
         }

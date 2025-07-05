@@ -143,6 +143,7 @@ static bool sound = true;
 static bool dacSound = false;
 static bool AppleIIe = true;
 static bool OptionsWindow = false;
+static bool ClearWindow = false;
 static bool initializedHdDisk = false;
 static bool HdDisk = false;
 static bool Fast1MhzSpeed = true;

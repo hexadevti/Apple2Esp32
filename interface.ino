@@ -13,17 +13,21 @@ void setCursor(uint8_t x, uint8_t y) {
 void print(const char * txt, bool inverted = false) {
   size_t length = std::strlen(txt);
 
-  uint16_t addr = cursorY * 40 + cursorX;
+  uint16_t addr = cursorY * 45 + cursorX;
   for (size_t i = 0; i < length; i++) {
     char currChar = txt[i];
     if (inverted && currChar < 0x60 && currChar >= 0x40) currChar-=0x40;
     menuScreen[addr+i] = currChar+(inverted ? 0 : 0x80);
     cursorX++;
-    if (cursorX > 39) {
+    if (cursorX > 44) {
       cursorY++;
       cursorX = 0;
     }
   }
+}
+
+void clearScreen() {
+  memset(menuScreen, 0xa0, 0x546 * sizeof(unsigned char));
 }
 
 void listFiles(bool downDirection)
@@ -31,7 +35,7 @@ void listFiles(bool downDirection)
   uint8_t startX = 0;
   uint8_t startY = 0;
   uint8_t pageSize = 8;
-  uint8_t fileNameMax = 40;
+  uint8_t fileNameMax = 45;
  
   std::vector<std::string> files;
   if (!HdDisk)
@@ -103,35 +107,21 @@ void listFiles(bool downDirection)
 }
 
 void showHideOptionsWindow() {
+  if (OptionsWindow) {
+    clearScreen();
+    delay(100);
+  }
   OptionsWindow = !OptionsWindow;
+
+  if (OptionsWindow) {
+    listFiles(true);
+    optionsScreenRender();
+  }
+
   paused = OptionsWindow;
-  listFiles(true);
-  printOptionsBackground();
 }
 
-void printMsg(char msg[], uint16_t color)
-{
-  tft.setTextFont(1);
-  tft.setTextSize(1);
-  tft.setTextColor(color, TFT_BLACK);
-  tft.setCursor(10, 0);
-  tft.print("                                                                         ");
-  tft.setCursor(10, 0);
-  tft.println(msg);
-}
-
-void printStatus(char msg[], uint16_t color)
-{
-  // tft.setTextFont(1);
-  // tft.setTextSize(1);
-  // tft.setTextColor(color, TFT_BLACK);
-  // tft.setCursor(5, 224);
-  // tft.print("                                                                   ");
-  // tft.setCursor(5, 224);
-  // tft.print(msg);
-}
-
-void printOptionsBackground()
+void optionsScreenRender()
 {
   setCursor(0, 0);
   print("Available files:", fnSelected == 0);
