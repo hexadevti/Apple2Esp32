@@ -55,7 +55,8 @@ void diskSetup()
     //   Serial.println("FSTYPE Mount Failed");
     //   return;
     // }
-    xTaskCreate(loadDiskAsync, "loadDiskAsync", 4096, NULL, 0, NULL);
+    
+    xTaskCreate(loadDiskAsync, "loadDiskAsync", 4096, NULL, 2, NULL);
     sprintf(buf, "FS.freeSpace = %d bytes", FSTYPE.totalBytes() - FSTYPE.usedBytes());
     printLog(buf);
     if (!HdDisk)
@@ -84,7 +85,7 @@ void saveTrackAsync(void *pvParameters)
       }
       count++;
     }
-    delay(10);
+    vTaskDelay(pdMS_TO_TICKS(10));
   }
 }
 
@@ -307,11 +308,7 @@ void loadDiskAsync(void *pvParameters)
   }
   file.close();
   root.close();
-
-  while(true){
-
-  }
-  
+  vTaskDelete(NULL); // Self-deletion 
 }
 
 int getOffset(int track, int sector)

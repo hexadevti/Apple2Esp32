@@ -1,8 +1,6 @@
 void speakerSetup() {
-  if (!dacSound) {
     pinMode(SPEAKER_PIN, OUTPUT);
     digitalWrite(SPEAKER_PIN, LOW);
-  }
 }
 
 void speakerToggle() {

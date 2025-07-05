@@ -62,7 +62,7 @@ void joystickSetup()
     pPb1 = Pb1;
     pPb2 = Pb2;
     pPb3 = Pb3;
-    xTaskCreate(analogJoystickTask, "analogJoystickTask", 4096, NULL, 1, NULL);
+    xTaskCreate(analogJoystickTask, "analogJoystickTask", 4096, NULL, 3, NULL);
 }
 
 static void buttonDown(uint8_t btn)
@@ -466,9 +466,7 @@ static void analogJoystickTask(void *pvParameters)
         pJoyX = joyX;
         pJoyY = joyY;
 
-        // Pb0 = !digital_button1;
-        // Pb1 = !digital_button2;
     
-        delay(100);
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
 }

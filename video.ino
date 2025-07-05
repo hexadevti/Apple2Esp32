@@ -378,7 +378,7 @@ void graphicFlashCharacters(void *pvParameters)
     tft.endWrite();
     Vertical_blankingOn_Off = true;
     page_lock.unlock();
-    vTaskDelay(pdMS_TO_TICKS(10));
+    vTaskDelay(pdMS_TO_TICKS(20));
     tft.invertDisplay(true);
     flashCount++;
     if (flashCount > 7)

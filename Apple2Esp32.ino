@@ -11,14 +11,10 @@ void setup() {
   HDSetup();
   diskSetup();
   speakerSetup();
-  setCpuFrequencyMhz(240);
   // wifiSetup();
   joystickSetup();
   printLog("Ready.");
-  
 }
-
-
 
 void loop() {
   cpuLoop();

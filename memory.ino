@@ -12,8 +12,6 @@ void memoryAlloc() {
   IIEmemoryBankSwitchedRAM2_1 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
   IIEmemoryBankSwitchedRAM2_2 = (unsigned char*)malloc(0x1000 * sizeof(unsigned char));
   menuScreen = (unsigned char*)malloc(0x400 * sizeof(unsigned char));
-  sourceDiskData = (unsigned char*)malloc(trackRawSize * 35 * sizeof(unsigned char));
-  tempDiskData = (unsigned char*)malloc(trackRawSize * 35 * sizeof(unsigned char));
   showFreeMem();
   memset(ram, 0, 0xc000 * sizeof(unsigned char));
   memset(auxram, 0, 0xc000 * sizeof(unsigned char));
