@@ -230,6 +230,7 @@ static unsigned char* IIEmemoryBankSwitchedRAM1;
 static unsigned char* IIEmemoryBankSwitchedRAM2_1;
 static unsigned char* IIEmemoryBankSwitchedRAM2_2;
 static unsigned char* menuScreen;
+static unsigned char* menuColor;
 
 //Speaker Config
 

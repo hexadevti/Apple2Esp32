@@ -185,7 +185,7 @@ static void changeDirection(bool x, uint8_t dir)
             }
             else if (dir == 2)
             {
-                if (fnSelected < 7)
+                if (fnSelected < 8)
                 {
                     fnSelected++;
                 }
@@ -241,6 +241,21 @@ static void changeDirection(bool x, uint8_t dir)
                         dacSound = !dacSound;
                         break;
                     case 8:
+                        if (dir == 0)
+                        { // Up
+                            if (volume < 0xf0)
+                                volume += 0x10;
+                            optionsScreenRender();
+                        }
+                        else if (dir == 2)
+                        { // down
+                            if (volume > 0) {
+                                volume -= 0x10;
+                            if (volume > 0xf0)
+                                volume = 0;
+                            }
+                            optionsScreenRender();
+                        }
                         break;
                     case 9:
                         break;

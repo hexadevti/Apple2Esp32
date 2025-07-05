@@ -59,7 +59,10 @@ void graphicFlashCharacters(void *pvParameters)
             for (int c = 0; c < 7; c++) // char cols
             {
               bool bpixel = AppleIIeFontPixels[(chr*7*8) + (i * 7) + c];
-              tft.writeColor((bpixel ? TFT_WHITE : TFT_BLACK), 1);
+              uint8_t color = menuColor[y * 45 + x];
+              uint8_t fgColor = (color & 0xf0) >> 4;
+              uint8_t bgColor = (color & 0x0f);
+              tft.writeColor((bpixel ? colors16[fgColor] : colors16[bgColor]), 1);
             }
           }
         }

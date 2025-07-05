@@ -10,7 +10,7 @@ void setCursor(uint8_t x, uint8_t y) {
   cursorY = y;
 }
 
-void print(const char * txt, bool inverted = false) {
+void print(const char * txt, bool inverted = false, uint8_t color = 0xf0) {
   size_t length = std::strlen(txt);
 
   uint16_t addr = cursorY * 45 + cursorX;
@@ -18,6 +18,7 @@ void print(const char * txt, bool inverted = false) {
     char currChar = txt[i];
     if (inverted && currChar < 0x60 && currChar >= 0x40) currChar-=0x40;
     menuScreen[addr+i] = currChar+(inverted ? 0 : 0x80);
+    menuColor[addr+i] = color;
     cursorX++;
     if (cursorX > 44) {
       cursorY++;
@@ -124,7 +125,7 @@ void showHideOptionsWindow() {
 void optionsScreenRender()
 {
   setCursor(0, 0);
-  print("Available files:", fnSelected == 0);
+  print("Available files:", fnSelected == 0, 0xA0);
   setCursor(0,12);
   print("< F1 >", fnSelected == 1);
   setCursor(0,13);
@@ -188,18 +189,17 @@ void optionsScreenRender()
   setCursor(22,21);
   print("<F12> Volume Up");
   setCursor(22,22);
-  print("[");
+  print("[", fnSelected == 8);
   for (int v = 0; v <= 0xf0; v+=0x10) {
     if (!dacSound) {
-      print("#");
+      print("#", fnSelected == 8);
     }
     else if (v == 0) { }
     else if (v <= volume)
-      print("#");
+      print("#", fnSelected == 8);
     else
-      print(" ");
+      print(" ", fnSelected == 8);
   }
-  print("]");
-
+  print("]", fnSelected == 8);
 }
   
