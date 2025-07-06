@@ -95,9 +95,11 @@ static void buttonDown(uint8_t btn)
             case 6:
                 videoColor = !videoColor;
                 break;
+#ifdef DAC
             case 7:
                 dacSound = !dacSound;
                 break;
+#endif
             case 8:
                 break;
             case 9:
@@ -173,7 +175,6 @@ static void changeDirection(bool x, uint8_t dir)
 {
     if (OptionsWindow)
     {
-
         if (x)
         {
             if (dir == 0)
@@ -185,10 +186,17 @@ static void changeDirection(bool x, uint8_t dir)
             }
             else if (dir == 2)
             {
+#ifdef DAC                
                 if (fnSelected < 8)
                 {
                     fnSelected++;
                 }
+#else
+                if (fnSelected < 7)
+                {
+                    fnSelected++;
+                }
+#endif
             }
             optionsScreenRender();
         }
@@ -240,6 +248,7 @@ static void changeDirection(bool x, uint8_t dir)
                     case 7:
                         dacSound = !dacSound;
                         break;
+#ifdef DAC
                     case 8:
                         if (dir == 0)
                         { // Up
@@ -257,10 +266,7 @@ static void changeDirection(bool x, uint8_t dir)
                             optionsScreenRender();
                         }
                         break;
-                    case 9:
-                        break;
-                    case 10:
-                        break;
+#endif                        
                     }
                     optionsScreenRender();
                 }

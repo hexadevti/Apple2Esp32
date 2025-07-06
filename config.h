@@ -233,7 +233,7 @@ static unsigned char* menuScreen;
 static unsigned char* menuColor;
 
 //Speaker Config
-
+//#define DAC
 boolean speaker_state = false;
 
 // Other Cofig

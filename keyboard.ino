@@ -168,12 +168,14 @@ void keyboard_bit()
                   videoColor = !videoColor;
                   optionsScreenRender();
                 }
+#ifdef DAC
                 else if (keyboard_data[2] == 0x83) // F7
                 {
                   dacSound = !dacSound;
                   speakerSetup();
                   optionsScreenRender();
                 }
+#endif
                 else if (keyboard_data[2] == 0x0a) // F8
                 {
                   optionsScreenRender();

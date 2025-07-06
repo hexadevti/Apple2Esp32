@@ -167,13 +167,14 @@ void optionsScreenRender()
   print(" Col. ", videoColor);
   setCursor(0,18);
   print(" Mono ", !videoColor);
-
+  #ifdef DAC
   setCursor(8,16);
   print("< F7 >", fnSelected == 7);
   setCursor(8,17);
   print(" DAC ", dacSound);
   setCursor(8,18);
   print(" DIG ", !dacSound);
+  #endif
 
   setCursor(0,20);
   print("<ESC> Exit from menu");
@@ -183,7 +184,7 @@ void optionsScreenRender()
   print("<Crtl> + <Enter> Save");
   setCursor(0,23);
   print(" and Reboot");
-
+#ifdef DAC
   setCursor(22,20);
   print("<F11> Volume Down");
   setCursor(22,21);
@@ -201,5 +202,6 @@ void optionsScreenRender()
       print(" ", fnSelected == 8);
   }
   print("]", fnSelected == 8);
+#endif
 }
   
