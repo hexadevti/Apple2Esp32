@@ -5,6 +5,13 @@ const uint16_t colors16[16] PROGMEM = {tft.color565(0, 0, 0), tft.color565(147, 
                                        tft.color565(0, 118, 12), tft.color565(126, 126, 126), tft.color565(67, 200, 0), tft.color565(220, 205, 22),
                                        tft.color565(31, 53, 211), tft.color565(187, 54, 255), tft.color565(126, 126, 126), tft.color565(255, 129, 236),
                                        tft.color565(7, 168, 224), tft.color565(157, 172, 255), tft.color565(93, 247, 132), tft.color565(255, 255, 255)};
+#else
+const uint16_t colors[8] PROGMEM = {vga.rgb(0, 0, 0), vga.rgb(67, 200, 0), vga.rgb(147, 11, 124), vga.rgb(255, 255, 255), vga.rgb(0, 0, 0), vga.rgb(255, 20, 0), vga.rgb(7, 168, 224), vga.rgb(255, 255, 255)};
+const uint16_t colors16[16] PROGMEM = {vga.rgb(0, 0, 0), vga.rgb(147, 11, 124), vga.rgb(98, 76, 0), vga.rgb(249, 86, 29),
+                                       vga.rgb(0, 118, 12), vga.rgb(126, 126, 126), vga.rgb(67, 200, 0), vga.rgb(220, 205, 22),
+                                       vga.rgb(31, 53, 211), vga.rgb(187, 54, 255), vga.rgb(126, 126, 126), vga.rgb(255, 129, 236),
+                                       vga.rgb(7, 168, 224), vga.rgb(157, 172, 255), vga.rgb(93, 247, 132), vga.rgb(255, 255, 255)};
+#endif                                    
 int flashCount = 0;
 int touchCount = 0;
 int width = 280;
@@ -13,60 +20,84 @@ int height = 192;
 void videoSetup()
 {
   printLog("Video Setup...");
-
+#ifdef TFT
   tft.begin();
   tft.setRotation(3);
   tft.invertDisplay(true);
   tft.initDMA();
   tft.fillRect(0, 0, 320, 240, TFT_BLACK);
-  xTaskCreate(graphicFlashCharacters, "graphicFlashCharacters", 1024, NULL, 1, NULL);
+#else
+  const PinConfig pins(-1, -1, -1, RED0_PIN, RED1_PIN, 
+                       -1, -1, -1, -1, GREEN0_PIN, GREEN1_PIN,
+                       -1, -1, -1, BLUE0_PIN, BLUE1_PIN, 
+                       HSYNC_PIN,VSYNC_PIN);
+  Mode mode(16, 96, 48, 640, 4, 2, 30, 240, 23760000, 0, 0, 2);
+  while (!vga.init(pins, mode, 8, 3))
+    delay(1);
+
+  printLog("Video initialized.");
+  vga.show();
+  vga.start();
+  vga.fillRect(0,0,320,240,0);
+#endif
+  xTaskCreate(renderLoop, "renderLoop", 1024, NULL, 1, NULL);
 }
 
-void graphicFlashCharacters(void *pvParameters)
+void renderLoop(void *pvParameters)
 {
   bool inversed = false;
   
   while (running)
   {
-
-    if (!OptionsWindow && AppleIIe && !Cols40_80 && !DHiResOn_Off)
-      tft.setAddrWindow(0, margin_y, 320, 192); // Set the area to draw
-    else if (!OptionsWindow && AppleIIe && DHiResOn_Off && !videoColor)
-      tft.setAddrWindow(0, margin_y, 320, 192); // Set the area to draw
-    else if (OptionsWindow)
-      tft.setAddrWindow(2, 0, 315, 240);
-    else
-      tft.setAddrWindow(margin_x, margin_y, 280, 192);
-
     page_lock.lock();
 
+    #ifdef TFT
+    if (!OptionsWindow && AppleIIe && !Cols40_80 && !DHiResOn_Off)
+    tft.setAddrWindow(0, margin_y, 320, 192); // Set the area to draw
+    else if (!OptionsWindow && AppleIIe && DHiResOn_Off && !videoColor)
+    tft.setAddrWindow(0, margin_y, 320, 192); // Set the area to draw
+    else if (OptionsWindow)
+    tft.setAddrWindow(2, 0, 315, 240);
+    else
+    tft.setAddrWindow(margin_x, margin_y, 280, 192);
     tft.startWrite();
-
+    #endif
+    
     Vertical_blankingOn_Off = false; // IIe video problem with Total Replay
 
-    int x = 0;
-    int y = 0;
+    int x = margin_x;
+    int y = margin_y;
     ushort textPage = Page1_Page2 ? 0x400 : 0x800;
     ushort graphicsPage = Page1_Page2 ? 0x2000 : 0x4000;
     
     if (OptionsWindow)
     {
-      for (int y = 0; y < 30; y++)
+      y=0;
+      for (int v = 0; v < 30; v++)
       {
         for (int i = 0; i < 8; i++) // char lines
         {
-          for (int x = 0; x < 45; x++)
+          x=0;
+          for (int h = 0; h < 45; h++)
           {
-            uint8_t chr = menuScreen[y * 45 + x];
+            uint8_t chr = menuScreen[v * 45 + h];
             for (int c = 0; c < 7; c++) // char cols
             {
               bool bpixel = AppleIIeFontPixels[(chr*7*8) + (i * 7) + c];
-              uint8_t color = menuColor[y * 45 + x];
+              uint8_t color = menuColor[v * 45 + h];
               uint8_t fgColor = (color & 0xf0) >> 4;
               uint8_t bgColor = (color & 0x0f);
+              #ifdef TFT
               tft.writeColor((bpixel ? colors16[fgColor] : colors16[bgColor]), 1);
+              #else
+              vga.dotFast(x, y, bpixel ? colors16[fgColor] : colors16[bgColor]);
+              x++;
+              vga.dotFast(x, y, bpixel ? colors16[fgColor] : colors16[bgColor]);
+              #endif
+              x++;
             }
           }
+          y++;
         }
       }
     }
@@ -82,7 +113,7 @@ void graphicFlashCharacters(void *pvParameters)
             {
               for (int j = 0; j < 8; j++)
               {
-                x = 0;
+                x = margin_x;
                 for (int c = 0; c < 0x28; c++)
                 {
                   for (int k = 0; k < 7; k++)
@@ -92,13 +123,23 @@ void graphicFlashCharacters(void *pvParameters)
                     int secondColor = value & 0b00001111;
                     if (j < 4)
                     {
-                      // if (!optionsScreenBlank(x, y))
+                      #ifdef TFT
                       tft.writeColor(colors16[secondColor], 1);
+                      #else
+                      vga.dotFast(x, y, colors16[secondColor]);
+                      x++;
+                      vga.dotFast(x, y, colors16[secondColor]);
+                      #endif
                     }
                     else
                     {
-                      // if (!optionsScreenBlank(x, y))
+                      #ifdef TFT
                       tft.writeColor(colors16[firstColor], 1);
+                      #else
+                      vga.dotFast(x, y, colors16[firstColor]);
+                      x++;
+                      vga.dotFast(x, y, colors16[firstColor]);
+                      #endif
                     }
                     x++;
                   }
@@ -112,6 +153,7 @@ void graphicFlashCharacters(void *pvParameters)
               {
                 for (int block = 0; block < 8; block++)
                 {
+                  x = margin_x;
                   uint8_t rep = 2;
                   uint8_t val = 0;
                   uint8_t prevVal = 0;
@@ -167,12 +209,26 @@ void graphicFlashCharacters(void *pvParameters)
                     val = prevVal | (((0xf >> (4 - prevCount)) & chr) << (4 - prevCount));
                     if (prevCount > 0)
                     {
+                      #ifdef TFT
                       tft.writeColor(colors16[val], rep);
                       x++;
+                      #else
+                      vga.dotFast(x, y, colors16[val]);  
+                      x++;
+                      vga.dotFast(x, y, colors16[val]);  
+                      x++;
+                      #endif
                     }
                     currVal = ((0xf << prevCount) & chr) >> prevCount;
+                    #ifdef TFT
                     tft.writeColor(colors16[currVal], rep);
                     x++;
+                    #else
+                    vga.dotFast(x, y, colors16[currVal]);  
+                    x++;
+                    vga.dotFast(x, y, colors16[currVal]);  
+                    x++;
+                    #endif
                     prevVal = ((0xf << (4 + prevCount)) & chr) >> (4 + prevCount);
                     prevCount++;
                     if (prevCount == 4)
@@ -185,6 +241,7 @@ void graphicFlashCharacters(void *pvParameters)
               {
                 for (int block = 0; block < 8; block++)
                 {
+                  x = margin_x;
                   bool last7bits = false;
                   for (ushort c = 0; c < 0x50; c++)
                   {
@@ -209,24 +266,46 @@ void graphicFlashCharacters(void *pvParameters)
                       {
                         if (i == 7)
                         {
+                          #ifdef TFT
                           if (blockline[i] && last7bits)
                             color = tft.color565(255, 255, 255);
                           else if (blockline[i] != last7bits)
                             color = tft.color565(127, 127, 127);
                           else
                             color = tft.color565(0, 0, 0);
+                          #else
+                          if (blockline[i] && last7bits)
+                            color = vga.rgb(255, 255, 255);
+                          else if (blockline[i] != last7bits)
+                            color = vga.rgb(127, 127, 127);
+                          else
+                            color = vga.rgb(0, 0, 0);
+                          #endif
                         }
                         else
                         {
+                          #ifdef TFT
                           if (blockline[i] && blockline[i + 1])
                             color = tft.color565(255, 255, 255);
                           else if (blockline[i] != blockline[i + 1])
                             color = tft.color565(127, 127, 127);
                           else
                             color = tft.color565(0, 0, 0);
+                          #else
+                          if (blockline[i] && blockline[i + 1])
+                            color = vga.rgb(255, 255, 255);
+                          else if (blockline[i] != blockline[i + 1])
+                            color = vga.rgb(127, 127, 127);
+                          else
+                            color = vga.rgb(0, 0, 0);
+                          #endif
                         }
 
+                        #ifdef TFT
                         tft.writeColor(color, 1);
+                        #else
+                        vga.dotFast(x, y, color);
+                        #endif
 
                         if (i == 1)
                           last7bits = blockline[i];
@@ -243,6 +322,7 @@ void graphicFlashCharacters(void *pvParameters)
 
               for (int block = 0; block < 8; block++)
               {
+                x = margin_x;
                 bool blocklineAnt[] = {false, false, false, false, false, false, false, false};
                 for (ushort c = 0; c < 0x28; c++)
                 {
@@ -276,9 +356,14 @@ void graphicFlashCharacters(void *pvParameters)
                     }
 
                     for (int id = 0; id < 7; id++)
-                    {
-                      // if (!optionsScreenBlank(x, y))
+                    { 
+                      #ifdef TFT
                       tft.writeColor(colors[pixels[id]], 1);
+                      #else
+                      vga.dotFast(x, y, colors[pixels[id]]);
+                      x++;
+                      vga.dotFast(x, y, colors[pixels[id]]);
+                      #endif
                       x++;
                     }
                     std::copy(std::begin(blockline), std::end(blockline), std::begin(blocklineAnt));
@@ -287,15 +372,23 @@ void graphicFlashCharacters(void *pvParameters)
                   {
                     for (int i = 7; i > 0; i--)
                     {
+                      #ifdef TFT
                       uint16_t color = TFT_BLACK;
-
                       if (blockline[i])
                         color = TFT_WHITE;
                       else
                         color = TFT_BLACK;
-
-                      // if (!optionsScreenBlank(x, y))
                       tft.writeColor(color, 1);
+                      #else
+                      uint16_t color = vga.rgb(0,0,0);
+                      if (blockline[i])
+                        color = vga.rgb(255,255,255);
+                      else
+                        color = vga.rgb(0,0,0);
+                      vga.dotFast(x, y, color);
+                      x++;
+                      vga.dotFast(x, y, color);
+                      #endif
                       x++;
                     }
                   }
@@ -309,7 +402,7 @@ void graphicFlashCharacters(void *pvParameters)
           {
             for (int i = 0; i < 8; i++) // char lines
             {
-              x = 0;
+              x = margin_x;
               for (int c = 0; c < 0x28; c++)
               {
                 for (int k = 0; k < 7; k++) // char cols
@@ -320,8 +413,13 @@ void graphicFlashCharacters(void *pvParameters)
                   bool inverted = false;
                   if (!AppleIIe)
                     inverted = chr >= 0x40 && chr < 0x80 && inversed;
-                  // if (!optionsScreenBlank(x, y))
+                  #ifdef TFT
                   tft.writeColor(bpixel ? (inverted ? TFT_BLACK : TFT_WHITE) : (inverted ? TFT_WHITE : TFT_BLACK), 1);
+                  #else
+                  vga.dotFast(x, y, bpixel ? (inverted ? 0 : vga.rgb(255,255,255)) : (inverted ? vga.rgb(255,255,255) : 0));
+                  x++;
+                  vga.dotFast(x, y, bpixel ? (inverted ? 0 : vga.rgb(255,255,255)) : (inverted ? vga.rgb(255,255,255) : 0));
+                  #endif
                   x++;
                 }
               }
@@ -332,6 +430,7 @@ void graphicFlashCharacters(void *pvParameters)
           {
             for (int i = 0; i < 8; i++)
             {
+              x = margin_x;
               for (int j = 0; j < 0x50; j++)
               {
                 char chr;
@@ -351,16 +450,23 @@ void graphicFlashCharacters(void *pvParameters)
                   uint16_t color = 0;
                   if (k % 2 == 0)
                   {
+                    #ifdef TFT
                     if (bpixel && last7bits)
                       color = tft.color565(255, 255, 255);
                     else if (bpixel != last7bits)
                       color = tft.color565(127, 127, 127);
                     else
                       color = tft.color565(0, 0, 0);
-
-                    // if (!optionsScreenBlank(x, y))
                     tft.writeColor(color, 1);
-
+                    #else
+                    if (bpixel && last7bits)
+                      color = vga.rgb(255, 255, 255);
+                    else if (bpixel != last7bits)
+                      color = vga.rgb(127, 127, 127);
+                    else
+                      color = vga.rgb(0, 0, 0);
+                    vga.dotFast(x, y, color);
+                    #endif
                     x++;
                   }
                   last7bits = bpixel;
@@ -371,13 +477,16 @@ void graphicFlashCharacters(void *pvParameters)
           }
         }
       }
-      
     }
+    #ifdef TFT
     tft.endWrite();
+    #endif
     Vertical_blankingOn_Off = true;
     page_lock.unlock();
     vTaskDelay(pdMS_TO_TICKS(20));
+    #ifdef TFT
     tft.invertDisplay(true);
+    #endif
     flashCount++;
     if (flashCount > 7)
     {
@@ -386,4 +495,3 @@ void graphicFlashCharacters(void *pvParameters)
     }
   }
 }
-#endif
