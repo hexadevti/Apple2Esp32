@@ -1,5 +1,5 @@
 void speakerSetup() {
-  #ifdef DAC
+  #ifdef DAC && TFT
     if (!dacSound) {
       digitalWrite(SPEAKER_PIN, LOW);
       pinMode(SPEAKER_PIN, OUTPUT);

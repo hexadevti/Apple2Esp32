@@ -1,7 +1,9 @@
 #include "config.h"
 
 void setup() {
+  #ifdef TFT
   pinMode(GREEN_LED_PIN, OUTPUT);
+  #endif
   logSetup();
   epromSetup();
   memoryAlloc();
@@ -11,7 +13,7 @@ void setup() {
   HDSetup();
   diskSetup();
   speakerSetup();
-  // wifiSetup();
+  //wifiSetup();
   joystickSetup();
   printLog("Ready.");
 }

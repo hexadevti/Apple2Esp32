@@ -1,4 +1,9 @@
 #ifndef TFT
+const uint16_t colors[8] PROGMEM = {vga.rgb(0, 0, 0), vga.rgb(67, 200, 0), vga.rgb(147, 11, 124), vga.rgb(255, 255, 255), vga.rgb(0, 0, 0), vga.rgb(255, 20, 0), vga.rgb(7, 168, 224), vga.rgb(255, 255, 255)};
+const uint16_t colors16[16] PROGMEM = {vga.rgb(0, 0, 0), vga.rgb(147, 11, 124), vga.rgb(98, 76, 0), vga.rgb(249, 86, 29),
+                                       vga.rgb(0, 118, 12), vga.rgb(126, 126, 126), vga.rgb(67, 200, 0), vga.rgb(220, 205, 22),
+                                       vga.rgb(31, 53, 211), vga.rgb(187, 54, 255), vga.rgb(126, 126, 126), vga.rgb(255, 129, 236),
+                                       vga.rgb(7, 168, 224), vga.rgb(157, 172, 255), vga.rgb(93, 247, 132), vga.rgb(255, 255, 255)};
 int flashCount = 0;
 int touchCount = 0;
 int width = 280;
@@ -7,7 +12,10 @@ int height = 192;
 void videoSetup()
 {
   printLog("Video Setup...");
-  const PinConfig pins(-1,-1,-1,RED0_PIN,RED1_PIN,  -1,-1,-1,-1,GREEN0_PIN,GREEN1_PIN,  -1,-1,-1,BLUE0_PIN,BLUE1_PIN, HSYNC_PIN,VSYNC_PIN);
+  const PinConfig pins(-1, -1, RED1_PIN, RED0_PIN, -1,
+                       -1, -1, -1, GREEN1_PIN, GREEN0_PIN, -1,  
+                       -1, -1, -1, BLUE1_PIN, BLUE0_PIN, 
+                       HSYNC_PIN,VSYNC_PIN);
   Mode mode(16, 96, 48, 640, 4, 2, 30, 240, 23760000, 0, 0, 2);
   while (!vga.init(pins, mode, 8, 3))
     delay(1);
@@ -35,21 +43,25 @@ void vgaRender(void *pvParameters)
     
     if (OptionsWindow)
     {
-      for (int y = 0; y < 30; y++)
+      for (int v = 0; v < 30; v++)
       {
         for (int i = 0; i < 8; i++) // char lines
         {
-          for (int x = 0; x < 45; x++)
+          x=0;
+          for (int h = 0; h < 45; h++)
           {
-            uint8_t chr = menuScreen[y * 45 + x];
+            uint8_t chr = menuScreen[v * 45 + h];
             for (int c = 0; c < 7; c++) // char cols
             {
               bool bpixel = AppleIIeFontPixels[(chr*7*8) + (i * 7) + c];
-              uint8_t color = menuColor[y * 45 + x];
+              uint8_t color = menuColor[v * 45 + h];
               uint8_t fgColor = (color & 0xf0) >> 4;
               uint8_t bgColor = (color & 0x0f);
+              vga.dotFast(x, y, bpixel ? colors16[fgColor] : colors16[bgColor]);
+              x++;
             }
           }
+          y++;
         }
       }
     }
@@ -75,13 +87,11 @@ void vgaRender(void *pvParameters)
                     int secondColor = value & 0b00001111;
                     if (j < 4)
                     {
-                      // if (!optionsScreenBlank(x, y))
-                      vga.dotFast(x, y, getLoresColor(secondColor));
+                      vga.dotFast(x, y, colors16[secondColor]);
                     }
                     else
                     {
-                      // if (!optionsScreenBlank(x, y))
-                      vga.dotFast(x, y, getLoresColor(firstColor));
+                      vga.dotFast(x, y, colors16[firstColor]);
                     }
                     x++;
                   }
@@ -115,15 +125,15 @@ void vgaRender(void *pvParameters)
                     val = prevVal | (((0xf >> (4 - prevCount)) & chr) << (4 - prevCount));
                     if (prevCount > 0)
                     {
-                      vga.dotFast(x, y, getDoubleHiresColor(val));  
+                      vga.dotFast(x, y, colors16[val]);  
                       x++;
-                      vga.dotFast(x, y, getDoubleHiresColor(val));  
+                      vga.dotFast(x, y, colors16[val]);  
                       x++;
                     }
                     currVal = ((0xf << prevCount) & chr) >> prevCount;
-                    vga.dotFast(x, y, getDoubleHiresColor(currVal));  
+                    vga.dotFast(x, y, colors16[currVal]);  
                     x++;
-                    vga.dotFast(x, y, getDoubleHiresColor(currVal));  
+                    vga.dotFast(x, y, colors16[currVal]);  
                     x++;
                     prevVal = ((0xf << (4 + prevCount)) & chr) >> (4 + prevCount);
                     prevCount++;
@@ -229,8 +239,7 @@ void vgaRender(void *pvParameters)
 
                     for (int id = 0; id < 7; id++)
                     {
-                      // if (!optionsScreenBlank(x, y))
-                      vga.dotFast(x, y, getDoubleHiresColor(pixels[id]));
+                      vga.dotFast(x, y, colors[pixels[id]]);
                       x++;
                     }
                     std::copy(std::begin(blockline), std::end(blockline), std::begin(blocklineAnt));
@@ -245,9 +254,6 @@ void vgaRender(void *pvParameters)
                         color = vga.rgb(255,255,255);
                       else
                         color = vga.rgb(0,0,0);
-
-                      // if (!optionsScreenBlank(x, y))
-
                       vga.dotFast(x, y, color);
                       x++;
                     }
@@ -273,8 +279,6 @@ void vgaRender(void *pvParameters)
                   bool inverted = false;
                   if (!AppleIIe)
                     inverted = chr >= 0x40 && chr < 0x80 && inversed;
-                  // if (!optionsScreenBlank(x, y))
-
                   vga.dotFast(x, y, bpixel ? (inverted ? 0 : vga.rgb(255,255,255)) : (inverted ? vga.rgb(255,255,255) : 0));
                   x++;
                 }
@@ -338,157 +342,4 @@ void vgaRender(void *pvParameters)
   }
 }
 
-
-int getLoresColor(int id)
-{
-  int ret = 0;
-  switch (id)
-  {
-  case 0:
-    ret = vga.rgb(0, 0, 0);
-    break;
-  case 1:
-    ret = vga.rgb(147, 11, 124);
-    break;
-  case 2:
-    ret = vga.rgb(31, 53, 211);
-    break;
-  case 3:
-    ret = vga.rgb(187, 54, 255);
-    break;
-  case 4:
-    ret = vga.rgb(0, 118, 12);
-    break;
-  case 5:
-    ret = vga.rgb(126, 126, 126);
-    break;
-  case 6:
-    ret = vga.rgb(7, 168, 224);
-    break;
-  case 7:
-    ret = vga.rgb(157, 172, 255);
-    break;
-  case 8:
-    ret = vga.rgb(98, 76, 0);
-    break;
-  case 9:
-    ret = vga.rgb(249, 86, 29);
-    break;
-  case 10:
-    ret = vga.rgb(126, 126, 126);
-    break;
-  case 11:
-    ret = vga.rgb(255, 129, 236);
-    break;
-  case 12:
-    ret = vga.rgb(67, 200, 0);
-    break;
-  case 13:
-    ret = vga.rgb(220, 205, 22);
-    break;
-  case 14:
-    ret = vga.rgb(93, 247, 132);
-    break;
-  case 15:
-    ret = vga.rgb(255, 255, 255);
-    break;
-  default:
-    break;
-  }
-  return ret;
-}
-
-int getHiresColor(int id)
-{
-  int ret = 0;
-  switch (id)
-  {
-  case 0:
-    ret = vga.rgb(0, 0, 0);
-    break;
-  case 1:
-    ret = vga.rgb(67, 200, 0);
-    break;
-  case 2:
-    ret = vga.rgb(187, 54, 255);
-    break;
-  case 3:
-    ret = vga.rgb(255, 255, 255);
-    break;
-  case 4:
-    ret = vga.rgb(0, 0, 0);
-    break;
-  case 5:
-    ret = vga.rgb(249, 62, 29);
-    break;
-  case 6:
-    ret = vga.rgb(7, 168, 224);
-    break;
-  case 7:
-    ret = vga.rgb(255, 255, 255);
-    break;
-  default:
-    break;
-  }
-  return ret;
-}
-
-int getDoubleHiresColor(int id)
-{
-  int ret = 0;
-  switch (id)
-  {
-  case 0:
-    ret = vga.rgb(0, 0, 0);
-    break;
-  case 1:
-    ret = vga.rgb(147, 11, 124);
-    break;
-  case 2:
-    ret = vga.rgb(98, 76, 0);
-    break;
-  case 3:
-    ret = vga.rgb(249, 86, 29);
-    break;
-  case 4:
-    ret = vga.rgb(0, 118, 12);
-    break;
-  case 5:
-    ret = vga.rgb(126, 126, 126);
-    break;
-  case 6:
-    ret = vga.rgb(67, 200, 0);
-    break;
-  case 7:
-    ret = vga.rgb(220, 205, 22);
-    break;
-  case 8:
-    ret = vga.rgb(31, 53, 211);
-    break;
-  case 9:
-    ret = vga.rgb(187, 54, 255);
-    break;
-  case 10:
-    ret = vga.rgb(126, 126, 126);
-    break;
-  case 11:
-    ret = vga.rgb(255, 129, 236);
-    break;
-  case 12:
-    ret = vga.rgb(7, 168, 224);
-    break;
-  case 13:
-    ret = vga.rgb(157, 172, 255);
-    break;
-  case 14:
-    ret = vga.rgb(93, 247, 132);
-    break;
-  case 15:
-    ret = vga.rgb(255, 255, 255);
-    break;
-  default:
-    break;
-  }
-  return ret;
-}
 #endif

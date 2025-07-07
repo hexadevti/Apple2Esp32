@@ -1,8 +1,8 @@
 void FSSetup()
 {
-   #ifdef SDFS
+   #ifndef LITTLEFS
   Serial.println("SD Card Setup");
-  SPI.begin(); //SD_SCK_PIN, SD_MISO_PIN, SD_MOSI_PIN, SD_CS_PIN);
+  SPI.begin(SD_SCK_PIN, SD_MISO_PIN, SD_MOSI_PIN, SD_CS_PIN);
   delay(500);
   int sdMountRetry = 0;
   while (!FSTYPE.begin(SD_CS_PIN) && sdMountRetry < 10) {

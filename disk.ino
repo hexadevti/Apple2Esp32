@@ -66,6 +66,11 @@ void diskSetup()
 
     xTaskCreate(saveTrackAsync, "saveTrackAsync", 4096, NULL, 1, NULL);
   }
+  else
+  {
+    printLog("Disk not attached");
+  }
+
 }
 
 void saveTrackAsync(void *pvParameters)
@@ -702,13 +707,20 @@ char processSwitchc0e0(ushort address, char value)
   else if (address == 0xc0e8)
   {
     DriveMotorON_OFF = false;
-
+    #ifdef TFT
     digitalWrite(GREEN_LED_PIN, HIGH);
+    #else
+    neopixelWrite(RGB_BUILTIN,0,0,0); // Off / black
+    #endif
   }
   else if (address == 0xc0e9)
   {
     DriveMotorON_OFF = true;
+    #ifdef TFT
     digitalWrite(GREEN_LED_PIN, LOW);
+    #else
+    neopixelWrite(RGB_BUILTIN,RGB_BRIGHTNESS,0,0); // Off / black
+    #endif
   }
   else if (address == 0xc0ea)
     Drive1_2 = true;

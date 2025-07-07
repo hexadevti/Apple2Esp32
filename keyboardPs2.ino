@@ -1,3 +1,5 @@
+#ifdef TFT
+
 const unsigned char scancode_to_apple[] = {
     //$0    $1    $2    $3    $4    $5    $6    $7    $8    $9    $A    $B    $C    $D    $E    $F
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, //$00
@@ -310,3 +312,4 @@ void keyboard_bit()
     keyboard_buf_indx = 0;
   }
 }
+#endif

@@ -2,25 +2,6 @@
     "version": 4,
     "configurations": [
         {
-            "name": "Win32",
-            "compilerPath": "",
-            "compilerArgs": [],
-            "intelliSenseMode": "",
-            "includePath": [
-                "${workspaceFolder}/**",
-                "${workspaceFolder}/include/**",
-                "C:\\Users\\lucia\\OneDrive\\Documentos\\Arduino\\libraries"
-            ],
-            "forcedInclude": [],
-            "cStandard": "",
-            "cppStandard": "",
-            "defines": [
-                "_DEBUG",
-                "UNICODE",
-                "_UNICODE"
-            ]
-        },
-        {
             "name": "Arduino",
             "compilerPath": "C:\\Users\\lucia\\AppData\\Local\\Arduino15\\packages\\esp32\\tools\\xtensa-esp32-elf-gcc\\esp-2021r2-patch5-8.4.0\\bin\\xtensa-esp32-elf-g++",
             "compilerArgs": [

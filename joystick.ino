@@ -51,6 +51,18 @@ int joyCenterY = 0;
 
 void joystickSetup()
 {
+#ifndef TFT
+    if (joystick)
+    {
+        timerpdl0 = JOY_MID;
+        timerpdl1 = JOY_MID;
+    }
+    else
+    {
+        timerpdl0 = JOY_MAX;
+        timerpdl1 = JOY_MAX;
+    }
+#else
     timerpdl0 = JOY_MID;
     timerpdl1 = JOY_MID;
     joyCenterX = 4095 - analogRead(ANALOG_X_PIN);
@@ -62,6 +74,7 @@ void joystickSetup()
     pPb1 = Pb1;
     pPb2 = Pb2;
     pPb3 = Pb3;
+#endif
     xTaskCreate(analogJoystickTask, "analogJoystickTask", 4096, NULL, 3, NULL);
 }
 
@@ -304,7 +317,7 @@ static void analogJoystickTask(void *pvParameters)
 {
     while (running)
     {
-        
+        #ifdef TFT
         analogX = 4095 - analogRead(ANALOG_X_PIN);
         analogY = 4095 - analogRead(ANALOG_Y_PIN);
         digital_button1 = analogRead(DIGITAL_BUTTON12_PIN);
@@ -486,7 +499,7 @@ static void analogJoystickTask(void *pvParameters)
 
         pJoyX = joyX;
         pJoyY = joyY;
-
+        #endif
     
         vTaskDelay(pdMS_TO_TICKS(100));
     }

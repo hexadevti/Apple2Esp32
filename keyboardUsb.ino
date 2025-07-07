@@ -254,7 +254,7 @@ class MyEspUsbHost : public EspUsbHost
               nextDiskFile();
             else
               nextHdFile();
-            optionsScreenRender();
+            listFiles(true);
 
           //Serial.println("down");
         }
@@ -264,7 +264,7 @@ class MyEspUsbHost : public EspUsbHost
             prevDiskFile();
           else
             prevHdFile();
-          optionsScreenRender();
+          listFiles(false);
           //Serial.println("up");
         }
 

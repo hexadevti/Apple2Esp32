@@ -1,15 +1,25 @@
+#define TFT // Defines TFT display (ESP32) or VGA diplay (ESP32-S3)
+#define LITTLEFS //  SDFS or LITTLEFS
+#define DAC
+
+
 #include "FS.h"
 #include <SPI.h>
+#ifdef TFT
 #include <TFT_eSPI.h>
-// #include <ESPAsyncWebServer.h>
-// #include <Update.h>
-// #include <ESPmDNS.h>
+#else
+#include "VGA.h"
+#include <ESPAsyncWebServer.h>
+#include <Update.h>
+#include <ESPmDNS.h>
+#endif
 #include <LittleFS.h>
 #include "SD.h"
 #include <EEPROM.h>
 #include "rom.h"
+#ifdef TFT && DAC
 #include <driver/dac.h>
-
+#endif
 #include <string>
 #include <bitset>
 #include <algorithm>
@@ -37,14 +47,14 @@ static bool doScan = false;
 static BLERemoteCharacteristic* pRemoteCharacteristic;
 static BLEAdvertisedDevice* myDevice;
 
-
+#ifndef TFT
 // WebServer/Wifi Config
 const char* host = "apple2";
 const char* ssid = "LUCIANO-ESCRITORIO";
 const char* password = "lrbf246!";
 const char* PARAM = "file";
-//AsyncWebServer server(80);
-
+AsyncWebServer server(80);
+#endif
 
 size_t content_len;
 File file;
@@ -54,7 +64,12 @@ static String filelist = "";
 static int freeSpace = 0;
 
 // Video Config
+#ifdef TFT
 TFT_eSPI tft = TFT_eSPI();
+#else
+VGA vga;
+#endif
+
 static const uint16_t screenWidth  = 240;
 static const uint16_t screenHeight = 320;
 static std::mutex page_lock;
@@ -63,8 +78,8 @@ int margin_x = 20;
 int margin_y = 24;
 uint16_t tx = 0, ty = 0; // To store the touch coordinates
 
-// LittleFS SD
-#define LITTLEFS //  SDFS or LITTLEFS
+
+// LittleFS/SD
 
 #ifdef LITTLEFS
 #define FSTYPE LittleFS
@@ -78,19 +93,38 @@ std::vector<std::string> hdFiles;
 std::vector<std::string> diskFiles;
 
 // Board Pins
-#define SD_SCK_PIN 18
-#define SD_MISO_PIN 19
-#define SD_MOSI_PIN 23
-#define SD_CS_PIN 5
-#define ANALOG_X_PIN 4
-#define ANALOG_Y_PIN 35
-#define DIGITAL_BUTTON12_PIN 34 // joystick buttons 0-3
+ 
+#ifdef TFT
+    #define SD_SCK_PIN 18
+    #define SD_MISO_PIN 19
+    #define SD_MOSI_PIN 23
+    #define SD_CS_PIN 5
+    #define KEYBOARD_DATA_PIN 21
+    #define KEYBOARD_IRQ_PIN 22
+    #define ANALOG_X_PIN 4
+    #define ANALOG_Y_PIN 35
+    #define GREEN_LED_PIN 17
+    #define DIGITAL_BUTTON12_PIN 34 // joystick buttons 0-3
+    #define SPEAKER_PIN 26
+#else
+    #define RED0_PIN 16
+    #define RED1_PIN 17
+    #define GREEN0_PIN 7
+    #define GREEN1_PIN 15
+    #define BLUE0_PIN 5
+    #define BLUE1_PIN 6
+    #define HSYNC_PIN 14
+    #define VSYNC_PIN 13
+    #define SD_SCK_PIN 18
+    #define SD_MISO_PIN 8
+    #define SD_MOSI_PIN 3
+    #define SD_CS_PIN 46
+    #define SPEAKER_PIN 4
+    #define U_PART U_SPIFFS
+#endif
 //#define RED_LED_PIN 4
-#define GREEN_LED_PIN 17
 //#define BLUE_LED_PIN 16 // unused
-#define SPEAKER_PIN 26
-#define KEYBOARD_DATA_PIN 21
-#define KEYBOARD_IRQ_PIN 22
+
 // #define GPIO25 25 // unused
 // #define GPIO32 32 // unused
 // #define TFT_MISO 12
@@ -233,7 +267,7 @@ static unsigned char* menuScreen;
 static unsigned char* menuColor;
 
 //Speaker Config
-//#define DAC
+
 boolean speaker_state = false;
 
 // Other Cofig

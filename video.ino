@@ -1,3 +1,5 @@
+#ifdef TFT
+
 const uint16_t colors[8] PROGMEM = {TFT_BLACK, TFT_GREEN, TFT_PURPLE, TFT_WHITE, TFT_BLACK, tft.color565(255, 20, 0), TFT_SKYBLUE, TFT_WHITE};
 const uint16_t colors16[16] PROGMEM = {tft.color565(0, 0, 0), tft.color565(147, 11, 124), tft.color565(98, 76, 0), tft.color565(249, 86, 29),
                                        tft.color565(0, 118, 12), tft.color565(126, 126, 126), tft.color565(67, 200, 0), tft.color565(220, 205, 22),
@@ -384,3 +386,4 @@ void graphicFlashCharacters(void *pvParameters)
     }
   }
 }
+#endif
