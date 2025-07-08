@@ -53,7 +53,7 @@ uint32_t lastCpuCycleCount = 0;
 uint32_t diffCpuCycleCount = 0;
 
 //high nibble SR flags, low nibble address mode
-const unsigned char flagsIIe[] PROGMEM = {
+const unsigned char flagsIIe[] = {
 	//X0               X1                X2                    X3    X4                    X5                X6                X7    X8              X9                 XA                  XB    XC                    XD                XE                XF   
 	  AD_IMP,          AD_INDX,          UNDF,                 UNDF, FL_Z | AD_ZPG,/*e*/   FL_ZN | AD_ZPG,   FL_ZNC | AD_ZPG,  UNDF, AD_IMP,         FL_ZN | AD_IMM,    FL_ZNC | AD_A,      UNDF, FL_Z | AD_ABS,/*e*/   FL_ZN | AD_ABS,   FL_ZNC | AD_ABS,  UNDF, // 0X
 	  AD_REL,          FL_ZN | AD_INDY,  FL_ZN | AD_IZPG/*e*/, UNDF, FL_Z | AD_ZPG,/*e*/   FL_ZN | AD_ZPGX,  FL_ZNC | AD_ZPGX, UNDF, AD_IMP,         FL_ZN | AD_ABSY,   FL_ZN | AD_A,/*e*/  UNDF, FL_Z | AD_ABS,/*e*/   FL_ZN | AD_ABSX,  FL_ZNC | AD_ABSX, UNDF, // 1X
@@ -73,7 +73,7 @@ const unsigned char flagsIIe[] PROGMEM = {
 	  AD_REL,          FL_ALL | AD_INDY, FL_ALL | AD_IZPG/*e*/,UNDF, UNDF,                 FL_ALL | AD_ZPGX, FL_ZN | AD_ZPGX,  UNDF, AD_IMP,         FL_ALL | AD_ABSY,  FL_ZN | AD_IMP,/*e*/UNDF, UNDF,                 FL_ALL | AD_ABSX, FL_ZN | AD_ABSX,  UNDF  // FX
 };
 
-const unsigned char flagsIIplus[] PROGMEM = {
+const unsigned char flagsIIplus[] = {
   AD_IMP, AD_INDX, UNDF, UNDF, UNDF, FL_ZN | AD_ZPG, FL_ZNC | AD_ZPG, UNDF, AD_IMP, FL_ZN | AD_IMM, FL_ZNC | AD_A, UNDF, UNDF, FL_ZN | AD_ABS, FL_ZNC | AD_ABS, UNDF,
   AD_REL, FL_ZN | AD_INDY, UNDF, UNDF, UNDF, FL_ZN | AD_ZPGX, FL_ZNC | AD_ZPGX, UNDF, AD_IMP, FL_ZN | AD_ABSY, UNDF, UNDF, UNDF, FL_ZN | AD_ABSX, FL_ZNC | AD_ABSX, UNDF,
   AD_ABS, FL_ZN | AD_INDX, UNDF, UNDF, FL_Z | AD_ZPG, FL_ZN | AD_ZPG, FL_ZNC | AD_ZPG, UNDF, AD_IMP, FL_ZN | AD_IMM, FL_ZNC | AD_A, UNDF, FL_Z | AD_ABS, FL_ZN | AD_ABS, FL_ZNC | AD_ABS, UNDF,
@@ -92,7 +92,7 @@ const unsigned char flagsIIplus[] PROGMEM = {
   AD_REL, FL_ALL | AD_INDY, UNDF, UNDF, UNDF, FL_ALL | AD_ZPGX, FL_ZN | AD_ZPGX, UNDF, AD_IMP, FL_ALL | AD_ABSY, UNDF, UNDF, UNDF, FL_ALL | AD_ABSX, FL_ZN | AD_ABSX, UNDF
 };
 
-const int cycles[] PROGMEM = { 7, 6, 1, 0, 0, 3, 5, 0, 3, 2, 2, 0, 0, 4, 6, 0, 
+const int cycles[] = { 7, 6, 1, 0, 0, 3, 5, 0, 3, 2, 2, 0, 0, 4, 6, 0, 
                        2, 5, 1, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0, 
                        6, 6, 1, 0, 3, 3, 5, 0, 4, 2, 2, 0, 4, 4, 6, 0, 
                        2, 5, 1, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0, 

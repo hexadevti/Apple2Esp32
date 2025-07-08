@@ -1,5 +1,5 @@
 //#define TFT // Defines TFT display (ESP32) or VGA diplay (ESP32-S3)
-#define LITTLEFS //  SDFS or LITTLEFS
+//#define LITTLEFS //  SDFS or LITTLEFS
 //#define DAC
 
 
@@ -66,16 +66,19 @@ static int freeSpace = 0;
 // Video Config
 #ifdef TFT
 TFT_eSPI tft = TFT_eSPI();
+int margin_x = 20;
+int margin_y = 24;
 #else
 VGA vga;
+int margin_x = 25;
+int margin_y = 25;
 #endif
 
 static const uint16_t screenWidth  = 240;
 static const uint16_t screenHeight = 320;
 static std::mutex page_lock;
 
-int margin_x = 20;
-int margin_y = 24;
+
 uint16_t tx = 0, ty = 0; // To store the touch coordinates
 
 

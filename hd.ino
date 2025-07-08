@@ -30,19 +30,55 @@ void HDSetup()
     hdAttached = true;
     initializedHdDisk = true;
     printLog("HD Setup...");
-    // if (!FSTYPE.begin(SD_CS_PIN)) {
-    //   Serial.println("FSTYPE Mount Failed");
-    //   return;
-    // }
+
+    xTaskCreate(loadHdAsync, "loadHdAsync", 4096, NULL, 2, NULL);
     sprintf(buf, "FS.freeSpace = %d bytes", FSTYPE.totalBytes() - FSTYPE.usedBytes());
     printLog(buf);
-    loadHD();
+    //loadHD();
     if (HdDisk) {
       getHdFileInfo(FSTYPE);
       xTaskCreate(getBlockAsync, "getBlockAsync", 4096, NULL, 1, NULL);
     }
   }
 }
+
+void loadHdAsync(void *pvParameters)
+{
+
+  File root = FSTYPE.open("/");
+  if (!root)
+  {
+    printLog("Failed to open directory");
+    return;
+  }
+  if (!root.isDirectory())
+  {
+    printLog("Not a directory");
+    return;
+  }
+  File file = root.openNextFile();
+  while (file)
+  {
+    if (!file.isDirectory())
+    {
+      std::string fileName = file.name();
+      for (int j = 0; j < fileExtensions.size(); j++)
+      {
+        if ((int)fileName.find(fileExtensions[j].c_str()) > 0)
+        {
+          std::string str(file.name());
+          // Serial.printf("File name on disk: %s\n", str.c_str());
+          hdFiles.push_back("/" + str);
+        }
+      }
+    }
+    file = root.openNextFile();
+  }
+  file.close();
+  root.close();
+  vTaskDelete(NULL); // Self-deletion 
+}
+
 
 void getBlockAsync(void *pvParameters) {
   int count = 0;
@@ -128,18 +164,17 @@ void getHdFileInfo(fs::FS &fs)
 {
   if (!fs.exists(selectedHdFileName.c_str())) 
   {
-    selectedHdFileName = "";
+    selectedHdFileName = "/";
   }
   File file = fs.open(selectedHdFileName.c_str());
   size_t len = file.size();
-  printLog("File Size: ");
   hdDiskImageSize = len;
   if (len % 512 > 0)
   {
     fileHeaderSize = len - floor(len / 512) * 512;
+    printLog("File Header Size: ");Serial.println(fileHeaderSize);
   }
   file.close();
-  printLog("File Header Size: ");Serial.println(fileHeaderSize);
 }
 
 void nextHdFile()
@@ -159,6 +194,7 @@ void prevHdFile()
 void saveHdFile()
 {
   paused = true;
+  Serial.printf("Saving HD file: %s\n", selectedHdFileName.c_str());
   writeStringToEEPROM(HdFileNameEEPROMaddress, selectedHdFileName.c_str());
   saveEEPROM();
   EEPROM.commit();
@@ -168,8 +204,19 @@ void saveHdFile()
 void setHdFile()
 {
   paused = true;
-  selectedHdFileName = hdFiles[shownFile].c_str();
+  if (hdFiles.size() == 0) {
+    printLog("No HD files found");
+  }
+  else if (shownFile < 0 || shownFile >= (int)hdFiles.size()) {
+    printLog("Invalid HD file index");
+    shownFile = 0;
+    selectedHdFileName = "/";
+  }
+  else {
+    selectedHdFileName = hdFiles[shownFile].c_str();
+  }
   paused = false;
+
 }
 
 char loadBlock(unsigned short address, unsigned short block)

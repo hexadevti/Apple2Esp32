@@ -1,21 +1,102 @@
 #ifdef TFT
 
-const uint16_t colors[8] PROGMEM = {TFT_BLACK, TFT_GREEN, TFT_PURPLE, TFT_WHITE, TFT_BLACK, tft.color565(255, 20, 0), TFT_SKYBLUE, TFT_WHITE};
-const uint16_t colors16[16] PROGMEM = {tft.color565(0, 0, 0), tft.color565(147, 11, 124), tft.color565(98, 76, 0), tft.color565(249, 86, 29),
+const uint16_t colors[8] = {TFT_BLACK, TFT_GREEN, TFT_PURPLE, TFT_WHITE, TFT_BLACK, tft.color565(255, 20, 0), TFT_SKYBLUE, TFT_WHITE};
+const uint16_t colors16[16] = {tft.color565(0, 0, 0), tft.color565(147, 11, 124), tft.color565(98, 76, 0), tft.color565(249, 86, 29),
                                        tft.color565(0, 118, 12), tft.color565(126, 126, 126), tft.color565(67, 200, 0), tft.color565(220, 205, 22),
                                        tft.color565(31, 53, 211), tft.color565(187, 54, 255), tft.color565(126, 126, 126), tft.color565(255, 129, 236),
                                        tft.color565(7, 168, 224), tft.color565(157, 172, 255), tft.color565(93, 247, 132), tft.color565(255, 255, 255)};
 #else
-const uint16_t colors[8] PROGMEM = {vga.rgb(0, 0, 0), vga.rgb(67, 200, 0), vga.rgb(147, 11, 124), vga.rgb(255, 255, 255), vga.rgb(0, 0, 0), vga.rgb(255, 20, 0), vga.rgb(7, 168, 224), vga.rgb(255, 255, 255)};
-const uint16_t colors16[16] PROGMEM = {vga.rgb(0, 0, 0), vga.rgb(147, 11, 124), vga.rgb(98, 76, 0), vga.rgb(249, 86, 29),
-                                       vga.rgb(0, 118, 12), vga.rgb(126, 126, 126), vga.rgb(67, 200, 0), vga.rgb(220, 205, 22),
-                                       vga.rgb(31, 53, 211), vga.rgb(187, 54, 255), vga.rgb(126, 126, 126), vga.rgb(255, 129, 236),
-                                       vga.rgb(7, 168, 224), vga.rgb(157, 172, 255), vga.rgb(93, 247, 132), vga.rgb(255, 255, 255)};
+const uint8_t colors[] = { 0b00000000, 
+                           0b00111000, 
+                           0b11000111, 
+                           0b11111111, 
+                           0b00000000, 
+                           0b00000111, 
+                           0b11000000, 
+                           0b11111111 };
+const uint8_t colors16[] = { 0b00000000, // 0 black
+                             0b10000000, // 1 dark blue
+                             0b00100000, // 2 dark green *
+                             0b01000000, // 3 mid blue
+                             0b00100010, // 4 dark orange
+                             0b10100100, // 5 cinza escuro
+                             0b00010000, // 6 Green bright *
+                             0b11111111, // 7 
+                             0b10000100, // 8 Violeta
+                             0b01000010, // 9 violet2
+                             0b01011011, // 10 gray bright
+                             0b11010010, // 11 Blue Bright
+                             0b00000111, // 12 Orange bright
+                             0b01010111, // 13 dark pink
+                             0b00111111, // 14 yellow
+                             0b00000000}; // 15 white
+
+  
 #endif                                    
 int flashCount = 0;
 int touchCount = 0;
 int width = 280;
 int height = 192;
+
+
+int getDoubleHiresColor(int id)
+{
+  int ret = 0;
+  switch (id)
+  {
+  case 0:
+    ret = vga.rgb(0, 0, 0);
+    break;
+  case 1:
+    ret = vga.rgb(147, 11, 124);
+    break;
+  case 2:
+    ret = vga.rgb(31, 53, 211);
+    break;
+  case 3:
+    ret = vga.rgb(187, 54, 255);
+    break;
+  case 4:
+    ret = vga.rgb(0, 118, 12);
+    break;
+  case 5:
+    ret = vga.rgb(126, 126, 126);
+    break;
+  case 6:
+    ret = vga.rgb(7, 168, 224);
+    break;
+  case 7:
+    ret = vga.rgb(157, 172, 255);
+    break;
+  case 8:
+    ret = vga.rgb(98, 76, 0);
+    break;
+  case 9:
+    ret = vga.rgb(249, 86, 29);
+    break;
+  case 10:
+    ret = vga.rgb(126, 126, 126);
+    break;
+  case 11:
+    ret = vga.rgb(255, 129, 236);
+    break;
+  case 12:
+    ret = vga.rgb(67, 200, 0);
+    break;
+  case 13:
+    ret = vga.rgb(220, 205, 22);
+    break;
+  case 14:
+    ret = vga.rgb(93, 247, 132);
+    break;
+  case 15:
+    ret = vga.rgb(255, 255, 255);
+    break;
+  default:
+    break;
+  }
+  return ret;
+}
 
 void videoSetup()
 {
@@ -36,12 +117,19 @@ void videoSetup()
     delay(1);
 
   printLog("Video initialized.");
+  for (size_t i = 0; i < 16; i++)
+  {
+    Serial.printf("Binary value for Color %d: %06X\n", i, colors16[i]);
+  }
+  
   vga.show();
   vga.start();
   vga.fillRect(0,0,320,240,0);
 #endif
   xTaskCreate(renderLoop, "renderLoop", 1024, NULL, 1, NULL);
 }
+
+
 
 void renderLoop(void *pvParameters)
 {
@@ -217,6 +305,10 @@ void renderLoop(void *pvParameters)
                       x++;
                       vga.dotFast(x, y, colors16[val]);  
                       x++;
+                      vga.dotFast(x, y, colors16[val]);  
+                      x++;
+                      vga.dotFast(x, y, colors16[val]);  
+                      x++;
                       #endif
                     }
                     currVal = ((0xf << prevCount) & chr) >> prevCount;
@@ -224,6 +316,10 @@ void renderLoop(void *pvParameters)
                     tft.writeColor(colors16[currVal], rep);
                     x++;
                     #else
+                    vga.dotFast(x, y, colors16[currVal]);  
+                    x++;
+                    vga.dotFast(x, y, colors16[currVal]);  
+                    x++;
                     vga.dotFast(x, y, colors16[currVal]);  
                     x++;
                     vga.dotFast(x, y, colors16[currVal]);  
@@ -260,57 +356,39 @@ void renderLoop(void *pvParameters)
 
                     for (int i = 7; i > 0; i--)
                     {
+                      #ifdef TFT
                       uint16_t color = 0;
-
                       if (i % 2 != 0)
                       {
                         if (i == 7)
                         {
-                          #ifdef TFT
                           if (blockline[i] && last7bits)
                             color = tft.color565(255, 255, 255);
                           else if (blockline[i] != last7bits)
                             color = tft.color565(127, 127, 127);
                           else
                             color = tft.color565(0, 0, 0);
-                          #else
-                          if (blockline[i] && last7bits)
-                            color = vga.rgb(255, 255, 255);
-                          else if (blockline[i] != last7bits)
-                            color = vga.rgb(127, 127, 127);
-                          else
-                            color = vga.rgb(0, 0, 0);
-                          #endif
                         }
                         else
                         {
-                          #ifdef TFT
                           if (blockline[i] && blockline[i + 1])
                             color = tft.color565(255, 255, 255);
                           else if (blockline[i] != blockline[i + 1])
                             color = tft.color565(127, 127, 127);
                           else
                             color = tft.color565(0, 0, 0);
-                          #else
-                          if (blockline[i] && blockline[i + 1])
-                            color = vga.rgb(255, 255, 255);
-                          else if (blockline[i] != blockline[i + 1])
-                            color = vga.rgb(127, 127, 127);
-                          else
-                            color = vga.rgb(0, 0, 0);
-                          #endif
                         }
 
-                        #ifdef TFT
                         tft.writeColor(color, 1);
-                        #else
-                        vga.dotFast(x, y, color);
-                        #endif
 
                         if (i == 1)
                           last7bits = blockline[i];
                         x++;
                       }
+                      #else
+                        vga.dotFast(x, y, blockline[i] ? vga.rgb(255, 255, 255) : vga.rgb(0, 0, 0));
+                        x++;
+                      #endif
                     }
                   }
                   y++;
@@ -445,12 +523,12 @@ void renderLoop(void *pvParameters)
                 bool last7bits = false;
                 for (int k = 0; k < 7; k++)
                 {
+                  #ifdef TFT
                   ushort addr = (chr * 7 * 8) + (i * 7) + k;
                   bool bpixel = AppleIIeFontPixels[addr];
                   uint16_t color = 0;
                   if (k % 2 == 0)
                   {
-                    #ifdef TFT
                     if (bpixel && last7bits)
                       color = tft.color565(255, 255, 255);
                     else if (bpixel != last7bits)
@@ -458,18 +536,15 @@ void renderLoop(void *pvParameters)
                     else
                       color = tft.color565(0, 0, 0);
                     tft.writeColor(color, 1);
-                    #else
-                    if (bpixel && last7bits)
-                      color = vga.rgb(255, 255, 255);
-                    else if (bpixel != last7bits)
-                      color = vga.rgb(127, 127, 127);
-                    else
-                      color = vga.rgb(0, 0, 0);
-                    vga.dotFast(x, y, color);
-                    #endif
                     x++;
                   }
                   last7bits = bpixel;
+                  #else
+                  ushort addr = (chr * 7 * 8) + (i * 7) + k;
+                  bool bpixel = AppleIIeFontPixels[addr];
+                  vga.dotFast(x, y, bpixel ? vga.rgb(255,255,255) : vga.rgb(0,0,0));
+                  x++;
+                  #endif
                 }
               }
               y++;
