@@ -34,10 +34,20 @@ void clearScreen() {
 void listFiles(bool downDirection)
 {
   uint8_t startX = 0;
-  uint8_t startY = 0;
-  uint8_t pageSize = 8;
+  uint8_t startY = 2;
+  uint8_t pageSize = 9;
   uint8_t fileNameMax = 45;
- 
+
+  for (int y = startY; y < startY + pageSize; y++)
+  {
+    for (int x = startX; x < fileNameMax; x++)
+    {
+      setCursor(x,y);
+      print(" ");
+    }
+  }
+  
+  pageSize--; // transform to index
   std::vector<std::string> files;
   if (!HdDisk)
   {
@@ -93,7 +103,7 @@ void listFiles(bool downDirection)
     }
     if (shown > pageSize)
       break;
-    setCursor(startX, startY + 2 + id - firstShowFile);
+    setCursor(startX, startY + id - firstShowFile);
     // sprintf(buf, "i: %s, selectedDiskFileName: %s", i.c_str(), selectedDiskFileName.c_str());
     // Serial.println(buf);
 
@@ -121,6 +131,34 @@ void showHideOptionsWindow() {
 
   paused = OptionsWindow;
 }
+
+void showHideDebugWindow() {
+  if (DebugWindow) {
+    clearScreen();
+    delay(100);
+  }
+  DebugWindow = !DebugWindow;
+
+  if (DebugWindow) {
+    debugScreenRender();
+  }
+  paused = DebugWindow;
+}
+
+void debugScreenRender()
+{
+  setCursor(0, 0);
+  print("debug:");
+
+  setCursor(0,12);
+  print("< CTRL-F1 >");
+  setCursor(0,13);
+  print(" Debug     ",debug);
+  setCursor(0,14);
+  print(" Off ", !debug);
+  
+}
+
 
 void optionsScreenRender()
 {

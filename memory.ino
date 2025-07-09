@@ -120,8 +120,8 @@ unsigned char read8(unsigned short address)
     {
       if (page >= 0xc3 && page < 0xc4)
       {
-        if (AppleIIe)
-        { // && !SlotC3RomOn_Off) {
+        if (AppleIIe && !SlotC3RomOn_Off)
+        { 
           IntC8RomOn_Off = true;
           return appleiieenhancedc0ff[address - 0xc000];
         }

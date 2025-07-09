@@ -281,7 +281,7 @@ void setDiskFile()
 
 void loadDiskAsync(void *pvParameters)
 {
-
+  diskFiles.clear();
   File root = FSTYPE.open("/");
   if (!root)
   {
@@ -313,6 +313,7 @@ void loadDiskAsync(void *pvParameters)
   }
   file.close();
   root.close();
+  listFiles(false); // Refresh the file list
   vTaskDelete(NULL); // Self-deletion 
 }
 

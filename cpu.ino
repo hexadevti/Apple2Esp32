@@ -142,10 +142,6 @@ void setflags() {
     case   FL_Z: SR &= 0xFD; break; // 0010 0000   1111 1101
   }
   
-  // if (lastPC >= 0x5d00 && lastPC < 0x5e00) {
-  //   sprintf(buf, "setflag: opflag=%02X result=%02X opflags & 0x80=%02X result & 0x80=%02X", opflags, result, opflags & 0x80, result & 0x80);
-  //   printLog(buf);
-  // }
   
   // Set various status flags
   if (opflags & FL_N) SR |= (result & 0x80);                    //negative
@@ -188,7 +184,7 @@ void cpuLoop() {
     {
       delay(100);
     }
-
+    
     opcode = read8(PC++);
 
     if (!Fast1MhzSpeed)
@@ -209,22 +205,24 @@ void cpuLoop() {
     
     // if (joystick) 
     processJoystick(1);
+      
 
-    lastPC = PC;
-
+    
+    
     opflags = AppleIIe ? flagsIIe[opcode] : flagsIIplus[opcode];
-
+    
+    
     // Addressing modes
     switch (opflags & 0x0F) {
       case AD_IMP:
       case AD_A: argument_addr = 0xFFFF; break;
       case AD_ABS:
-        argument_addr = read16(PC);
-        PC += 2;
-        break;
+      argument_addr = read16(PC);
+      PC += 2;
+      break;
       case AD_ABSX:
-        argument_addr = read16(PC) + (unsigned short)X;
-        PC += 2;
+      argument_addr = read16(PC) + (unsigned short)X;
+      PC += 2;
         break;
       case AD_IABX:
 		    argument_addr = read16(PC) + (unsigned short)X;
@@ -275,7 +273,13 @@ void cpuLoop() {
         argument_addr = ((unsigned short)read8(PC++) + (unsigned short)Y) & 0xFF;
         break;
     }
+    if (debug) {
+      if (lastPC >= 0x2000 && lastPC < 0x2100) {
+        printCPUStatus();
+      }
+    }
 
+    lastPC = PC;
     //opcodes
     switch (opcode) {
       //ADC

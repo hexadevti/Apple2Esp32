@@ -44,7 +44,7 @@ void HDSetup()
 
 void loadHdAsync(void *pvParameters)
 {
-
+  hdFiles.clear();
   File root = FSTYPE.open("/");
   if (!root)
   {
@@ -76,6 +76,7 @@ void loadHdAsync(void *pvParameters)
   }
   file.close();
   root.close();
+  listFiles(false); // Refresh the file list
   vTaskDelete(NULL); // Self-deletion 
 }
 

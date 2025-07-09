@@ -173,6 +173,16 @@ class MyEspUsbHost : public EspUsbHost
       {
         cpuReset();
       }
+      else if (keycode == 58) // CTRL-F1
+      {
+        showHideDebugWindow();
+        keymem = 0;
+      }
+      else if (keycode == 59) // CTRL-F2
+      {
+        debug = !debug;
+        keymem = 0;
+      }
       else if (keycode == 62) // CTRL-F5
       {
         ESP.restart();
@@ -200,6 +210,46 @@ class MyEspUsbHost : public EspUsbHost
     }
     else
     {
+      if (keycode == 58) // F1
+      {
+        HdDisk = !HdDisk;
+        if (HdDisk) {
+          firstShowFile = 0;
+          xTaskCreate(loadHdAsync, "loadHdAsync", 4096, NULL, 2, NULL);
+        }
+        else {
+          firstShowFile = 0;
+          xTaskCreate(loadDiskAsync, "loadDiskAsync", 4096, NULL, 2, NULL);
+        }
+        optionsScreenRender();
+        // Serial.println("f1");
+      }
+      else if (keycode == 59) // F2
+      {
+        AppleIIe = !AppleIIe;
+        optionsScreenRender();
+        // Serial.println("f2");
+      }
+      else if (keycode == 60) // F3
+      {
+        Fast1MhzSpeed = !Fast1MhzSpeed;
+        optionsScreenRender();
+      }
+      else if (keycode == 61) // F4
+      {
+        paused = !paused;
+        optionsScreenRender();
+      }
+      else if (keycode == 62) // F5
+      {
+        joystick = !joystick;
+        optionsScreenRender();
+      }
+      else if (keycode == 63) // F6
+      {
+        videoColor = !videoColor;
+        optionsScreenRender();
+      }
 
       if (OptionsWindow) // Option Window Opened
       {
@@ -215,38 +265,6 @@ class MyEspUsbHost : public EspUsbHost
             setDiskFile();
           diskChanged = true;
           showHideOptionsWindow();
-        }
-        else if (keycode == 58) // F1
-        {
-          HdDisk = !HdDisk;
-          optionsScreenRender();
-          // Serial.println("f1");
-        }
-        else if (keycode == 59) // F2
-        {
-          AppleIIe = !AppleIIe;
-          optionsScreenRender();
-          // Serial.println("f2");
-        }
-        else if (keycode == 60) // F3
-        {
-          Fast1MhzSpeed = !Fast1MhzSpeed;
-          optionsScreenRender();
-        }
-        else if (keycode == 61) // F4
-        {
-          paused = !paused;
-          optionsScreenRender();
-        }
-        else if (keycode == 62) // F5
-        {
-          joystick = !joystick;
-          optionsScreenRender();
-        }
-        else if (keycode == 63) // F6
-        {
-          videoColor = !videoColor;
-          optionsScreenRender();
         }
         else if (keycode == 81) // Down Arrow
         {

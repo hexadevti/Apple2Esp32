@@ -20,8 +20,8 @@ const uint8_t colors16[] = { 0b00000000, // 0 black
                              0b01000000, // 3 mid blue
                              0b00100010, // 4 dark orange
                              0b10100100, // 5 cinza escuro
-                             0b00010000, // 6 Green bright *
-                             0b11111111, // 7 
+                             0b00010000, // 6 Green mid *
+                             0b00111000, // 7 Green bright
                              0b10000100, // 8 Violeta
                              0b01000010, // 9 violet2
                              0b01011011, // 10 gray bright
@@ -29,7 +29,7 @@ const uint8_t colors16[] = { 0b00000000, // 0 black
                              0b00000111, // 12 Orange bright
                              0b01010111, // 13 dark pink
                              0b00111111, // 14 yellow
-                             0b00000000}; // 15 white
+                             0b11111111}; // 15 white
 
   
 #endif                                    
@@ -38,65 +38,6 @@ int touchCount = 0;
 int width = 280;
 int height = 192;
 
-
-int getDoubleHiresColor(int id)
-{
-  int ret = 0;
-  switch (id)
-  {
-  case 0:
-    ret = vga.rgb(0, 0, 0);
-    break;
-  case 1:
-    ret = vga.rgb(147, 11, 124);
-    break;
-  case 2:
-    ret = vga.rgb(31, 53, 211);
-    break;
-  case 3:
-    ret = vga.rgb(187, 54, 255);
-    break;
-  case 4:
-    ret = vga.rgb(0, 118, 12);
-    break;
-  case 5:
-    ret = vga.rgb(126, 126, 126);
-    break;
-  case 6:
-    ret = vga.rgb(7, 168, 224);
-    break;
-  case 7:
-    ret = vga.rgb(157, 172, 255);
-    break;
-  case 8:
-    ret = vga.rgb(98, 76, 0);
-    break;
-  case 9:
-    ret = vga.rgb(249, 86, 29);
-    break;
-  case 10:
-    ret = vga.rgb(126, 126, 126);
-    break;
-  case 11:
-    ret = vga.rgb(255, 129, 236);
-    break;
-  case 12:
-    ret = vga.rgb(67, 200, 0);
-    break;
-  case 13:
-    ret = vga.rgb(220, 205, 22);
-    break;
-  case 14:
-    ret = vga.rgb(93, 247, 132);
-    break;
-  case 15:
-    ret = vga.rgb(255, 255, 255);
-    break;
-  default:
-    break;
-  }
-  return ret;
-}
 
 void videoSetup()
 {
@@ -117,11 +58,6 @@ void videoSetup()
     delay(1);
 
   printLog("Video initialized.");
-  for (size_t i = 0; i < 16; i++)
-  {
-    Serial.printf("Binary value for Color %d: %06X\n", i, colors16[i]);
-  }
-  
   vga.show();
   vga.start();
   vga.fillRect(0,0,320,240,0);
@@ -158,7 +94,7 @@ void renderLoop(void *pvParameters)
     ushort textPage = Page1_Page2 ? 0x400 : 0x800;
     ushort graphicsPage = Page1_Page2 ? 0x2000 : 0x4000;
     
-    if (OptionsWindow)
+    if (OptionsWindow || DebugWindow)
     {
       y=0;
       for (int v = 0; v < 30; v++)

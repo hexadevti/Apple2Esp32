@@ -53,6 +53,8 @@ char processSoftSwitches(ushort address, char value, bool Read_Write = true)
     return (char)(IIEMemoryBankBankSelect1_2 ? 0x00 : 0xff);
   else if (address == 0xc012)
     return (char)(IIEMemoryBankReadRAM_ROM ? 0xff : 0x00);
+  else if (address == 0xc013)
+    return (byte)(RAMReadOn_Off ? 0xff : 0x00);    
   else if (address == 0xc014)
     return (byte)(RAMWriteOn_Off ? 0xff : 0x00);
   else if (address == 0xc015)
@@ -153,15 +155,6 @@ char processSoftSwitches(ushort address, char value, bool Read_Write = true)
     /*if (b < mainBoard.IIEAuxBanks)
         IIeExpansionCardBank = b;*/
   }
-  else if (address == 0xc07f)
-  {
-    if (Read_Write)
-    {
-      return (byte)(DHiResOn_Off ? 0xff : 0x00);
-    }
-    else
-      IOUDisOn_Off = false;
-  }
   else if (address == 0xc07e)
   {
     if (Read_Write)
@@ -171,6 +164,16 @@ char processSoftSwitches(ushort address, char value, bool Read_Write = true)
     else
       IOUDisOn_Off = true;
   }
+  else if (address == 0xc07f)
+  {
+    if (Read_Write)
+    {
+      return (byte)(DHiResOn_Off ? 0xff : 0x00);
+    }
+    else
+      IOUDisOn_Off = false;
+  }
+
   else if (address >= 0xc080 && address < 0xc090) // Slot 0 - LanguageCard
   {
     if (AppleIIe)
