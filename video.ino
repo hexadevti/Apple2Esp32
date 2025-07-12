@@ -322,7 +322,7 @@ void renderLoop(void *pvParameters)
                         x++;
                       }
                       #else
-                        vga.dotFast(x, y, blockline[i] ? vga.rgb(255, 255, 255) : vga.rgb(0, 0, 0));
+                        vga.dotFast(x, y, blockline[i] ? colors[7] : colors[0]);
                         x++;
                       #endif
                     }
@@ -394,11 +394,11 @@ void renderLoop(void *pvParameters)
                         color = TFT_BLACK;
                       tft.writeColor(color, 1);
                       #else
-                      uint16_t color = vga.rgb(0,0,0);
+                      uint16_t color = colors[0];
                       if (blockline[i])
-                        color = vga.rgb(255,255,255);
+                        color = colors[7];
                       else
-                        color = vga.rgb(0,0,0);
+                        color = colors[0];
                       vga.dotFast(x, y, color);
                       x++;
                       vga.dotFast(x, y, color);
@@ -430,9 +430,9 @@ void renderLoop(void *pvParameters)
                   #ifdef TFT
                   tft.writeColor(bpixel ? (inverted ? TFT_BLACK : TFT_WHITE) : (inverted ? TFT_WHITE : TFT_BLACK), 1);
                   #else
-                  vga.dotFast(x, y, bpixel ? (inverted ? 0 : vga.rgb(255,255,255)) : (inverted ? vga.rgb(255,255,255) : 0));
+                  vga.dotFast(x, y, bpixel ? (inverted ? colors[0] : colors[7]) : (inverted ? colors[7] : colors[0]));
                   x++;
-                  vga.dotFast(x, y, bpixel ? (inverted ? 0 : vga.rgb(255,255,255)) : (inverted ? vga.rgb(255,255,255) : 0));
+                  vga.dotFast(x, y, bpixel ? (inverted ? colors[0] : colors[7]) : (inverted ? colors[7] : colors[0]));
                   #endif
                   x++;
                 }
@@ -478,7 +478,7 @@ void renderLoop(void *pvParameters)
                   #else
                   ushort addr = (chr * 7 * 8) + (i * 7) + k;
                   bool bpixel = AppleIIeFontPixels[addr];
-                  vga.dotFast(x, y, bpixel ? vga.rgb(255,255,255) : vga.rgb(0,0,0));
+                  vga.dotFast(x, y, bpixel ? colors[7] : colors[0]);
                   x++;
                   #endif
                 }

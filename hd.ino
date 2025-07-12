@@ -26,19 +26,14 @@ ushort lastBlock = -1;
 
 void HDSetup()
 {
-  if (HdDisk) {
-    hdAttached = true;
+  if (hdAttached) {
     initializedHdDisk = true;
     printLog("HD Setup...");
-
     xTaskCreate(loadHdAsync, "loadHdAsync", 4096, NULL, 2, NULL);
     sprintf(buf, "FS.freeSpace = %d bytes", FSTYPE.totalBytes() - FSTYPE.usedBytes());
     printLog(buf);
-    //loadHD();
-    if (HdDisk) {
-      getHdFileInfo(FSTYPE);
-      xTaskCreate(getBlockAsync, "getBlockAsync", 4096, NULL, 1, NULL);
-    }
+    getHdFileInfo(FSTYPE);
+    xTaskCreate(getBlockAsync, "getBlockAsync", 4096, NULL, 1, NULL);
   }
 }
 
@@ -49,11 +44,13 @@ void loadHdAsync(void *pvParameters)
   if (!root)
   {
     printLog("Failed to open directory");
+    vTaskDelete(NULL); // Self-deletion 
     return;
   }
   if (!root.isDirectory())
   {
     printLog("Not a directory");
+    vTaskDelete(NULL); // Self-deletion 
     return;
   }
   File file = root.openNextFile();

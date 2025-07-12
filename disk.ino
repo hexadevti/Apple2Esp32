@@ -45,20 +45,15 @@ const ushort secoffset[] = {0, 0x700, 0xe00, 0x600, 0xd00, 0x500, 0xc00, 0x400, 
 volatile bool trackPendingSave = false;
 void diskSetup()
 {
-  diskAttached = (HdDisk == 0);
   if (diskAttached)
   {
     initializedHdDisk = false;
     printLog("DiskII Setup...");
-    
     xTaskCreate(loadDiskAsync, "loadDiskAsync", 4096, NULL, 2, NULL);
     sprintf(buf, "FS.freeSpace = %d bytes", FSTYPE.totalBytes() - FSTYPE.usedBytes());
     printLog(buf);
-    if (!HdDisk)
-      getDiskFileInfo(FSTYPE);
-
+    getDiskFileInfo(FSTYPE);
     phaseBuffer = std::queue<uint8_t>();
-
     xTaskCreate(saveTrackAsync, "saveTrackAsync", 4096, NULL, 1, NULL);
   }
 }
@@ -286,11 +281,13 @@ void loadDiskAsync(void *pvParameters)
   if (!root)
   {
     printLog("Failed to open directory");
+    vTaskDelete(NULL); // Self-deletion 
     return;
   }
   if (!root.isDirectory())
   {
     printLog("Not a directory");
+    vTaskDelete(NULL); // Self-deletion 
     return;
   }
   File file = root.openNextFile();

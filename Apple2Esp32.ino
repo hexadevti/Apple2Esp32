@@ -2,7 +2,8 @@
 
 void setup() {
   #ifdef TFT
-  pinMode(GREEN_LED_PIN, OUTPUT);
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, HIGH); // Turn off green LED
   #endif
   logSetup();
   epromSetup();

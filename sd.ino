@@ -1,17 +1,19 @@
 void FSSetup()
 {
+  hdAttached = HdDisk;
+  diskAttached = !HdDisk;
    #ifndef LITTLEFS
   Serial.println("SD Card Setup");
   SPI.begin(SD_SCK_PIN, SD_MISO_PIN, SD_MOSI_PIN, SD_CS_PIN);
   delay(500);
   int sdMountRetry = 0;
-  while (!FSTYPE.begin(SD_CS_PIN) && sdMountRetry < 10) {
+  while (!FSTYPE.begin(SD_CS_PIN) && sdMountRetry < 2) {
     printLog("Card Mount Failed");
     delay(100);
     sdMountRetry++;
   }
 
-  if (sdMountRetry == 10) {
+  if (sdMountRetry == 2) {
     hdAttached = false;
     diskAttached = false;
     return;
