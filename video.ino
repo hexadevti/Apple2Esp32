@@ -55,7 +55,7 @@ void videoSetup()
                        HSYNC_PIN,VSYNC_PIN);
   Mode mode(16, 96, 48, 640, 4, 2, 30, 240, 23760000, 0, 0, 2);
   while (!vga.init(pins, mode, 8, 3))
-    delay(1);
+    delay(10);
 
   printLog("Video initialized.");
   vga.show();
@@ -80,7 +80,7 @@ void renderLoop(void *pvParameters)
     tft.setAddrWindow(0, margin_y, 320, 192); // Set the area to draw
     else if (!OptionsWindow && AppleIIe && DHiResOn_Off && !videoColor)
     tft.setAddrWindow(0, margin_y, 320, 192); // Set the area to draw
-    else if (OptionsWindow)
+    else if (OptionsWindow || clearScr)
     tft.setAddrWindow(2, 0, 315, 240);
     else
     tft.setAddrWindow(margin_x, margin_y, 280, 192);
@@ -94,7 +94,33 @@ void renderLoop(void *pvParameters)
     ushort textPage = Page1_Page2 ? 0x400 : 0x800;
     ushort graphicsPage = Page1_Page2 ? 0x2000 : 0x4000;
     
-    if (OptionsWindow || DebugWindow)
+    if (clearScr) {
+      y=0;
+      for (int v = 0; v < 30; v++)
+      {
+        for (int i = 0; i < 8; i++) // char lines
+        {
+          x=0;
+          for (int h = 0; h < 45; h++)
+          {
+            for (int c = 0; c < 7; c++) // char cols
+            {
+              #ifdef TFT
+              tft.writeColor(colors[0], 1);
+              #else
+              vga.dotFast(x, y, colors[0]);
+              x++;
+              vga.dotFast(x, y, colors[0]);
+              #endif
+              x++;
+            }
+          }
+          y++;
+        }
+      }
+      clearScr = false;
+    }
+    else if (OptionsWindow || DebugWindow)
     {
       y=0;
       for (int v = 0; v < 30; v++)

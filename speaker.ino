@@ -13,10 +13,13 @@ void speakerSetup() {
 
 void speakerToggle() {
   speaker_state = !speaker_state;
+  
   #ifdef DAC
     if (dacSound)
       dacWrite(SPEAKER_PIN, speaker_state ? volume : 0);
     else
-  #endif
+  #else
     digitalWrite(SPEAKER_PIN, speaker_state ? HIGH : LOW);
+  #endif
+    
 }

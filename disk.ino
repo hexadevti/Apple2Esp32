@@ -135,8 +135,8 @@ void addPhase(uint8_t phase)
   // getTrack(FSTYPE, track, false);
   if (track != diskTrack)
   {
-    sprintf(buf, "Track changed: %d ", track);
-    printLog(buf);
+    // sprintf(buf, "Track changed: %d ", track);
+    // printLog(buf);
     if (trackPendingSave)
     {
       saveImage(FSTYPE, diskTrack);
@@ -706,7 +706,7 @@ char processSwitchc0e0(ushort address, char value)
   {
     DriveMotorON_OFF = false;
     #ifdef TFT
-    digitalWrite(GREEN_LED_PIN, HIGH);
+    digitalWrite(LED_PIN, HIGH);
     #else
     neopixelWrite(RGB_BUILTIN,0,0,0); // Off / black
     #endif
@@ -715,7 +715,7 @@ char processSwitchc0e0(ushort address, char value)
   {
     DriveMotorON_OFF = true;
     #ifdef TFT
-    digitalWrite(GREEN_LED_PIN, LOW);
+    digitalWrite(LED_PIN, LOW);
     #else
     neopixelWrite(RGB_BUILTIN,RGB_BRIGHTNESS,0,0); // Off / black
     #endif

@@ -42,8 +42,8 @@ void showFreeMem() {
 
 unsigned char read8(unsigned short address)
 {
-  unsigned char page = address >> 8;
-  if (page < 0x02)
+  
+  if (address < 0x0200)
   {
     if (AppleIIe)
     {
@@ -55,7 +55,7 @@ unsigned char read8(unsigned short address)
     else
       return zp[address];
   }
-  else if (page >= 0x02 && page < 0xc0)
+  else if (address < 0xc000)
   {
     if (AppleIIe)
     {
@@ -106,11 +106,11 @@ unsigned char read8(unsigned short address)
       return ram[address];
     }
   }
-  else if (page >= 0xc0 && page < 0xc1)
+  else if (address < 0xc100)
   { // Softswitches
     return readSoftSwitches(address);
   }
-  else if (page >= 0xc1 && page < 0xc8)
+  else if (address < 0xc800)
   {
     if (AppleIIe && IntCXRomOn_Off)
     {
@@ -118,7 +118,7 @@ unsigned char read8(unsigned short address)
     }
     else
     {
-      if (page >= 0xc3 && page < 0xc4)
+      if (address >= 0xc300 && address < 0xc400)
       {
         if (AppleIIe && !SlotC3RomOn_Off)
         { 
@@ -131,17 +131,17 @@ unsigned char read8(unsigned short address)
           return 0;
         }
       }
-      else if (page >= 0xc6 && page < 0xc7)
+      else if (address >= 0xc600 && address < 0xc700)
       {
         return diskAttached ? diskiicardrom[address - 0xc600] : 0;
       }
-      else if (page >= 0xc7 && page < 0xc8)
+      else if (address >= 0xc700 && address < 0xc800)
       {
         return hdAttached ? hdrom[address - 0xc700] : 0;
       }
     }
   }
-  else if (page >= 0xc8 && page < 0xd0)
+  else if (address < 0xd000)
   {
     if (AppleIIe)
     {
@@ -149,7 +149,7 @@ unsigned char read8(unsigned short address)
         return appleiieenhancedc0ff[address - 0xc000];
     }
   }
-  else if (page >= 0xd0)
+  else if (address >= 0xd000)
   {
     if (MemoryBankReadRAM_ROM)
     {
@@ -202,8 +202,8 @@ unsigned char read8(unsigned short address)
 
 void write8(unsigned short address, unsigned char value)
 {
-  unsigned char page = address >> 8;
-  if (page < 0x02)
+  
+  if (address < 0x0200)
   {
     if (AppleIIe)
     {
@@ -215,7 +215,7 @@ void write8(unsigned short address, unsigned char value)
     else
       zp[address] = value;
   }
-  else if (page >= 0x02 && page < 0xc0)
+  else if (address < 0xc000)
   {
     if (AppleIIe)
     {
@@ -266,11 +266,11 @@ void write8(unsigned short address, unsigned char value)
       ram[address] = value;
     }
   }
-  else if (page >= 0xc0 && page < 0xc1)
+  else if (address < 0xc100)
   { // Softswitched
     writeSoftSwitches(address, value);
   }
-  else if (page >= 0xd0)
+  else if (address >= 0xd000)
   {
     if (AppleIIe)
     {

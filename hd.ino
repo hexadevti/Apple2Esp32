@@ -220,7 +220,7 @@ void setHdFile()
 char loadBlock(unsigned short address, unsigned short block)
 {
   #ifdef TFT
-  digitalWrite(GREEN_LED_PIN, LOW);
+  digitalWrite(LED_PIN, LOW);
   #else
   neopixelWrite(RGB_BUILTIN,RGB_BRIGHTNESS,0,0); // Off / black
   #endif
@@ -236,7 +236,7 @@ char loadBlock(unsigned short address, unsigned short block)
     }
     //printLog("512 bytes written");
     #ifdef TFT
-    digitalWrite(GREEN_LED_PIN, HIGH);
+    digitalWrite(LED_PIN, HIGH);
     #else
     neopixelWrite(RGB_BUILTIN,0,0,0); // Off / black
     #endif
@@ -246,7 +246,7 @@ char loadBlock(unsigned short address, unsigned short block)
   catch(std::exception ex)
   {
     #ifdef TFT
-    digitalWrite(GREEN_LED_PIN, HIGH);
+    digitalWrite(LED_PIN, HIGH);
     #else
     neopixelWrite(RGB_BUILTIN,0,0,0); // Off / black
     #endif

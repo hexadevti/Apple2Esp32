@@ -101,12 +101,12 @@ class MyEspUsbHost : public EspUsbHost
   }
 
   void onModifierChange() {
-    if (left_win) {
+    if (shift) {
       Pb0 = true;
     } else {
       Pb0 = false;
     }
-    if (right_win || left_alt) {
+    if (control) {
       Pb1 = true;
     } else {
       Pb1 = false;
@@ -117,19 +117,19 @@ class MyEspUsbHost : public EspUsbHost
     // Serial.printf("Down %d", keycode);
     // Serial.println();
     if (joystick) {
-      if (keycode == 92) // Left
+      if (keycode == 80) // Left
       {
         timerpdl0 = JOY_MIN;
       }
-      else if (keycode == 94) // Right
+      else if (keycode == 79) // Right
       {
         timerpdl0 = JOY_MAX;
       }
-      else if (keycode == 96) // Up
+      else if (keycode == 82) // Up
       {
         timerpdl1 = JOY_MIN;
       }
-      else if (keycode == 90 || keycode == 98) // Down
+      else if (keycode == 81) // Down
       {
         timerpdl1 = JOY_MAX;
       }
@@ -140,11 +140,11 @@ class MyEspUsbHost : public EspUsbHost
     // Serial.printf("Up %d", keycode);
     // Serial.println();
     if (joystick) {
-      if (keycode == 92 || keycode == 94) // Left || right
+      if (keycode == 79 || keycode == 80) // Left || right
       {
         timerpdl0 = JOY_MID;
       }
-      else if (keycode == 96 || keycode == 90 || keycode == 98) // Up || Down
+      else if (keycode == 81 || keycode == 82) // Up || Down
       {
         timerpdl1 = JOY_MID;
       }

@@ -171,6 +171,7 @@ unsigned char pull8() {
   return read8(STP_BASE + (++STP));
 }
 
+//int joyCount = 0;
 void cpuLoop() {
 	
   // Load the reset vector
@@ -203,12 +204,15 @@ void cpuLoop() {
       lastCpuCycleCount = cpuCycleCount;
     }
     
-    // if (joystick) 
+    // // if (joystick) 
+    // if (joyCount > 10)  {
+    //   processJoystick(0.085);
+    //   joyCount = 0;
+    // }
+    // else
+    //   joyCount++;
     processJoystick(1);
-      
 
-    
-    
     opflags = AppleIIe ? flagsIIe[opcode] : flagsIIplus[opcode];
     
     

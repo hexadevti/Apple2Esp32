@@ -32,20 +32,20 @@
 #include <condition_variable>
 
 
-#include "BLEDevice.h"
+// #include "BLEDevice.h"
 
 
-// BLE
+// // BLE
 
-// The remote service we wish to connect to.
-static BLEUUID serviceUUID((uint16_t) 0x1812);
-// The characteristic of the remote service we are interested in.
-static BLEUUID    charUUID((uint16_t) 0x2a4d);
-static bool doConnect = false;
-static bool connected = false;
-static bool doScan = false;
-static BLERemoteCharacteristic* pRemoteCharacteristic;
-static BLEAdvertisedDevice* myDevice;
+// // The remote service we wish to connect to.
+// static BLEUUID serviceUUID((uint16_t) 0x1812);
+// // The characteristic of the remote service we are interested in.
+// static BLEUUID    charUUID((uint16_t) 0x2a4d);
+// static bool doConnect = false;
+// static bool connected = false;
+// static bool doScan = false;
+// static BLERemoteCharacteristic* pRemoteCharacteristic;
+// static BLEAdvertisedDevice* myDevice;
 
 #ifndef TFT
 // WebServer/Wifi Config
@@ -106,7 +106,7 @@ std::vector<std::string> diskFiles;
     #define KEYBOARD_IRQ_PIN 22
     #define ANALOG_X_PIN 4
     #define ANALOG_Y_PIN 35
-    #define GREEN_LED_PIN 17
+    #define LED_PIN 17
     #define DIGITAL_BUTTON12_PIN 34 // joystick buttons 0-3
     #define SPEAKER_PIN 26
 #else

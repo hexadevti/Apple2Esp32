@@ -1,6 +1,8 @@
 #include <cstring>
 #include <iostream>
 
+bool clearScr = false;
+
 
 uint8_t cursorX = 0;
 uint8_t cursorY = 0;
@@ -29,6 +31,7 @@ void print(const char * txt, bool inverted = false, uint8_t color = 0xf0) {
 
 void clearScreen() {
   memset(menuScreen, 0xa0, 0x546 * sizeof(unsigned char));
+  clearScr = true;
 }
 
 void listFiles(bool downDirection)
@@ -117,10 +120,11 @@ void listFiles(bool downDirection)
   }
 }
 
+
+
 void showHideOptionsWindow() {
   if (OptionsWindow) {
     clearScreen();
-    delay(100);
   }
   OptionsWindow = !OptionsWindow;
 
@@ -135,7 +139,6 @@ void showHideOptionsWindow() {
 void showHideDebugWindow() {
   if (DebugWindow) {
     clearScreen();
-    delay(100);
   }
   DebugWindow = !DebugWindow;
 

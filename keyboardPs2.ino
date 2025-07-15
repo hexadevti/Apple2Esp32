@@ -226,7 +226,6 @@ void keyboard_bit()
           {
             keymem = 0x88; // back key
             if (!joystick) {
-              Serial.print("back");
               timerpdl0 = JOY_MIN;
             }
           }
