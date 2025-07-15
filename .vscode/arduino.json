@@ -1,8 +1,19 @@
 {
-    "port": "COM4",
-    "configuration": "JTAGAdapter=default,PSRAM=opi,FlashMode=qio,FlashSize=16M,LoopCore=1,EventsCore=1,USBMode=hwcdc,CDCOnBoot=default,MSCOnBoot=default,DFUOnBoot=default,UploadMode=default,PartitionScheme=default,CPUFreq=240,UploadSpeed=921600,DebugLevel=none,EraseFlash=none",
-    "board": "esp32:esp32:esp32s3",
-    "programmer": "esptool",
-    "sketch": "Apple2Esp32.ino",
-    "output": "build"
+  "port": "COM3",
+  "board": "esp32:esp32:esp32",
+  "programmer": "Esptool",
+  "sketch": "Apple2Esp32.ino",
+  "output": "build",
+  "monitorPortSettings": {
+    "port": "COM3",
+    "baudRate": 115200,
+    "lineEnding": "\r\n",
+    "dataBits": 8,
+    "parity": "none",
+    "stopBits": "one"
+  },
+  "optimize_for_debug": false,
+  "configurationRequired": true,
+  "useProgrammer": false,
+  "configuration": "UploadSpeed=921600,CPUFreq=240,FlashFreq=80,FlashMode=qio,FlashSize=4M,PartitionScheme=default,DebugLevel=none,PSRAM=disabled,LoopCore=1,EventsCore=1,EraseFlash=none,JTAGAdapter=default"
 }

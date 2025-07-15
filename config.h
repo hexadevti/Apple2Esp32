@@ -1,4 +1,4 @@
-//#define TFT // Defines TFT display (ESP32) or VGA diplay (ESP32-S3)
+#define TFT // Defines TFT display (ESP32) or VGA diplay (ESP32-S3)
 //#define LITTLEFS //  SDFS or LITTLEFS
 //#define DAC
 
@@ -53,7 +53,7 @@ const char* host = "apple2";
 const char* ssid = "LUCIANO-ESCRITORIO";
 const char* password = "lrbf246!";
 const char* PARAM = "file";
-AsyncWebServer server(80);
+//AsyncWebServer server(80);
 #endif
 
 size_t content_len;
