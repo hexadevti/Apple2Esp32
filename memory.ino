@@ -45,65 +45,53 @@ unsigned char read8(unsigned short address)
   
   if (address < 0x0200)
   {
-    if (AppleIIe)
-    {
-      if (AltZPOn_Off)
-        return auxzp[address];
-      else
-        return zp[address];
-    }
+    if (AltZPOn_Off)
+      return auxzp[address];
     else
       return zp[address];
   }
   else if (address < 0xc000)
   {
-    if (AppleIIe)
+    if (!Store80On_Off)
     {
-      if (!Store80On_Off)
-      {
-        if (RAMReadOn_Off)
-          return auxram[address];
-        else
-          return ram[address];
-      }
+      if (RAMReadOn_Off)
+        return auxram[address];
       else
+        return ram[address];
+    }
+    else
+    {
+      if (address >= 0x0400 && address < 0x0800)
       {
-        if (address >= 0x0400 && address < 0x0800)
-        {
-          if (!Page1_Page2) // Page 2
-            return auxram[address];
-          else // Page 1
-            return ram[address];
-        } // Text Pages
-        else if (address >= 0x2000 && address < 0x4000) // Graphics Pages
-        {
-          if (LoRes_HiRes)
-          {
-            if (RAMReadOn_Off)
-              return auxram[address];
-            else
-              return ram[address];
-          }
-          else
-          {
-            if (!Page1_Page2) // Page 2
-              return auxram[address];
-            else // Page 1
-              return ram[address];
-          }
-        }
-        else
+        if (!Page1_Page2) // Page 2
+          return auxram[address];
+        else // Page 1
+          return ram[address];
+      } // Text Pages
+      else if (address >= 0x2000 && address < 0x4000) // Graphics Pages
+      {
+        if (LoRes_HiRes)
         {
           if (RAMReadOn_Off)
             return auxram[address];
           else
             return ram[address];
         }
+        else
+        {
+          if (!Page1_Page2) // Page 2
+            return auxram[address];
+          else // Page 1
+            return ram[address];
+        }
       }
-    }
-    else
-    {
-      return ram[address];
+      else
+      {
+        if (RAMReadOn_Off)
+          return auxram[address];
+        else
+          return ram[address];
+      }
     }
   }
   else if (address < 0xc100)
@@ -112,7 +100,7 @@ unsigned char read8(unsigned short address)
   }
   else if (address < 0xc800)
   {
-    if (AppleIIe && IntCXRomOn_Off)
+    if (IntCXRomOn_Off)
     {
       return appleiieenhancedc0ff[address - 0xc000];
     }
@@ -120,7 +108,7 @@ unsigned char read8(unsigned short address)
     {
       if (address >= 0xc300 && address < 0xc400)
       {
-        if (AppleIIe && !SlotC3RomOn_Off)
+        if (!SlotC3RomOn_Off)
         { 
           IntC8RomOn_Off = true;
           return appleiieenhancedc0ff[address - 0xc000];
@@ -143,13 +131,10 @@ unsigned char read8(unsigned short address)
   }
   else if (address < 0xd000)
   {
-    if (AppleIIe)
-    {
-      if (IntC8RomOn_Off)
-        return appleiieenhancedc0ff[address - 0xc000];
-    }
+    if (IntC8RomOn_Off)
+      return appleiieenhancedc0ff[address - 0xc000];
   }
-  else if (address >= 0xd000)
+  else
   {
     if (MemoryBankReadRAM_ROM)
     {
@@ -157,12 +142,11 @@ unsigned char read8(unsigned short address)
     }
     else
     {
-
       if (AppleIIe)
       {
         if (IIEMemoryBankReadRAM_ROM)
         {
-          if (address >= 0xd000 && address < 0xe000)
+          if (address < 0xe000)
           {
             if (IIEMemoryBankBankSelect1_2)
             {
@@ -179,7 +163,7 @@ unsigned char read8(unsigned short address)
                 return IIEmemoryBankSwitchedRAM2_2[address - 0xd000];
             }
           }
-          else if (address >= 0xd000)
+          else
           {
             if (AltZPOn_Off)
               return IIEAuxBankSwitchedRAM1[address - 0xe000];
@@ -194,10 +178,7 @@ unsigned char read8(unsigned short address)
         return rom[address - 0xd000];
     }
   }
-  else
-  {
-    return 0;
-  }
+  
 }
 
 void write8(unsigned short address, unsigned char value)
@@ -205,65 +186,53 @@ void write8(unsigned short address, unsigned char value)
   
   if (address < 0x0200)
   {
-    if (AppleIIe)
-    {
-      if (AltZPOn_Off)
-        auxzp[address] = value;
-      else
-        zp[address] = value;
-    }
+    if (AltZPOn_Off)
+      auxzp[address] = value;
     else
       zp[address] = value;
   }
   else if (address < 0xc000)
   {
-    if (AppleIIe)
+    if (!Store80On_Off)
     {
-      if (!Store80On_Off)
+      if (RAMWriteOn_Off)
+        auxram[address] = value;
+      else
+        ram[address] = value;
+    }
+    else // softswitches.Store80On_Off
+    {
+      if (address >= 0x0400 && address < 0x0800) // Text Pages
       {
-        if (RAMWriteOn_Off)
+        if (!Page1_Page2)
           auxram[address] = value;
         else
           ram[address] = value;
       }
-      else // softswitches.Store80On_Off
+      else if (address >= 0x2000 && address < 0x4000) // Graphics Pages
       {
-        if (address >= 0x0400 && address < 0x0800) // Text Pages
-        {
-          if (!Page1_Page2)
-            auxram[address] = value;
-          else
-            ram[address] = value;
-        }
-        else if (address >= 0x2000 && address < 0x4000) // Graphics Pages
-        {
-          if (LoRes_HiRes)
-          {
-            if (RAMWriteOn_Off)
-              auxram[address] = value;
-            else
-              ram[address] = value;
-          }
-          else
-          {
-            if (!Page1_Page2) // Page 2
-              auxram[address] = value;
-            else // Page 1
-              ram[address] = value;
-          }
-        }
-        else
+        if (LoRes_HiRes)
         {
           if (RAMWriteOn_Off)
             auxram[address] = value;
           else
             ram[address] = value;
         }
+        else
+        {
+          if (!Page1_Page2) // Page 2
+            auxram[address] = value;
+          else // Page 1
+            ram[address] = value;
+        }
       }
-    }
-    else
-    {
-      ram[address] = value;
+      else
+      {
+        if (RAMWriteOn_Off)
+          auxram[address] = value;
+        else
+          ram[address] = value;
+      }
     }
   }
   else if (address < 0xc100)

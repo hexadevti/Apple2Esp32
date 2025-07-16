@@ -32,7 +32,6 @@
 #include <deque>
 #include <condition_variable>
 
-
 #include "BLEDevice.h"
 
 
