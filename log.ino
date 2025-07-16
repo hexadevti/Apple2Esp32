@@ -19,12 +19,12 @@ void printProgress(size_t prg, size_t sz) {
   }
   
 void printCPUStatus() {
-    char sFlags[8]; 
-    for (int f = 0;f<8;f++) {
-    sFlags[7-f] = (SR & (1 << f)) != 0 ? '1' : '0';
-    }
-    sprintf(buf, "[PC]%04X: %02X ,[Addr]%04X(%02X): A=%02X X=%02X Y=%02X FL=%02X(%s) OPFlag=%02X, cycleCount=%d, diffCycleCount=%d", lastPC, opcode, argument_addr, read8(argument_addr), A, X, Y, SR, sFlags, opflags, cycleCount, diffCpuCycleCount);
-    printLog(buf);
+  std::string sFlags = ""; 
+  for (int f = 0;f<8;f++) {
+    sFlags +=(SR & (1 << f)) != 0 ? "1" : "0";
+  }
+  sprintf(buf, "[PC]%04X: %02X ,[Addr]%04X(%02X): A=%02X X=%02X Y=%02X FL=%02X(%s) OPFlag=%02X, cycleCount=%d, diffCycleCount=%d", lastPC, opcode, argument_addr, read8(argument_addr), A, X, Y, SR, sFlags.c_str(), opflags, cycleCount, diffCpuCycleCount);
+  printLog(buf);
 }
 
 void PrintHex(uint8_t data[], int length)

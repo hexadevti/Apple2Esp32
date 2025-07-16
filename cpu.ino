@@ -2,6 +2,7 @@
 // dpeckett.com, <damian@pecke.tt>
 
 // Address Modes
+
 #define AD_IMP  0x01
 #define AD_A    0x02
 #define AD_ABS  0x03
@@ -277,10 +278,10 @@ void cpuLoop() {
         argument_addr = ((unsigned short)read8(PC++) + (unsigned short)Y) & 0xFF;
         break;
     }
+
     if (debug) {
-      if (lastPC >= 0x2000 && lastPC < 0x2100) {
-        printCPUStatus();
-      }
+        //printCPUStatus();
+        stackdebug();
     }
 
     lastPC = PC;

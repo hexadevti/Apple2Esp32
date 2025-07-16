@@ -14,8 +14,11 @@ void setup() {
   HDSetup();
   diskSetup();
   speakerSetup();
-  wifiSetup();
+  //wifiSetup();
+  setupRender();
+  
   joystickSetup();
+  //bleSetup();
   printLog("Ready.");
 }
 

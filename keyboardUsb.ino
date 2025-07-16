@@ -175,14 +175,23 @@ class MyEspUsbHost : public EspUsbHost
       }
       else if (keycode == 58) // CTRL-F1
       {
+        clearScreen();
         showHideDebugWindow();
         keymem = 0;
       }
       else if (keycode == 59) // CTRL-F2
       {
         debug = !debug;
+        debugScreenRender();
         keymem = 0;
       }
+      // else if (keycode == 60) // CTRL-F3
+      // {
+      //   clearScreen();
+      //   colorDemo();
+      //   demo = !demo;
+      //   keymem = 0;
+      // }
       else if (keycode == 62) // CTRL-F5
       {
         ESP.restart();
@@ -355,7 +364,7 @@ void keyboardSetup()
 void keyboardTask(void *pvParameters)
 {
   int count = 0;
-  int cycles = 0;
+  int cycleskbd = 0;
   bool holdKey = false;
   unsigned char repeat_keymem = 0;
   while (running)
@@ -370,14 +379,14 @@ void keyboardTask(void *pvParameters)
       count = 0;
 
     if (count >= 70) {
-      if (cycles == 0) {
+      if (cycleskbd == 0) {
         //Serial.println("RELEASE");
         keymem = 0;
       }
-      cycles++;
-      if (cycles >= 10) {
+      cycleskbd++;
+      if (cycleskbd >= 10) {
         //Serial.println("REPEAT");
-        cycles = 0;
+        cycleskbd = 0;
         keymem = keymem_hold;
       }
     }

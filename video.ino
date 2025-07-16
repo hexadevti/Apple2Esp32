@@ -18,11 +18,11 @@ const uint8_t colors16[] = { 0b00000000, // 0 black
                              0b10000000, // 1 dark blue
                              0b00100000, // 2 dark green *
                              0b01000000, // 3 mid blue
-                             0b00100010, // 4 dark orange
+                             0b00100010, // 4 brown
                              0b10100100, // 5 cinza escuro
                              0b00010000, // 6 Green mid *
                              0b00111000, // 7 Green bright
-                             0b10000100, // 8 Violeta
+                             0b10001010, // 8 Violeta
                              0b01000010, // 9 violet2
                              0b01011011, // 10 gray bright
                              0b11010010, // 11 Blue Bright
@@ -30,6 +30,23 @@ const uint8_t colors16[] = { 0b00000000, // 0 black
                              0b01010111, // 13 dark pink
                              0b00111111, // 14 yellow
                              0b11111111}; // 15 white
+
+const uint8_t colorsLo[] = { 0b00000000, // 0000 0 black
+                             0b10001010, // 1000 8 magenta
+                             0b10000000, // 0001 1 dark blue
+                             0b01000010, // 1001 9 violet2
+                             0b00100000, // 0010 2 dark green *
+                             0b01011011, // 1010 10 gray bright
+                             0b01000000, // 0011 3 mid blue
+                             0b11010010, // 1011 11 Blue Bright
+                             0b00001100, // 0100 4 brown
+                             0b00000111, // 1100 12 Orange bright
+                             0b10100100, // 0101 5 cinza escuro
+                             0b01010111, // 1101 13 dark pink
+                             0b00010000, // 0110 6 Green mid *
+                             0b00111111, // 1110 14 yellow
+                             0b00111000, // 0111 7 Green bright
+                             0b11111111};// 1111 15 white
 
   
 #endif                                    
@@ -94,7 +111,37 @@ void renderLoop(void *pvParameters)
     ushort textPage = Page1_Page2 ? 0x400 : 0x800;
     ushort graphicsPage = Page1_Page2 ? 0x2000 : 0x4000;
     
-    if (clearScr) {
+    if (demo) {
+    y=0;
+      for (int v = 0; v < 30; v++)
+      {
+        for (int i = 0; i < 8; i++) // char lines
+        {
+          x=0;
+          for (int h = 0; h < 45; h++)
+          {
+            uint8_t chr = menuScreen[v * 45 + h];
+            for (int c = 0; c < 7; c++) // char cols
+            {
+              bool bpixel = AppleIIeFontPixels[(chr*7*8) + (i * 7) + c];
+              uint8_t color = menuColor[v * 45 + h];
+              uint8_t fgColor = 0xff;
+              uint8_t bgColor = color;
+              #ifdef TFT
+              tft.writeColor((bpixel ? fgColor : bgColor), 1);
+              #else
+              vga.dotFast(x, y, bpixel ? fgColor : bgColor);
+              x++;
+              vga.dotFast(x, y, bpixel ? fgColor : bgColor);
+              #endif
+              x++;
+            }
+          }
+          y++;
+        }
+      }
+    }
+    else if (clearScr) {
       y=0;
       for (int v = 0; v < 30; v++)
       {
@@ -120,7 +167,7 @@ void renderLoop(void *pvParameters)
       }
       clearScr = false;
     }
-    else if (OptionsWindow || DebugWindow)
+    else if (OptionsWindow || DebugWindow) 
     {
       y=0;
       for (int v = 0; v < 30; v++)
@@ -176,9 +223,9 @@ void renderLoop(void *pvParameters)
                       #ifdef TFT
                       tft.writeColor(colors16[secondColor], 1);
                       #else
-                      vga.dotFast(x, y, colors16[secondColor]);
+                      vga.dotFast(x, y, colorsLo[secondColor]);
                       x++;
-                      vga.dotFast(x, y, colors16[secondColor]);
+                      vga.dotFast(x, y, colorsLo[secondColor]);
                       #endif
                     }
                     else
@@ -186,9 +233,9 @@ void renderLoop(void *pvParameters)
                       #ifdef TFT
                       tft.writeColor(colors16[firstColor], 1);
                       #else
-                      vga.dotFast(x, y, colors16[firstColor]);
+                      vga.dotFast(x, y, colorsLo[firstColor]);
                       x++;
-                      vga.dotFast(x, y, colors16[firstColor]);
+                      vga.dotFast(x, y, colorsLo[firstColor]);
                       #endif
                     }
                     x++;

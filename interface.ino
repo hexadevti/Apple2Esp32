@@ -2,10 +2,26 @@
 #include <iostream>
 
 bool clearScr = false;
-
+bool demo = false;
+std::deque<std::string> debugLines;
 
 uint8_t cursorX = 0;
 uint8_t cursorY = 0;
+
+void setupRender() {
+  xTaskCreate(renderTask, "renderTask", 4096, NULL, 1, NULL);
+}
+
+void renderTask(void *pvParameters) {
+  while (running) {
+
+    if (DebugWindow) {
+      printDebugLine();
+    }
+
+    vTaskDelay(pdMS_TO_TICKS(100));
+  }
+}
 
 void setCursor(uint8_t x, uint8_t y) {
   cursorX = x;
@@ -31,6 +47,7 @@ void print(const char * txt, bool inverted = false, uint8_t color = 0xf0) {
 
 void clearScreen() {
   memset(menuScreen, 0xa0, 0x546 * sizeof(unsigned char));
+  memset(menuColor, 0x00, 0x546 * sizeof(unsigned char));
   clearScr = true;
 }
 
@@ -120,7 +137,22 @@ void listFiles(bool downDirection)
   }
 }
 
+void colorDemo() {
+  char *txtColor = (char *)malloc(8);
+  for (uint8_t h = 0; h < 0x10; h++) {
+    setCursor(h*2 + 2, 0);
+    sprintf(txtColor, "x%X", h);
+    print(txtColor, false, 0);
+    for (uint8_t v = 0; v < 0x10; v++) {
+      setCursor(0, v + 1);
+      sprintf(txtColor, "%2X", v);
+      print(txtColor, false, 0);
 
+      setCursor(h*2 + 2, v + 1);
+      print("  ", false, (h | v << 4));
+    }
+  }
+}
 
 void showHideOptionsWindow() {
   if (OptionsWindow) {
@@ -145,7 +177,7 @@ void showHideDebugWindow() {
   if (DebugWindow) {
     debugScreenRender();
   }
-  paused = DebugWindow;
+  //paused = DebugWindow;
 }
 
 void debugScreenRender()
@@ -153,15 +185,51 @@ void debugScreenRender()
   setCursor(0, 0);
   print("debug:");
 
-  setCursor(0,12);
+  setCursor(0,2);
   print("< CTRL-F1 >");
-  setCursor(0,13);
-  print(" Debug     ",debug);
-  setCursor(0,14);
-  print(" Off ", !debug);
+  setCursor(0,3);
+  print("   Close   ");
+  setCursor(0,4);
+  print("   Debug   ");
+ 
+  setCursor(12,2);
+  print("< CTRL-F2 >");
+  setCursor(12,3);
+  print("   Debug   ",debug);
+  setCursor(12,4);
+  print("    Off    ", !debug);
+ 
+}
+
+void stackdebug() {
+  std::string sFlags = ""; 
+  for (int f = 0;f<8;f++) {
+    sFlags +=(SR & (1 << f)) != 0 ? "1" : "0";
+  }
+  sprintf(buf, "%04X:%02X %04X(%02X)  %02X %02X %02X %02X(%s)", lastPC, opcode, argument_addr, read8(argument_addr), A, X, Y, SR, sFlags.c_str());
+  debugLines.push_front(buf);
+  if (debugLines.size() > 20) {
+    debugLines.pop_back();
+  }
   
 }
 
+void printDebugLine()
+{
+  setCursor(0,8);
+  print("PC  :Op Addr(Val) A  X  Y  FL(NOFBDIZC)");
+  
+  for (int i = 0; i < debugLines.size(); i++) {
+    setCursor(0,9+i);  
+    if (i < debugLines.size()) {
+      print(debugLines[i].c_str());
+    }
+    else {
+      setCursor(0,16+i);
+      print("                                ");
+    }
+  }
+}
 
 void optionsScreenRender()
 {

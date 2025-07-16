@@ -1,4 +1,4 @@
-#define TFT // Defines TFT display (ESP32) or VGA diplay (ESP32-S3)
+//#define TFT // Defines TFT display (ESP32) or VGA diplay (ESP32-S3)
 //#define LITTLEFS //  SDFS or LITTLEFS
 //#define DAC
 
@@ -29,23 +29,24 @@
 #include <thread>
 #include <mutex>
 #include <vector>
+#include <deque>
 #include <condition_variable>
 
 
-// #include "BLEDevice.h"
+#include "BLEDevice.h"
 
 
-// // BLE
+// BLE
 
-// // The remote service we wish to connect to.
-// static BLEUUID serviceUUID((uint16_t) 0x1812);
-// // The characteristic of the remote service we are interested in.
-// static BLEUUID    charUUID((uint16_t) 0x2a4d);
-// static bool doConnect = false;
-// static bool connected = false;
-// static bool doScan = false;
-// static BLERemoteCharacteristic* pRemoteCharacteristic;
-// static BLEAdvertisedDevice* myDevice;
+// The remote service we wish to connect to.
+static BLEUUID serviceUUID((uint16_t) 0x1812);
+// The characteristic of the remote service we are interested in.
+static BLEUUID    charUUID((uint16_t) 0x2a4d);
+static bool doConnect = false;
+static bool connected = false;
+static bool doScan = false;
+static BLERemoteCharacteristic* pRemoteCharacteristic;
+static BLEAdvertisedDevice* myDevice;
 
 #ifndef TFT
 // WebServer/Wifi Config
@@ -53,7 +54,7 @@ const char* host = "apple2";
 const char* ssid = "LUCIANO-ESCRITORIO";
 const char* password = "lrbf246!";
 const char* PARAM = "file";
-//AsyncWebServer server(80);
+AsyncWebServer server(80);
 #endif
 
 size_t content_len;
