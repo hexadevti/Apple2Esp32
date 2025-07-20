@@ -30,6 +30,7 @@
 #include <mutex>
 #include <vector>
 #include <deque>
+#include <map>
 #include <condition_variable>
 
 #include "BLEDevice.h"

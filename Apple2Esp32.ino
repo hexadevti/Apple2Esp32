@@ -15,7 +15,6 @@ void setup() {
   diskSetup();
   speakerSetup();
   //wifiSetup();
-  setupRender();
   
   joystickSetup();
   //bleSetup();

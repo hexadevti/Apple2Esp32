@@ -3,6 +3,8 @@
 
 // Address Modes
 
+
+
 #define AD_IMP  0x01
 #define AD_A    0x02
 #define AD_ABS  0x03
@@ -124,6 +126,9 @@ unsigned char value8;
 unsigned short value16, value16_2, result;
 
 bool debug = false;
+bool debugPaused = false;
+bool debugStep = false;
+uint16_t debugAddressBreak = 0;
 
 void cpuReset()
 {
@@ -174,14 +179,13 @@ unsigned char pull8() {
 
 //int joyCount = 0;
 void cpuLoop() {
-	
   // Load the reset vector
   PC = read16(0xFFFC);
   STP = 0xFD;
   
-  
   while (running) 
   {
+    lastPC = PC;
     while (paused) 
     {
       delay(100);
@@ -220,14 +224,16 @@ void cpuLoop() {
     // Addressing modes
     switch (opflags & 0x0F) {
       case AD_IMP:
-      case AD_A: argument_addr = 0xFFFF; break;
+      case AD_A: 
+        argument_addr = 0xFFFF; 
+        break;
       case AD_ABS:
-      argument_addr = read16(PC);
-      PC += 2;
-      break;
+        argument_addr = read16(PC);
+        PC += 2;
+        break;
       case AD_ABSX:
-      argument_addr = read16(PC) + (unsigned short)X;
-      PC += 2;
+        argument_addr = read16(PC) + (unsigned short)X;
+        PC += 2;
         break;
       case AD_IABX:
 		    argument_addr = read16(PC) + (unsigned short)X;
@@ -279,12 +285,26 @@ void cpuLoop() {
         break;
     }
 
-    if (debug) {
-        //printCPUStatus();
-        stackdebug();
+    if (DebugWindow)
+    {
+      while (debugPaused && DebugWindow) {
+        if (debugStep) {
+          debugStep = false;
+          break;
+        }
+        delay(100);
+      }
+      //printCPUStatus();
+      stackdebug();
     }
 
-    lastPC = PC;
+    // if (debugAddressBreak != 0 && PC == debugAddressBreak) {
+    //   debugPaused = true;
+    //   clearScreen();
+    //   showHideDebugWindow();
+    // }
+
+  
     //opcodes
     switch (opcode) {
       //ADC
