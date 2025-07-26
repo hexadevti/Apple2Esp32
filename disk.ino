@@ -160,6 +160,7 @@ bool identifyDosProdos()
 
 void getDiskFileInfo(fs::FS &fs)
 {
+  
   Serial.printf("selectedDiskFileName = %s\n", selectedDiskFileName.c_str());
   if (!fs.exists(selectedDiskFileName.c_str()))
   {
@@ -167,11 +168,11 @@ void getDiskFileInfo(fs::FS &fs)
     shownFile = 0;
 
   }
-  File file = fs.open(selectedDiskFileName.c_str());
-  size_t len = file.size();
-  sprintf(buf, "File Size: %d", len);
-  printLog(buf);
-  file.close();
+  // File file = fs.open(selectedDiskFileName.c_str());
+  // size_t len = file.size();
+  // sprintf(buf, "File Size: %d", len);
+  // printLog(buf);
+  // file.close();
   getTrack(FSTYPE, 17, true);
   diskVolume = trackRawData[0x06];
   sprintf(buf, "Disk Volume: %d", diskVolume);
@@ -180,6 +181,7 @@ void getDiskFileInfo(fs::FS &fs)
   FlagDO_PO = identifyDosProdos();
   sprintf(buf, "Disk format: %s", FlagDO_PO ? "DOS" : "PRODOS");
   printLog(buf);
+  
 }
 
 void getTrack(fs::FS &fs, int track, bool force)
@@ -228,6 +230,7 @@ void saveImage(fs::FS &fs, int track)
   {
     Serial.println("File failed to open");
   }
+
 }
 
 void nextDiskFile()

@@ -1,4 +1,4 @@
-#ifndef TFT
+#if !defined(TFT)
 #include "EspUsbHost.h"
 
 volatile unsigned char keymem_hold = 0;
@@ -46,7 +46,6 @@ class MyEspUsbHost : public EspUsbHost
 {
   void onKeyboard(hid_keyboard_report_t report, hid_keyboard_report_t last_report)
   {
-    
     // Serial.printf("modifier=["BYTE_TO_BINARY_PATTERN"]->["BYTE_TO_BINARY_PATTERN"], Key0=[0x%02x]->[0x%02x], Key1=[0x%02x]->[0x%02x], Key2=[0x%02x]->[0x%02x], Key3=[0x%02x]->[0x%02x], Key4=[0x%02x]->[0x%02x], Key5=[0x%02x]->[0x%02x]",
     // BYTE_TO_BINARY(last_report.modifier),
     // BYTE_TO_BINARY(report.modifier),
@@ -459,7 +458,6 @@ void keyboardTask(void *pvParameters)
   unsigned char repeat_keycode = 0;
   while (running)
   {
-    
     usbHost.task();
     delay(1);
     repeat_keymem = keymem_hold;

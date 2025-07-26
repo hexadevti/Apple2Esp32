@@ -1,7 +1,7 @@
 
 void wifiSetup()
 {
-#ifndef TFT
+#if !defined(TFT)
   if (!wifiConnected)
   {
     printLog("1");
@@ -12,7 +12,7 @@ void wifiSetup()
  #endif
 }
 
-#ifndef TFT
+#if !defined(TFT) 
 void deleteFile(fs::FS &fs, String filename)
 {
   Serial.printf("Deleting file: %s\r\n", filename);

@@ -181,47 +181,42 @@ void bleSetup()
   pBLEScan->start(5, false);
   xTaskCreate(
       bleConnect, "bleConnect", 4096, NULL, 1, NULL);
-  
-  
+
 } // End of setup.
-
-
 
 void bleConnect(void *pvParameters)
 {
-    while (true)
+  while (true)
+  {
+    Serial.printf("doconnect: %d, connected: %d, doScan: %d\n", doConnect, connected, doScan);
+    if (doConnect)
     {
-        Serial.printf("doconnect: %d, connected: %d, doScan: %d\n", doConnect, connected, doScan);
-        if (doConnect)
-        {
-            if (connectToServer())
-            {
-                Serial.println("We are now connected to the BLE Server.");
-                doScan = false;
-            }
-            else
-            {
-                Serial.println("We have failed to connect to the server; there is nothin more we will do.");
-            }
-            doConnect = false;
-        } 
-        else if (doScan)
-        {
-            BLEDevice::getScan()->start(5, false); // this is just eample to start scan after disconnect, most likely there is better way to do it in arduino
-        }
-
-        // if (connected)
-        // {
-            
-        // }
-        // else if (doScan)
-        // {
-        //     BLEDevice::getScan()->start(0); // this is just eample to start scan after disconnect, most likely there is better way to do it in arduino
-        // }
-        
-
-
-        delay(1000); // Delay a second between loops.
+      if (connectToServer())
+      {
+        Serial.println("We are now connected to the BLE Server.");
+        doScan = false;
+      }
+      else
+      {
+        Serial.println("We have failed to connect to the server; there is nothin more we will do.");
+      }
+      doConnect = false;
     }
- 
+    else if (doScan)
+    {
+      BLEDevice::getScan()->start(5, false); // this is just eample to start scan after disconnect, most likely there is better way to do it in arduino
+    }
+
+    // if (connected)
+    // {
+
+    // }
+    // else if (doScan)
+    // {
+    //     BLEDevice::getScan()->start(0); // this is just eample to start scan after disconnect, most likely there is better way to do it in arduino
+    // }
+
+    delay(1000); // Delay a second between loops.
+  }
+
 } // End of loop

@@ -1,17 +1,25 @@
 //#define TFT // Defines TFT display (ESP32) or VGA diplay (ESP32-S3)
 //#define LITTLEFS //  SDFS or LITTLEFS
 //#define DAC
+#define TFT_S3
 
 
 #include "FS.h"
 #include <SPI.h>
 #ifdef TFT
-#include <TFT_eSPI.h>
+    #include <TFT_eSPI.h>
 #else
-#include "VGA.h"
-#include <ESPAsyncWebServer.h>
-#include <Update.h>
-#include <ESPmDNS.h>
+#ifdef TFT_S3
+    #include <Arduino_GFX_Library.h>
+    #include <ESPAsyncWebServer.h>
+    #include <Update.h>
+    #include <ESPmDNS.h>
+#else
+    #include "VGA.h"
+    #include <ESPAsyncWebServer.h>
+    #include <Update.h>
+    #include <ESPmDNS.h>
+#endif
 #endif
 #include <LittleFS.h>
 #include "SD.h"
@@ -48,7 +56,7 @@ static bool doScan = false;
 static BLERemoteCharacteristic* pRemoteCharacteristic;
 static BLEAdvertisedDevice* myDevice;
 
-#ifndef TFT
+#if !defined(TFT)
 // WebServer/Wifi Config
 const char* host = "apple2";
 const char* ssid = "LUCIANO-ESCRITORIO";
@@ -64,23 +72,6 @@ static String filelist = "";
 
 static int freeSpace = 0;
 
-// Video Config
-#ifdef TFT
-TFT_eSPI tft = TFT_eSPI();
-int margin_x = 20;
-int margin_y = 24;
-#else
-VGA vga;
-int margin_x = 25;
-int margin_y = 25;
-#endif
-
-static const uint16_t screenWidth  = 240;
-static const uint16_t screenHeight = 320;
-static std::mutex page_lock;
-
-
-uint16_t tx = 0, ty = 0; // To store the touch coordinates
 
 
 // LittleFS/SD
@@ -111,20 +102,33 @@ std::vector<std::string> diskFiles;
     #define DIGITAL_BUTTON12_PIN 34 // joystick buttons 0-3
     #define SPEAKER_PIN 26
 #else
-    #define RED0_PIN 16
-    #define RED1_PIN 17
-    #define GREEN0_PIN 7
-    #define GREEN1_PIN 15
-    #define BLUE0_PIN 5
-    #define BLUE1_PIN 6
-    #define HSYNC_PIN 14
-    #define VSYNC_PIN 13
-    #define SD_SCK_PIN 18
-    #define SD_MISO_PIN 8
-    #define SD_MOSI_PIN 3
-    #define SD_CS_PIN 46
-    #define SPEAKER_PIN 4
-    #define U_PART U_SPIFFS
+    #ifdef TFT_S3
+        #define TFT_CS_PIN 45
+        #define TFT_SCK_PIN 47 
+        #define TFT_D0_PIN 21
+        #define TFT_D1_PIN 48 
+        #define TFT_D2_PIN 40 
+        #define TFT_D3_PIN 39 
+        #define SD_MISO_PIN 13
+        #define SD_SCK_PIN 12
+        #define SD_MOSI_PIN 11
+        #define SD_CS_PIN 10
+        #define SPEAKER_PIN 41      
+    #else
+        #define RED0_PIN 16
+        #define RED1_PIN 17
+        #define GREEN0_PIN 7
+        #define GREEN1_PIN 15
+        #define BLUE0_PIN 5
+        #define BLUE1_PIN 6
+        #define HSYNC_PIN 14
+        #define VSYNC_PIN 13
+        #define SD_SCK_PIN 18
+        #define SD_MISO_PIN 8
+        #define SD_MOSI_PIN 3
+        #define SD_CS_PIN 46
+        #define SPEAKER_PIN 4
+        #endif
 #endif
 //#define RED_LED_PIN 4
 //#define BLUE_LED_PIN 16 // unused
@@ -138,6 +142,38 @@ std::vector<std::string> diskFiles;
 // #define TFT_DC   2  // Data Command control pin
 // #define TFT_BL   27  // LED back-light
 // #define TOUCH_CS 33     // Chip select pin (T_CS) of touch screen
+
+
+// Video Config
+#ifdef TFT
+TFT_eSPI tft = TFT_eSPI();
+int margin_x = 20;
+int margin_y = 24;
+#else
+    #ifdef TFT_S3
+        int margin_x = 20;
+        int margin_y = 24;
+        Arduino_DataBus *bus = new Arduino_ESP32QSPI(TFT_CS_PIN, TFT_SCK_PIN, TFT_D0_PIN, TFT_D1_PIN, TFT_D2_PIN, TFT_D3_PIN);
+        Arduino_GFX *g = new Arduino_NV3041A(bus, GFX_NOT_DEFINED /* RST */, 0 /* rotation */, true /* IPS */);
+        Arduino_GFX *gfx = new Arduino_Canvas(480 /* width */, 272 /* height */, g);
+        // #include <XPT2046_Touchscreen.h>
+        // #define CS_PIN  38
+        // // MOSI=11, MISO=12, SCK=13
+        // XPT2046_Touchscreen ts(CS_PIN);
+        
+    #else
+        VGA vga;
+        int margin_x = 25;
+        int margin_y = 25;
+    #endif
+#endif
+
+static const uint16_t screenWidth  = 240;
+static const uint16_t screenHeight = 320;
+static std::mutex page_lock;
+
+uint16_t tx = 0, ty = 0; // To store the touch coordinates
+
 
 // keyboard
 // keyboard scan buffer

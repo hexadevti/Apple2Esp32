@@ -1,24 +1,42 @@
+static SPIClass hspi { HSPI };
+
 void FSSetup()
 {
   hdAttached = HdDisk;
   diskAttached = !HdDisk;
-   #ifndef LITTLEFS
   Serial.println("SD Card Setup");
-  SPI.begin(SD_SCK_PIN, SD_MISO_PIN, SD_MOSI_PIN, SD_CS_PIN);
-  delay(500);
-  int sdMountRetry = 0;
-  while (!FSTYPE.begin(SD_CS_PIN) && sdMountRetry < 2) {
-    printLog("Card Mount Failed");
-    delay(100);
-    sdMountRetry++;
-  }
-
-  if (sdMountRetry == 2) {
-    hdAttached = false;
-    diskAttached = false;
-    return;
-  }
   
+  #ifndef LITTLEFS
+  int sdMountRetry = 0;
+    #ifdef TFT_S3
+      hspi.begin(SD_SCK_PIN, SD_MISO_PIN, SD_MOSI_PIN, SD_CS_PIN); 
+      while (!FSTYPE.begin(SD_CS_PIN, hspi) && sdMountRetry < 2) {
+        printLog("Card Mount Failed");
+        delay(100);
+        sdMountRetry++;
+      }
+      if (sdMountRetry == 2) {
+        hdAttached = false;
+        diskAttached = false;
+        return;
+      }
+    #else
+      fspi->begin(SD_SCK_PIN, SD_MISO_PIN, SD_MOSI_PIN, SD_CS_PIN);
+      while (!FSTYPE.begin(*fspi) && sdMountRetry < 10) {
+        printLog("Little FS Failed");
+        delay(100);
+        sdMountRetry++;
+      }
+
+      if (sdMountRetry == 2) {
+        hdAttached = false;
+        diskAttached = false;
+        return;
+      }
+      
+    #endif
+
+
   uint8_t cardType = FSTYPE.cardType();
 
   if (cardType == CARD_NONE) {
@@ -40,7 +58,12 @@ void FSSetup()
   uint64_t cardSize = FSTYPE.cardSize() / (1024 * 1024);
   sprintf(buf,"SD Card Size: %lluMB\n", cardSize);
   printLog(buf);
+
+
   #else
+
+
+
   Serial.println("LittleFS Setup");
   //SPI.begin();
   //delay(500);
