@@ -174,268 +174,275 @@ MyEspUsbHost usbHost;
     // Serial.printf(" capslock = %d", capslock);
     bool shift_enabled = false;
       
-      if (OptionsWindow) // Option Window Opened
-      {
-        if (control) 
-        {
-          switch (keycode)
-          {
-            case 40: // CTRL-ENTER  
-              if (OptionsWindow) 
-              {
-                if (HdDisk)
-                  setHdFile();
-                else
-                  setDiskFile();
-                if (HdDisk)
-                  saveHdFile();
-                else
-                  saveDiskFile();
-                ESP.restart();
-              }
-              keymem = 0;
-              break;              
-          }
+    switch (keycode)
+    {
+      case 58: // F1
+        HdDisk = !HdDisk;
+        if (HdDisk) {
+          firstShowFile = 0;
+          xTaskCreate(loadHdAsync, "loadHdAsync", 4096, NULL, 2, NULL);
         }
-        else // without modifier key
-        {
-          if (keycode == 41) // ESC
-          {
-            showHideOptionsWindow();
-          }
-          else if (keycode == 40) // enter
-          {
-            if (HdDisk)
-              setHdFile();
-            else
-              setDiskFile();
-            diskChanged = true;
-            showHideOptionsWindow();
-          }
-          else if (keycode == 81) // Down Arrow
-          {
-              if (!HdDisk)
-                nextDiskFile();
-              else
-                nextHdFile();
-              listFiles(true);
-
-            //Serial.println("down");
-          }
-          else if (keycode == 82) // Up Arrow
-          {
-            if (!HdDisk)
-              prevDiskFile();
-            else
-              prevHdFile();
-            listFiles(false);
-            //Serial.println("up");
-          }
+        else {
+          firstShowFile = 0;
+          xTaskCreate(loadDiskAsync, "loadDiskAsync", 4096, NULL, 2, NULL);
         }
+        optionsScreenRender();
+        // Serial.println("f1");
+        break;
+      case 59: // F2
+        AppleIIe = !AppleIIe;
+        optionsScreenRender();
+        // Serial.println("f2");
+        break;
+      case 60: // F3
+        Fast1MhzSpeed = !Fast1MhzSpeed;
+        optionsScreenRender();
+        break;
+      case 61: // F4
+        paused = !paused;
+        optionsScreenRender();
+        break;
+      case 62: // F5
+        joystick = !joystick;
+        optionsScreenRender();
+        break;
+      case 63: // F6
+        videoColor = !videoColor;
+        optionsScreenRender();
+        break;
+      case 64: // F7
+        upscale = !upscale;
+        optionsScreenRender();
+        clearScreen();
         keymem = 0;
+        return;
+        break;
+    }
+
+    if (OptionsWindow) // Option Window Opened
+    {
+      if (control) 
+      {
+        switch (keycode)
+        {
+          case 40: // CTRL-ENTER  
+            if (OptionsWindow) 
+            {
+              if (HdDisk)
+                setHdFile();
+              else
+                setDiskFile();
+              if (HdDisk)
+                saveHdFile();
+              else
+                saveDiskFile();
+              ESP.restart();
+            }
+            keymem = 0;
+            break;              
+        }
       }
-      else if (DebugWindow) {
-        if (control) {
-          switch (keycode)
-          {
-            case 58: // CTRL-F1
-              debug = false;
-              showHideDebugWindow();
-              keymem = 0;
-              break;
-          }
-        } 
+      else // without modifier key
+      {
+        if (keycode == 41) // ESC
+        {
+          showHideOptionsWindow();
+        }
+        else if (keycode == 40) // enter
+        {
+          if (HdDisk)
+            setHdFile();
+          else
+            setDiskFile();
+          diskChanged = true;
+          showHideOptionsWindow();
+        }
+        else if (keycode == 81) // Down Arrow
+        {
+            if (!HdDisk)
+              nextDiskFile();
+            else
+              nextHdFile();
+            listFiles(true);
+
+          //Serial.println("down");
+        }
+        else if (keycode == 82) // Up Arrow
+        {
+          if (!HdDisk)
+            prevDiskFile();
+          else
+            prevHdFile();
+          listFiles(false);
+          //Serial.println("up");
+        }
+      }
+      keymem = 0;
+    }
+    else if (DebugWindow) {
+      if (control) {
+        switch (keycode)
+        {
+          case 58: // CTRL-F1
+            debug = false;
+            showHideDebugWindow();
+            keymem = 0;
+            break;
+        }
+      } 
+      else 
+      {
+        switch (keycode)
+        {
+          case 62: // F5
+            debugPaused = !debugPaused;
+            delay(10);
+            //debugStep = true;
+            //printDebugLine();
+            keymem = 0;
+            break;
+          case 67: // F10
+            if (debugPaused) {
+              debugStep = true;
+              keycode_hold = keycode;
+            }
+            keymem = 0;
+            break;
+          case 41: // ESC
+            debug = false;
+            showHideDebugWindow();
+            keymem = 0;
+            break;
+          default:
+            if (keycode >= 30 && keycode < 40 || // 0-9
+                keycode >= 4 && keycode < 10) { // A-Z
+              setCursor(inputCursorX, inputCursorY);
+              std::string s(1, char(keycode));
+              Serial.printf("keycode = %d, ascii = %d, %s\n", keycode, ascii, s);
+              // if (keycode >= 30 && keycode <= 40) { // 0-9
+              //   print(reinterpret_cast<const char*>(keycode));
+              // } else if (keycode >= 4 && keycode <= 10) { // A-Z
+              //   print(reinterpret_cast<const char*>(keycode));
+              // } 
+              inputCursorX++;
+
+            } 
+            // else if (keycode == 42 || keycode == 80) {
+            //   inputCursorX--;
+            //   setCursor(inputCursorX, inputCursorY);
+            // }
+            // else if (keycode == 40) {
+            //   setCursor(29, 5);
+            //   uint16_t addr = getAddressValue();
+            //   Serial.printf("debug address = 0x%04X\n", addr);
+            //   if (addr > 0x0000 && addr <= 0xFFFF) {
+            //     debugAddressBreak = addr;
+            //     Serial.printf("Set breakpoint at address 0x%04X\n", debugAddressBreak);
+            //   } else {
+            //     Serial.println("Invalid address");
+            //   }
+            //   inputCursorX = 29;
+            //   inputCursorY = 5;
+            //   keymem = 0;
+            // } 
+            break;
+            
+        }
+      }
+    }
+    else // All closed windows
+    {
+      if (control)
+      {
+        if (keycode >= 4 && keycode <= 29) {
+          ascii = keycode - 3;
+          keymem = ascii | 0x80;
+        }
         else 
         {
-          switch (keycode)
-          {
-            case 62: // F5
-              debugPaused = !debugPaused;
-              delay(10);
-              //debugStep = true;
-              //printDebugLine();
-              keymem = 0;
-              break;
-            case 67: // F10
-              if (debugPaused) {
-                debugStep = true;
-                keycode_hold = keycode;
-              }
-              keymem = 0;
-              break;
-            case 41: // ESC
-              debug = false;
+          switch (keycode) {
+            case 58: // CTRL-F1
+              clearScreen();
               showHideDebugWindow();
+              debug = true;
+              debugScreenRender();
               keymem = 0;
               break;
-            default:
-              if (keycode >= 30 && keycode < 40 || // 0-9
-                  keycode >= 4 && keycode < 10) { // A-Z
-                setCursor(inputCursorX, inputCursorY);
-                std::string s(1, char(keycode));
-                Serial.printf("keycode = %d, ascii = %d, %s\n", keycode, ascii, s);
-                // if (keycode >= 30 && keycode <= 40) { // 0-9
-                //   print(reinterpret_cast<const char*>(keycode));
-                // } else if (keycode >= 4 && keycode <= 10) { // A-Z
-                //   print(reinterpret_cast<const char*>(keycode));
-                // } 
-                inputCursorX++;
-
-              } 
-              // else if (keycode == 42 || keycode == 80) {
-              //   inputCursorX--;
-              //   setCursor(inputCursorX, inputCursorY);
-              // }
-              // else if (keycode == 40) {
-              //   setCursor(29, 5);
-              //   uint16_t addr = getAddressValue();
-              //   Serial.printf("debug address = 0x%04X\n", addr);
-              //   if (addr > 0x0000 && addr <= 0xFFFF) {
-              //     debugAddressBreak = addr;
-              //     Serial.printf("Set breakpoint at address 0x%04X\n", debugAddressBreak);
-              //   } else {
-              //     Serial.println("Invalid address");
-              //   }
-              //   inputCursorX = 29;
-              //   inputCursorY = 5;
-              //   keymem = 0;
-              // } 
+            // case 60: // CTRL-F3
+            //   clearScreen();
+            //   colorDemo();
+            //   demo = !demo;
+            //   keymem = 0;
+            //   break;
+            case 62: // CTRL-F5
+              ESP.restart();
               break;
-              
+            case 69: // CTRL-F12
+              cpuReset();
+              break;
+            case 41: // CTRL-ESC
+              showHideOptionsWindow();
+              keymem = 0;
+              break;
           }
         }
-      }
-      else // All closed windows
+
+        
+      } 
+      else // without modifier key
       {
-        if (control)
+        if (ascii == 0)
         {
-          if (keycode >= 4 && keycode <= 29) {
-            ascii = keycode - 3;
-            keymem = ascii | 0x80;
-          }
-          else 
+          if (keycode == 53)
+            ascii = modifier == 1 ? 0x22 : 0x27;
+          else if (keycode == 100)
+            ascii = modifier == 1 ? 0x7c : 0x5c;
+          else if (keycode == 39)
+            ascii = modifier == 1 ? 0x29 : 0x00;
+          else if (keycode == 80) // Left
           {
-            switch (keycode) {
-              case 58: // CTRL-F1
-                clearScreen();
-                showHideDebugWindow();
-                debug = true;
-                debugScreenRender();
-                keymem = 0;
-                break;
-              // case 60: // CTRL-F3
-              //   clearScreen();
-              //   colorDemo();
-              //   demo = !demo;
-              //   keymem = 0;
-              //   break;
-              case 62: // CTRL-F5
-                ESP.restart();
-                break;
-              case 69: // CTRL-F12
-                cpuReset();
-                break;
-              case 41: // CTRL-ESC
-                showHideOptionsWindow();
-                keymem = 0;
-                break;
-            }
+            ascii = 0x08;
           }
-
-          
-        } 
-        else // without modifier key
-        {
-          switch (keycode)
+          else if (keycode == 79) // Right
           {
-            case 58: // F1
-              HdDisk = !HdDisk;
-              if (HdDisk) {
-                firstShowFile = 0;
-                xTaskCreate(loadHdAsync, "loadHdAsync", 4096, NULL, 2, NULL);
-              }
-              else {
-                firstShowFile = 0;
-                xTaskCreate(loadDiskAsync, "loadDiskAsync", 4096, NULL, 2, NULL);
-              }
-              optionsScreenRender();
-              // Serial.println("f1");
-              break;
-            case 59: // F2
-              AppleIIe = !AppleIIe;
-              optionsScreenRender();
-              // Serial.println("f2");
-              break;
-            case 60: // F3
-              Fast1MhzSpeed = !Fast1MhzSpeed;
-              optionsScreenRender();
-              break;
-            case 61: // F4
-              paused = !paused;
-              optionsScreenRender();
-              break;
-            case 62: // F5
-              joystick = !joystick;
-              optionsScreenRender();
-              break;
-            case 63: // F6
-              videoColor = !videoColor;
-              optionsScreenRender();
-              break;
+            ascii = 0x15;
           }
-          
-          if (ascii == 0)
+          else if (keycode == 82) // Up
           {
-            if (keycode == 53)
-              ascii = modifier == 1 ? 0x22 : 0x27;
-            else if (keycode == 100)
-              ascii = modifier == 1 ? 0x7c : 0x5c;
-            else if (keycode == 39)
-              ascii = modifier == 1 ? 0x29 : 0x00;
-            else if (keycode == 80) // Left
-            {
-              ascii = 0x08;
-            }
-            else if (keycode == 79) // Right
-            {
-              ascii = 0x15;
-            }
-            else if (keycode == 82) // Up
-            {
-              ascii = 0x0b;
-            }
-            else if (keycode == 81) // Down
-            {
-              ascii = 0x0a;
-            }
-            else if (keycode == 57) // CapsLock
-              capslock = !capslock;
+            ascii = 0x0b;
           }
-          else if (keycode == 135)
+          else if (keycode == 81) // Down
           {
-            if (ascii == 100)
-              ascii = 0x2f;
-            else
-              ascii = 0x3f;
+            ascii = 0x0a;
           }
-          else
-          {
-            if (ascii_to_apple[ascii] != 0)
-              ascii = ascii_to_apple[ascii];
-          }
-          if (ascii >= 97 && ascii <= 122 && capslock)
-          {
-            ascii = ascii - 0x20;
-          }
-          keymem = ascii | 0x80; // scancode_to_apple[ascii + ((shift_enabled) ? 0x80 : 0x00)];
+          else if (keycode == 57) // CapsLock
+            capslock = !capslock;
         }
+        else if (keycode == 135)
+        {
+          if (ascii == 100)
+            ascii = 0x2f;
+          else
+            ascii = 0x3f;
+        }
+        else
+        {
+          if (ascii_to_apple[ascii] != 0)
+            ascii = ascii_to_apple[ascii];
+        }
+        if (ascii >= 97 && ascii <= 122 && capslock)
+        {
+          ascii = ascii - 0x20;
+        }
+        keymem = ascii | 0x80; // scancode_to_apple[ascii + ((shift_enabled) ? 0x80 : 0x00)];
       }
-    
-      // Serial.printf(" ascii processed = %d", ascii);
+    }
+  
+    // Serial.printf(" ascii processed = %d", ascii);
 
-      // Serial.printf(" keymem = %d", keymem);
-      // Serial.println();
-      keymem_hold = keymem;
+    // Serial.printf(" keymem = %d", keymem);
+    // Serial.println();
+    keymem_hold = keymem;
   };
 
 

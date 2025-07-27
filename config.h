@@ -113,7 +113,8 @@ std::vector<std::string> diskFiles;
         #define SD_SCK_PIN 12
         #define SD_MOSI_PIN 11
         #define SD_CS_PIN 10
-        #define SPEAKER_PIN 41      
+        #define SPEAKER_PIN 41   
+          
     #else
         #define RED0_PIN 16
         #define RED1_PIN 17
@@ -151,8 +152,8 @@ int margin_x = 20;
 int margin_y = 24;
 #else
     #ifdef TFT_S3
-        int margin_x = 20;
-        int margin_y = 24;
+        int margin_x = 0;
+        int margin_y = 0;
         Arduino_DataBus *bus = new Arduino_ESP32QSPI(TFT_CS_PIN, TFT_SCK_PIN, TFT_D0_PIN, TFT_D1_PIN, TFT_D2_PIN, TFT_D3_PIN);
         Arduino_GFX *g = new Arduino_NV3041A(bus, GFX_NOT_DEFINED /* RST */, 0 /* rotation */, true /* IPS */);
         Arduino_GFX *gfx = new Arduino_Canvas(480 /* width */, 272 /* height */, g);
@@ -215,6 +216,7 @@ static bool running = true;
 static bool paused = false;
 static bool sound = true;
 static bool dacSound = false;
+static bool upscale = false;
 static bool AppleIIe = true;
 static bool OptionsWindow = false;
 static bool DebugWindow = false;

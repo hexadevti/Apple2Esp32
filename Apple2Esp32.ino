@@ -20,10 +20,10 @@ void setup() {
   keyboardSetup();
 
   speakerSetup();
-  wifiSetup();
+  //wifiSetup();
   
   //joystickSetup();
-  bleSetup();
+  //bleSetup();
   printLog("Ready.");
 
   // MOSI=11, MISO=12, SCK=13

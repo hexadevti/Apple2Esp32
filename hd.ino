@@ -222,7 +222,9 @@ char loadBlock(unsigned short address, unsigned short block)
   #ifdef TFT
   digitalWrite(LED_PIN, LOW);
   #else
-  neopixelWrite(RGB_BUILTIN,RGB_BRIGHTNESS,0,0); // Off / black
+    #if !defined(TFT_S3)
+      neopixelWrite(RGB_BUILTIN,RGB_BRIGHTNESS,0,0); // Off / black
+    #endif
   #endif
   
   getBlock(FSTYPE, block);
@@ -238,7 +240,9 @@ char loadBlock(unsigned short address, unsigned short block)
     #ifdef TFT
     digitalWrite(LED_PIN, HIGH);
     #else
-    neopixelWrite(RGB_BUILTIN,0,0,0); // Off / black
+      #if !defined(TFT_S3)
+        neopixelWrite(RGB_BUILTIN,0,0,0); // Off / black
+      #endif
     #endif
     
     return 0;
@@ -248,7 +252,9 @@ char loadBlock(unsigned short address, unsigned short block)
     #ifdef TFT
     digitalWrite(LED_PIN, HIGH);
     #else
-    neopixelWrite(RGB_BUILTIN,0,0,0); // Off / black
+      #if !defined(TFT_S3)
+        neopixelWrite(RGB_BUILTIN,0,0,0); // Off / black
+      #endif
     #endif
     
     

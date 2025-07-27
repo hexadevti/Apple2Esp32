@@ -64,7 +64,6 @@ int touchCount = 0;
 int width = 280;
 int height = 192;
 
-
 void videoSetup()
 {
   printLog("Video Setup...");
@@ -99,15 +98,50 @@ void videoSetup()
   xTaskCreate(renderLoop, "renderLoop", 4096, NULL, 1, NULL);
 }
 
-
+int red(int color) {
+  return color & 0xf800 >> 8;
+}
+int green(int color) {
+  return color & 0x7c0 >> 3;
+}
+int blue(int color) {
+  return color & 0x3f << 2;
+}
+int avarage(int color1, int color2) {
+  return color2; //return gfx->color565((red(color1)+red(color2))/2,(green(color1)+green(color2))/2,(blue(color1)+blue(color2))/2);
+}
 
 void renderLoop(void *pvParameters)
 {
   bool inversed = false;
   
+
   while (running)
   {
     page_lock.lock();
+
+    
+    float y_upscale_factor = 0; 
+    float y_upscale_threshold = 0;
+    float x_upscale_factor = 0;
+    float x_upscale_threshold = 0;
+    
+    if (upscale) {
+      margin_x = 0;
+      margin_y = 0;
+      y_upscale_factor = 1.41f; 
+      y_upscale_threshold = 0.41f;
+      x_upscale_factor = 1.7121f;
+      x_upscale_threshold = 0.72f;
+    } else {
+      margin_x = 100;
+      margin_y = 40;
+      y_upscale_factor = 0; 
+      y_upscale_threshold = 0;
+      x_upscale_factor = 0;
+      x_upscale_threshold = 0;
+    }
+
 
     #ifdef TFT
     if (!OptionsWindow && AppleIIe && !Cols40_80 && !DHiResOn_Off)
@@ -128,8 +162,12 @@ void renderLoop(void *pvParameters)
 
     int x = margin_x;
     int y = margin_y;
+    int x_upscaled = margin_x;
+    int y_upscaled = margin_y;
     ushort textPage = Page1_Page2 ? 0x400 : 0x800;
     ushort graphicsPage = Page1_Page2 ? 0x2000 : 0x4000;
+    
+    
     
     // if (demo) {
     // y=0;
@@ -163,6 +201,15 @@ void renderLoop(void *pvParameters)
     // }
     if (clearScr) {
       y=0;
+      #ifdef TFT_S3
+      for (int y = 0; y < 272; y++)
+      {
+        for (int x = 0; x < 480; x++)
+        {
+          gfx->writePixelPreclipped(x, y, colors[0]);
+        }
+      }
+      #else
       for (int v = 0; v < 30; v++)
       {
         for (int i = 0; i < 8; i++) // char lines
@@ -175,9 +222,13 @@ void renderLoop(void *pvParameters)
               #ifdef TFT
               tft.writeColor(colors[0], 1);
               #else
-              vga.dotFast(x, y, colors[0]);
-              x++;
-              vga.dotFast(x, y, colors[0]);
+                #ifdef TFT_S3
+                  gfx->writePixelPreclipped(x, y, colors[0]);
+                #else
+                  vga.dotFast(x, y, colors[0]);
+                  x++;
+                  vga.dotFast(x, y, colors[0]);
+                #endif
               #endif
               x++;
             }
@@ -185,6 +236,7 @@ void renderLoop(void *pvParameters)
           y++;
         }
       }
+      #endif
       clearScr = false;
     }
     else if (OptionsWindow || DebugWindow) 
@@ -208,7 +260,7 @@ void renderLoop(void *pvParameters)
                 tft.writeColor((bpixel ? colors16[fgColor] : colors16[bgColor]), 1);
               #else
                 #ifdef TFT_S3
-                  gfx->writePixel(x, y, bpixel ? colors16[fgColor] : colors16[bgColor]);
+                  gfx->writePixelPreclipped(x, y, bpixel ? colors16[fgColor] : colors16[bgColor]);
                 #else
                   vga.dotFast(x, y, bpixel ? colors16[fgColor] : colors16[bgColor]);
                   x++;
@@ -249,7 +301,7 @@ void renderLoop(void *pvParameters)
                         tft.writeColor(colors16[secondColor], 1);
                       #else
                         #ifdef TFT_S3
-                          gfx->drawPixel(x, y, colors16[secondColor]);
+                          gfx->writePixelPreclipped(x, y, colors16[secondColor]);
                         #else
                           vga.dotFast(x, y, colors16[secondColor]);
                           x++;
@@ -263,7 +315,7 @@ void renderLoop(void *pvParameters)
                       tft.writeColor(colors16[firstColor], 1);
                       #else
                         #ifdef TFT_S3
-                          gfx->drawPixel(x, y, colors16[secondColor]);
+                          gfx->writePixelPreclipped(x, y, colors16[secondColor]);
                         #else
                           vga.dotFast(x, y, colors16[firstColor]);
                           x++;
@@ -344,7 +396,7 @@ void renderLoop(void *pvParameters)
                       x++;
                       #else
                         #ifdef TFT_S3
-                          gfx->drawPixel(x, y, colors16[val]);
+                          gfx->writePixelPreclipped(x, y, colors16[val]);
                           x++;
                         #else
                           vga.dotFast(x, y, colors16[val]);  
@@ -364,7 +416,7 @@ void renderLoop(void *pvParameters)
                     x++;
                     #else
                       #ifdef TFT_S3
-                        gfx->drawPixel(x, y, colors16[currVal]);
+                        gfx->writePixelPreclipped(x, y, colors16[currVal]);
                         x++;
                       #else
                         vga.dotFast(x, y, colors16[currVal]);  
@@ -439,7 +491,7 @@ void renderLoop(void *pvParameters)
                       }
                       #else
                         #ifdef TFT_S3
-                          gfx->drawPixel(x, y, blockline[i] ? colors[7] : colors[0]);
+                          gfx->writePixelPreclipped(x, y, blockline[i] ? colors[7] : colors[0]);
                           x++;
                         #else
                           vga.dotFast(x, y, blockline[i] ? colors[7] : colors[0]);
@@ -459,85 +511,114 @@ void renderLoop(void *pvParameters)
               {
                 x = margin_x;
                 bool blocklineAnt[] = {false, false, false, false, false, false, false, false};
-                for (ushort c = 0; c < 0x28; c++)
+                // Init Upscale Y
+                int repeat = 0;
+                uint8_t repeatTimes = 1;
+                if (((float)y * y_upscale_factor) - floor((float)y * y_upscale_factor) < y_upscale_threshold)
+                  repeatTimes = 2;
+                while (repeat < repeatTimes)
                 {
-                  char chr = ram[(ushort)(((graphicsPage) + (b * 0x28) + (l * 0x80) + c) + block * 0x400)];
-                  bool blockline[8];
-                  for (int i = 0; i < 8; i++)
-                    blockline[7 - i] = (chr & (1 << i)) != 0;
-                  if (videoColor)
+                  uint16_t lastPixel = 0;
+                  x_upscaled = margin_x;
+                  x = margin_x;
+                  // End Upscale Y
+                  for (ushort c = 0; c < 0x28; c++)
                   {
+                    char chr = ram[(ushort)(((graphicsPage) + (b * 0x28) + (l * 0x80) + c) + block * 0x400)];
+                    bool blockline[8];
+                    for (int i = 0; i < 8; i++)
+                      blockline[7 - i] = (chr & (1 << i)) != 0;
+                    if (videoColor)
+                    {
+                      char pixels[7];
+                      if (c % 2 == 0) // Odd
+                      {
+                        pixels[0] = (blockline[0] ? 4 : 0) + (blockline[7] ? 2 : 0) + (blocklineAnt[1] ? 1 : 0);
+                        pixels[1] = (blockline[0] ? 4 : 0) + (blockline[7] ? 2 : 0) + (blockline[6] ? 1 : 0);
+                        pixels[2] = (blockline[0] ? 4 : 0) + (blockline[5] ? 2 : 0) + (blockline[6] ? 1 : 0);
+                        pixels[3] = (blockline[0] ? 4 : 0) + (blockline[5] ? 2 : 0) + (blockline[4] ? 1 : 0);
+                        pixels[4] = (blockline[0] ? 4 : 0) + (blockline[3] ? 2 : 0) + (blockline[4] ? 1 : 0);
+                        pixels[5] = (blockline[0] ? 4 : 0) + (blockline[3] ? 2 : 0) + (blockline[2] ? 1 : 0);
+                        pixels[6] = (blockline[0] ? 4 : 0) + (blockline[1] ? 2 : 0) + (blockline[2] ? 1 : 0);
+                      }
+                      else // Even
+                      {
+                        pixels[0] = (blockline[0] ? 4 : 0) + (blocklineAnt[1] ? 2 : 0) + (blockline[7] ? 1 : 0);
+                        pixels[1] = (blockline[0] ? 4 : 0) + (blockline[6] ? 2 : 0) + (blockline[7] ? 1 : 0);
+                        pixels[2] = (blockline[0] ? 4 : 0) + (blockline[6] ? 2 : 0) + (blockline[5] ? 1 : 0);
+                        pixels[3] = (blockline[0] ? 4 : 0) + (blockline[4] ? 2 : 0) + (blockline[5] ? 1 : 0);
+                        pixels[4] = (blockline[0] ? 4 : 0) + (blockline[4] ? 2 : 0) + (blockline[3] ? 1 : 0);
+                        pixels[5] = (blockline[0] ? 4 : 0) + (blockline[2] ? 2 : 0) + (blockline[3] ? 1 : 0);
+                        pixels[6] = (blockline[0] ? 4 : 0) + (blockline[2] ? 2 : 0) + (blockline[1] ? 1 : 0);
+                      }
 
-                    char pixels[7];
-                    if (c % 2 == 0) // Odd
-                    {
-                      pixels[0] = (blockline[0] ? 4 : 0) + (blockline[7] ? 2 : 0) + (blocklineAnt[1] ? 1 : 0);
-                      pixels[1] = (blockline[0] ? 4 : 0) + (blockline[7] ? 2 : 0) + (blockline[6] ? 1 : 0);
-                      pixels[2] = (blockline[0] ? 4 : 0) + (blockline[5] ? 2 : 0) + (blockline[6] ? 1 : 0);
-                      pixels[3] = (blockline[0] ? 4 : 0) + (blockline[5] ? 2 : 0) + (blockline[4] ? 1 : 0);
-                      pixels[4] = (blockline[0] ? 4 : 0) + (blockline[3] ? 2 : 0) + (blockline[4] ? 1 : 0);
-                      pixels[5] = (blockline[0] ? 4 : 0) + (blockline[3] ? 2 : 0) + (blockline[2] ? 1 : 0);
-                      pixels[6] = (blockline[0] ? 4 : 0) + (blockline[1] ? 2 : 0) + (blockline[2] ? 1 : 0);
-                    }
-                    else // Even
-                    {
-                      pixels[0] = (blockline[0] ? 4 : 0) + (blocklineAnt[1] ? 2 : 0) + (blockline[7] ? 1 : 0);
-                      pixels[1] = (blockline[0] ? 4 : 0) + (blockline[6] ? 2 : 0) + (blockline[7] ? 1 : 0);
-                      pixels[2] = (blockline[0] ? 4 : 0) + (blockline[6] ? 2 : 0) + (blockline[5] ? 1 : 0);
-                      pixels[3] = (blockline[0] ? 4 : 0) + (blockline[4] ? 2 : 0) + (blockline[5] ? 1 : 0);
-                      pixels[4] = (blockline[0] ? 4 : 0) + (blockline[4] ? 2 : 0) + (blockline[3] ? 1 : 0);
-                      pixels[5] = (blockline[0] ? 4 : 0) + (blockline[2] ? 2 : 0) + (blockline[3] ? 1 : 0);
-                      pixels[6] = (blockline[0] ? 4 : 0) + (blockline[2] ? 2 : 0) + (blockline[1] ? 1 : 0);
-                    }
-
-                    for (int id = 0; id < 7; id++)
-                    { 
-                      #ifdef TFT
-                      tft.writeColor(colors[pixels[id]], 1);
-                      #else
-                        #ifdef TFT_S3
-                          gfx->drawPixel(x, y, colors[pixels[id]]);
+                      for (int id = 0; id < 7; id++)
+                      { 
+                        #ifdef TFT
+                        tft.writeColor(colors[pixels[id]], 1);
                         #else
-                          vga.dotFast(x, y, colors[pixels[id]]);
-                          x++;
-                          vga.dotFast(x, y, colors[pixels[id]]);
+                          #ifdef TFT_S3
+                            // Init upscale pixel 280px -> 480px
+                            uint16_t actualPixel = 0;
+                            if (((float)x * x_upscale_factor) - floor((float)x * x_upscale_factor) < x_upscale_threshold) 
+                            {
+                              actualPixel = colors[pixels[id]];
+                              actualPixel = avarage(actualPixel,lastPixel);
+                              // if (repeat == 1) 
+                              //   actualPixel = avarage(actualPixel,bottomPixel);
+                              gfx->writePixelPreclipped(x_upscaled, y_upscaled, actualPixel);
+                              x_upscaled++;
+                            }  
+                            // End upscale pixel
+                            lastPixel = colors[pixels[id]];
+                            actualPixel = lastPixel;
+                            // if (repeat == 1)
+                            //   actualPixel = avarage(actualPixel,bottomPixel);
+                            gfx->writePixelPreclipped(x_upscaled, y_upscaled, actualPixel);
+                          #else
+                            vga.dotFast(x, y, colors[pixels[id]]);
+                            x++;
+                            vga.dotFast(x, y, colors[pixels[id]]);
+                          #endif
                         #endif
-                      #endif
-                      x++;
+                        x_upscaled++;
+                        x++;
+                      }
+                      std::copy(std::begin(blockline), std::end(blockline), std::begin(blocklineAnt));
                     }
-                    std::copy(std::begin(blockline), std::end(blockline), std::begin(blocklineAnt));
-                  }
-                  else
-                  {
-                    for (int i = 7; i > 0; i--)
+                    else
                     {
-                      #ifdef TFT
-                      uint16_t color = TFT_BLACK;
-                      if (blockline[i])
-                        color = TFT_WHITE;
-                      else
-                        color = TFT_BLACK;
-                      tft.writeColor(color, 1);
-                      #else
-                        
-                      uint16_t color = colors[0];
-                      if (blockline[i])
-                        color = colors[7];
-                      else
-                        color = colors[0];
-                        #ifdef TFT_S3
-                          gfx->drawPixel(x, y, color);
+                      for (int i = 7; i > 0; i--)
+                      {
+                        #ifdef TFT
+                        uint16_t color = TFT_BLACK;
+                        if (blockline[i])
+                          color = TFT_WHITE;
+                        else
+                          color = TFT_BLACK;
+                        tft.writeColor(color, 1);
                         #else
-                          vga.dotFast(x, y, color);
-                          x++;
-                          vga.dotFast(x, y, color);
+                          
+                        uint16_t color = colors[0];
+                        if (blockline[i])
+                          color = colors[7];
+                        else
+                          color = colors[0];
+                          #ifdef TFT_S3
+                            gfx->writePixelPreclipped(x, y, color);
+                          #else
+                            vga.dotFast(x, y, color);
+                            x++;
+                            vga.dotFast(x, y, color);
+                          #endif
                         #endif
-                      #endif
-                      x++;
+                        x++;
+                      }
                     }
                   }
+                  repeat++;
+                  y_upscaled++;
                 }
-                x = 0;
                 y++;
               }
             }
@@ -546,30 +627,73 @@ void renderLoop(void *pvParameters)
           {
             for (int i = 0; i < 8; i++) // char lines
             {
-              x = margin_x;
-              for (int c = 0; c < 0x28; c++)
+              // Init Upscale Y
+              int repeat = 0;
+              uint8_t repeatTimes = 1;
+              if (((float)y * y_upscale_factor) - floor((float)y * y_upscale_factor) < y_upscale_threshold)
+                repeatTimes = 2;
+              while (repeat < repeatTimes)
               {
-                for (int k = 0; k < 7; k++) // char cols
+                uint16_t lastPixel = 0;
+                x_upscaled = margin_x;
+                x = margin_x;
+                // End Upscale Y
+                for (int c = 0; c < 0x28; c++)
                 {
-                  char chr = ram[(ushort)(textPage + (b * 0x28) + (l * 0x80) + c)];
-                  ushort addr = (chr * 7 * 8) + (i * 7) + k;
-                  bool bpixel = AppleIIe ? AppleIIeFontPixels[addr] : AppleFontPixels[addr];
-                  bool inverted = false;
-                  if (!AppleIIe)
-                    inverted = chr >= 0x40 && chr < 0x80 && inversed;
-                  #ifdef TFT
-                  tft.writeColor(bpixel ? (inverted ? TFT_BLACK : TFT_WHITE) : (inverted ? TFT_WHITE : TFT_BLACK), 1);
-                  #else
-                    #ifdef TFT_S3
-                      gfx->writePixel(x, y, bpixel ? (inverted ? colors[0] : colors[7]) : (inverted ? colors[7] : colors[0]));
+                  for (int k = 0; k < 7; k++) // char cols
+                  {
+                    bool bottomPixel = 0;
+                    if (repeat == 1) {
+                      int lb = l;
+                      int bb = b;
+                      if (l < 7) { 
+                        lb++; 
+                      } else if (l == 7 && b < 2) { 
+                        lb++; bb++; 
+                      }
+                      char bottomChr = ram[(ushort)(textPage + (bb * 0x28) + (lb * 0x80) + c)];
+                      ushort bottomAddr = (bottomChr * 7 * 8) + (i * 7) + k;
+                      bottomPixel = AppleIIe ? AppleIIeFontPixels[bottomAddr] : AppleFontPixels[bottomAddr];
+                    }
+                    char chr = ram[(ushort)(textPage + (b * 0x28) + (l * 0x80) + c)];
+                    ushort addr = (chr * 7 * 8) + (i * 7) + k;
+                    bool bpixel = AppleIIe ? AppleIIeFontPixels[addr] : AppleFontPixels[addr];
+                    bool inverted = false;
+                    if (!AppleIIe)
+                      inverted = chr >= 0x40 && chr < 0x80 && inversed;
+                    #ifdef TFT
+                    tft.writeColor(bpixel ? (inverted ? TFT_BLACK : TFT_WHITE) : (inverted ? TFT_WHITE : TFT_BLACK), 1);
                     #else
-                      vga.dotFast(x, y, bpixel ? (inverted ? colors[0] : colors[7]) : (inverted ? colors[7] : colors[0]));
-                      x++;
-                      vga.dotFast(x, y, bpixel ? (inverted ? colors[0] : colors[7]) : (inverted ? colors[7] : colors[0]));
+                      #ifdef TFT_S3
+                        // Init upscale pixel 280px -> 480px
+                        uint16_t actualPixel = 0;
+                        if (((float)x * x_upscale_factor) - floor((float)x * x_upscale_factor) < x_upscale_threshold) 
+                        {
+                          actualPixel = bpixel ? (inverted ? colors[0] : colors[7]) : (inverted ? colors[7] : colors[0]);
+                          actualPixel = avarage(actualPixel,lastPixel);
+                          if (repeat == 1) 
+                            actualPixel = avarage(actualPixel,bottomPixel);
+                          gfx->writePixelPreclipped(x_upscaled, y_upscaled, actualPixel);
+                          x_upscaled++;
+                        }  
+                        // End upscale pixel
+                        lastPixel = bpixel ? (inverted ? colors[0] : colors[7]) : (inverted ? colors[7] : colors[0]);
+                        actualPixel = lastPixel;
+                        if (repeat == 1)
+                           actualPixel = avarage(actualPixel,bottomPixel);
+                        gfx->writePixelPreclipped(x_upscaled, y_upscaled, actualPixel);
+                        #else
+                        vga.dotFast(x, y, bpixel ? (inverted ? colors[0] : colors[7]) : (inverted ? colors[7] : colors[0]));
+                        x++;
+                        vga.dotFast(x, y, bpixel ? (inverted ? colors[0] : colors[7]) : (inverted ? colors[7] : colors[0]));
+                      #endif
                     #endif
-                  #endif
-                  x++;
+                    x_upscaled++;
+                    x++;
+                  }
                 }
+                repeat++;
+                y_upscaled++;
               }
               y++;
             }
@@ -613,7 +737,7 @@ void renderLoop(void *pvParameters)
                   ushort addr = (chr * 7 * 8) + (i * 7) + k;
                   bool bpixel = AppleIIeFontPixels[addr];
                     #ifdef TFT_S3
-                      gfx->drawPixel(x, y, bpixel ? colors[7] : colors[0]);
+                      gfx->writePixelPreclipped(x, y, bpixel ? colors[7] : colors[0]);
                     #else
                       vga.dotFast(x, y, bpixel ? colors[7] : colors[0]);
                     #endif

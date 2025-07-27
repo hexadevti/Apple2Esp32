@@ -711,7 +711,9 @@ char processSwitchc0e0(ushort address, char value)
     #ifdef TFT
     digitalWrite(LED_PIN, HIGH);
     #else
-    neopixelWrite(RGB_BUILTIN,0,0,0); // Off / black
+      #if !defined(TFT_S3)
+        neopixelWrite(RGB_BUILTIN,0,0,0); // Off / black
+      #endif
     #endif
   }
   else if (address == 0xc0e9)
@@ -719,8 +721,10 @@ char processSwitchc0e0(ushort address, char value)
     DriveMotorON_OFF = true;
     #ifdef TFT
     digitalWrite(LED_PIN, LOW);
-    #else
-    neopixelWrite(RGB_BUILTIN,RGB_BRIGHTNESS,0,0); // Off / black
+    #else 
+      #if !defined(TFT_S3)
+        neopixelWrite(RGB_BUILTIN,RGB_BRIGHTNESS,0,0); // Off / black
+      #endif
     #endif
   }
   else if (address == 0xc0ea)
