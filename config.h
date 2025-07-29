@@ -155,7 +155,7 @@ int margin_y = 24;
         int margin_x = 0;
         int margin_y = 0;
         Arduino_DataBus *bus = new Arduino_ESP32QSPI(TFT_CS_PIN, TFT_SCK_PIN, TFT_D0_PIN, TFT_D1_PIN, TFT_D2_PIN, TFT_D3_PIN);
-        Arduino_GFX *g = new Arduino_NV3041A(bus, GFX_NOT_DEFINED /* RST */, 0 /* rotation */, true /* IPS */);
+        Arduino_GFX *g = new Arduino_NV3041A(bus, GFX_NOT_DEFINED /* RST */, 2 /* rotation */, true /* IPS */);
         Arduino_GFX *gfx = new Arduino_Canvas(480 /* width */, 272 /* height */, g);
         // #include <XPT2046_Touchscreen.h>
         // #define CS_PIN  38
