@@ -544,8 +544,9 @@ void renderLoop(void *pvParameters)
               {
                 // Init Upscale
                 int repeat_y = 0;
+                uint16_t repeatTimes_y = 1;
                 uint16_t upscaleCoef_y = floor(coef192 * (float)(y+1));
-                uint16_t repeatTimes_y = upscaleCoef_y - last_y;
+                repeatTimes_y = upscaleCoef_y - last_y;
                 last_y = upscaleCoef_y;
                 while (repeat_y < repeatTimes_y)
                 {
@@ -566,37 +567,38 @@ void renderLoop(void *pvParameters)
                     char chrBottom;
                     char prevChrBottom;
                     char pixelsBottom[7];
+                    if (smoothUpscale) {
+                      if (videoColor && repeat_y > 0) {
+                        int blockb = block;
+                        int lb = l;
+                        int bb = b;
+                        blockb++;
+                        if (blockb == 8) { blockb=0; lb++; }
+                        if (lb == 8) { lb=0; bb++; }
+                        if (bb == 3) { bb=0; lastLine = true; }
 
-                    if (videoColor && repeat_y > 0) {
-                      int blockb = block;
-                      int lb = l;
-                      int bb = b;
-                      blockb++;
-                      if (blockb == 8) { blockb=0; lb++; }
-                      if (lb == 8) { lb=0; bb++; }
-                      if (bb == 3) { bb=0; lastLine = true; }
-
-                      chrBottom = ram[(ushort)(((graphicsPage) + (bb * 0x28) + (lb * 0x80) + c) + blockb * 0x400)];
-                      if (c % 2 == 0) // Odd
-                      {
-                        pixelsBottom[0] = (chrBottom & 0x80) >> 5 | (chrBottom & 1) << 1 | (prevChrBottom & 0x40) >> 6;
-                        pixelsBottom[1] = (chrBottom & 0x80) >> 5 | (chrBottom & 1) << 1 | (chrBottom & 0x2) >> 1;
-                        pixelsBottom[2] = (chrBottom & 0x80) >> 5 | (chrBottom & 0x4) >> 1 | (chrBottom & 0x2) >> 1;
-                        pixelsBottom[3] = (chrBottom & 0x80) >> 5 | (chrBottom & 0x4) >> 1 | (chrBottom & 0x8) >> 3;
-                        pixelsBottom[4] = (chrBottom & 0x80) >> 5 | (chrBottom & 0x10) >> 3 | (chrBottom & 0x8) >> 3;
-                        pixelsBottom[5] = (chrBottom & 0x80) >> 5 | (chrBottom & 0x10) >> 3 | (chrBottom & 0x20) >> 5;
-                        pixelsBottom[6] = (chrBottom & 0x80) >> 5 | (chrBottom & 0x40) >> 5 | (chrBottom & 0x20) >> 5;
-                      }
-                      else // Even
-                      {
-                        pixelsBottom[0] = (chrBottom & 0x80) >> 5 | (prevChrBottom & 0x40) >> 5 | (chrBottom & 0x1); 
-                        pixelsBottom[1] = (chrBottom & 0x80) >> 5 | (chrBottom & 0x2) | (chrBottom & 0x1);
-                        pixelsBottom[2] = (chrBottom & 0x80) >> 5 | (chrBottom & 0x2) | (chrBottom & 0x4) >> 2;
-                        pixelsBottom[3] = (chrBottom & 0x80) >> 5 | (chrBottom & 0x8) >> 2 | (chrBottom & 0x4) >> 2;
-                        pixelsBottom[4] = (chrBottom & 0x80) >> 5 | (chrBottom & 0x8) >> 2 | (chrBottom & 0x10) >> 4;
-                        pixelsBottom[5] = (chrBottom & 0x80) >> 5 | (chrBottom & 0x20) >> 4 | (chrBottom & 0x10) >> 4;
-                        pixelsBottom[6] = (chrBottom & 0x80) >> 5 | (chrBottom & 0x20) >> 4 | (chrBottom & 0x40) >> 6;
-                        
+                        chrBottom = ram[(ushort)(((graphicsPage) + (bb * 0x28) + (lb * 0x80) + c) + blockb * 0x400)];
+                        if (c % 2 == 0) // Odd
+                        {
+                          pixelsBottom[0] = (chrBottom & 0x80) >> 5 | (chrBottom & 1) << 1 | (prevChrBottom & 0x40) >> 6;
+                          pixelsBottom[1] = (chrBottom & 0x80) >> 5 | (chrBottom & 1) << 1 | (chrBottom & 0x2) >> 1;
+                          pixelsBottom[2] = (chrBottom & 0x80) >> 5 | (chrBottom & 0x4) >> 1 | (chrBottom & 0x2) >> 1;
+                          pixelsBottom[3] = (chrBottom & 0x80) >> 5 | (chrBottom & 0x4) >> 1 | (chrBottom & 0x8) >> 3;
+                          pixelsBottom[4] = (chrBottom & 0x80) >> 5 | (chrBottom & 0x10) >> 3 | (chrBottom & 0x8) >> 3;
+                          pixelsBottom[5] = (chrBottom & 0x80) >> 5 | (chrBottom & 0x10) >> 3 | (chrBottom & 0x20) >> 5;
+                          pixelsBottom[6] = (chrBottom & 0x80) >> 5 | (chrBottom & 0x40) >> 5 | (chrBottom & 0x20) >> 5;
+                        }
+                        else // Even
+                        {
+                          pixelsBottom[0] = (chrBottom & 0x80) >> 5 | (prevChrBottom & 0x40) >> 5 | (chrBottom & 0x1); 
+                          pixelsBottom[1] = (chrBottom & 0x80) >> 5 | (chrBottom & 0x2) | (chrBottom & 0x1);
+                          pixelsBottom[2] = (chrBottom & 0x80) >> 5 | (chrBottom & 0x2) | (chrBottom & 0x4) >> 2;
+                          pixelsBottom[3] = (chrBottom & 0x80) >> 5 | (chrBottom & 0x8) >> 2 | (chrBottom & 0x4) >> 2;
+                          pixelsBottom[4] = (chrBottom & 0x80) >> 5 | (chrBottom & 0x8) >> 2 | (chrBottom & 0x10) >> 4;
+                          pixelsBottom[5] = (chrBottom & 0x80) >> 5 | (chrBottom & 0x20) >> 4 | (chrBottom & 0x10) >> 4;
+                          pixelsBottom[6] = (chrBottom & 0x80) >> 5 | (chrBottom & 0x20) >> 4 | (chrBottom & 0x40) >> 6;
+                          
+                        }
                       }
                     }
                     
@@ -635,22 +637,25 @@ void renderLoop(void *pvParameters)
                             // Init upscale pixel 280px -> 480px
                             
                             int repeat_x = 0;
+                            uint8_t repeatTimes_x = 1;
                             uint16_t upscaleCoef_x = floor(coef280 * (float)(x+1));
-                            uint8_t repeatTimes_x = upscaleCoef_x - last_x;
+                            repeatTimes_x = upscaleCoef_x - last_x;
                             last_x = upscaleCoef_x;
                             while (repeat_x < repeatTimes_x)
                             {
                               uint16_t actualPixel = colors[pixels[id]];
-                              if (c == 0x27 && id == 6)
-                                lastCol = true;
-                              if (!lastCol)
-                                actualPixel = avarage(actualPixel,lastPixel);
-                              if (!lastLine && repeat_y > 0) {
-                                uint16_t bottomPixel = colors[pixelsBottom[id]];
-                                actualPixel = avarage(actualPixel,bottomPixel);
+                              if (smoothUpscale) {
+                                if (c == 0x27 && id == 6)
+                                  lastCol = true;
+                                if (!lastCol)
+                                  actualPixel = avarage(actualPixel,lastPixel);
+                                if (!lastLine && repeat_y > 0) {
+                                  uint16_t bottomPixel = colors[pixelsBottom[id]];
+                                  actualPixel = avarage(actualPixel,bottomPixel);
+                                }
+                                lastPixel = colors[pixels[id]];
                               }
                               gfx->writePixelPreclipped(x_upscaled, y_upscaled, actualPixel);
-                              lastPixel = colors[pixels[id]];
                               repeat_x++;
                               x_upscaled++;
                             }  
@@ -663,8 +668,10 @@ void renderLoop(void *pvParameters)
                         x++;
                       }
                       prevChr = chr;
-                      if (repeat_y > 0) {
-                        prevChrBottom = chrBottom;
+                      if (smoothUpscale) {
+                        if (repeat_y > 0) {
+                          prevChrBottom = chrBottom;
+                        }
                       }
                     }
                     else
@@ -710,8 +717,9 @@ void renderLoop(void *pvParameters)
             {
               // Init Upscale
               int repeat_y = 0;
+              uint16_t repeatTimes_y = 1;
               uint16_t upscaleCoef_y = floor(coef192 * (float)(y+1));
-              uint16_t repeatTimes_y = upscaleCoef_y - last_y;
+              repeatTimes_y = upscaleCoef_y - last_y;
               last_y = upscaleCoef_y;
               while (repeat_y < repeatTimes_y)
               {
@@ -727,27 +735,27 @@ void renderLoop(void *pvParameters)
                 {
                   for (int k = 0; k < 7; k++)
                   {
-
                     // Init Upscale
                     bool bbPixel = 0;
-                    if (c == 0x27 && k == 6)
-                      lastCol = true;
-                    if (repeat_y > 0) {
-                      int ib = i;
-                      int lb = l;
-                      int bb = b;
-                      ib++;
-                      if (ib == 8) { ib=0; lb++; }
-                      if (lb == 8) { lb=0; bb++; }
-                      if (bb == 3) { bb=0; lastLine = true; }
+                    if (smoothUpscale) {
+                      if (c == 0x27 && k == 6)
+                        lastCol = true;
+                      if (repeat_y > 0) {
+                        int ib = i;
+                        int lb = l;
+                        int bb = b;
+                        ib++;
+                        if (ib == 8) { ib=0; lb++; }
+                        if (lb == 8) { lb=0; bb++; }
+                        if (bb == 3) { bb=0; lastLine = true; }
 
-                      char bottomChr = ram[(ushort)(textPage + (bb * 0x28) + (lb * 0x80) + c)];
-                      
-                      ushort bottomAddr = (bottomChr * 7 * 8) + (ib * 7) + k;
-                      bbPixel = AppleIIe ? AppleIIeFontPixels[bottomAddr] : AppleFontPixels[bottomAddr];
+                        char bottomChr = ram[(ushort)(textPage + (bb * 0x28) + (lb * 0x80) + c)];
+                        
+                        ushort bottomAddr = (bottomChr * 7 * 8) + (ib * 7) + k;
+                        bbPixel = AppleIIe ? AppleIIeFontPixels[bottomAddr] : AppleFontPixels[bottomAddr];
+                      }
                     }
                     // End Upscale
-
                     char chr = ram[(ushort)(textPage + (b * 0x28) + (l * 0x80) + c)];
                     ushort addr = (chr * 7 * 8) + (i * 7) + k;
                     bool bpixel = AppleIIe ? AppleIIeFontPixels[addr] : AppleFontPixels[addr];
@@ -758,23 +766,25 @@ void renderLoop(void *pvParameters)
                       tft.writeColor(bpixel ? (inverted ? TFT_BLACK : TFT_WHITE) : (inverted ? TFT_WHITE : TFT_BLACK), 1);
                     #else
                       #ifdef TFT_S3
-                        uint16_t actualPixel = 0;
-                        uint16_t bottomPixel = bbPixel ? (inverted ? colors[0] : colors[7]) : (inverted ? colors[7] : colors[0]);
-                      
                         // Init Upscale
                         int repeat_x = 0;
+                        uint8_t repeatTimes_x = 1;
                         uint16_t upscaleCoef_x = floor(coef280 * (float)(x+1));
-                        uint8_t repeatTimes_x = upscaleCoef_x - last_x;
+                        repeatTimes_x = upscaleCoef_x - last_x;
                         last_x = upscaleCoef_x;
                         while (repeat_x < repeatTimes_x)
                         {
-                          actualPixel = bpixel ? (inverted ? colors[0] : colors[7]) : (inverted ? colors[7] : colors[0]);
-                          if (!lastCol)
-                            actualPixel = avarage(actualPixel,lastPixel);
-                          if (!lastLine && repeat_y > 0)
-                            actualPixel = avarage(actualPixel,bottomPixel);
+                          uint16_t actualPixel = bpixel ? (inverted ? colors[0] : colors[7]) : (inverted ? colors[7] : colors[0]);
+                          if (smoothUpscale) {
+                            if (!lastCol)
+                              actualPixel = avarage(actualPixel,lastPixel);
+                            if (!lastLine && repeat_y > 0) {
+                              uint16_t bottomPixel = bbPixel ? (inverted ? colors[0] : colors[7]) : (inverted ? colors[7] : colors[0]);
+                              actualPixel = avarage(actualPixel,bottomPixel);
+                            }
+                            lastPixel = bpixel ? (inverted ? colors[0] : colors[7]) : (inverted ? colors[7] : colors[0]);
+                          }
                           gfx->writePixelPreclipped(x_upscaled, y_upscaled, actualPixel);
-                          lastPixel = bpixel ? (inverted ? colors[0] : colors[7]) : (inverted ? colors[7] : colors[0]);
                           repeat_x++;
                           x_upscaled++;
                         }
@@ -816,26 +826,28 @@ void renderLoop(void *pvParameters)
                 {
                   // Init Upscale
                   bool bbPixel = 0;
-                  if (j == 0x4f)
-                    lastCol = true;
                   int ib = i;
-                  int lb = l;
-                  int bb = b;
-                  if (repeat_y > 0) {
-                    ib++;
-                    if (ib == 8) { ib=0; lb++; }
-                    if (lb == 8) { lb=0; bb++; }
-                    if (bb == 3) { bb=0; lastLine = true; }
+                  if (smoothUpscale) {
+                    if (j == 0x4f)
+                      lastCol = true;
+                    int lb = l;
+                    int bb = b;
+                    if (repeat_y > 0) {
+                      ib++;
+                      if (ib == 8) { ib=0; lb++; }
+                      if (lb == 8) { lb=0; bb++; }
+                      if (bb == 3) { bb=0; lastLine = true; }
 
-                    if (j % 2 == 0)
-                    {
-                      bottomChr = auxram[0, (ushort)(0x400 + (bb * 0x28) + (lb * 0x80) + j / 2)];
+                      if (j % 2 == 0)
+                      {
+                        bottomChr = auxram[0, (ushort)(0x400 + (bb * 0x28) + (lb * 0x80) + j / 2)];
+                      }
+                      else
+                      {
+                        bottomChr = ram[(ushort)(0x400 + (bb * 0x28) + (lb * 0x80) + (j - 1) / 2)];
+                      }
+                      
                     }
-                    else
-                    {
-                      bottomChr = ram[(ushort)(0x400 + (bb * 0x28) + (lb * 0x80) + (j - 1) / 2)];
-                    }
-                    
                   }
                   // End Upscale
 
@@ -868,12 +880,10 @@ void renderLoop(void *pvParameters)
                     }
                     last7bits = bpixel;
                     #else
-                    ushort bottomAddr = (bottomChr * 7 * 8) + (ib * 7) + k;
-                    bbPixel = AppleIIeFontPixels[bottomAddr];
-
-                    uint16_t actualPixel = 0;
-                    uint16_t bottomPixel = bbPixel ? colors[7] : colors[0];
-                      
+                    if (smoothUpscale) {
+                      ushort bottomAddr = (bottomChr * 7 * 8) + (ib * 7) + k;
+                      bbPixel = AppleIIeFontPixels[bottomAddr];
+                      }
 
                     // Init Upscale
                     int repeat_x = 0;
@@ -886,15 +896,19 @@ void renderLoop(void *pvParameters)
                     while (repeat_x < repeatTimes_x)
                     {
                       lastPixel = bpixel ? colors[7] : colors[0];
-                      actualPixel = lastPixel;
+                      uint16_t actualPixel = lastPixel;
                       if (downScale)
                         break;  
-                      if (!lastCol)
-                        actualPixel = avarage(actualPixel,lastPixel);
-                      //Serial.printf("lastLine=%s repeat_y=%d, repeat_x=%d\n", lastLine ? "T" : "F", repeat_y, repeat_x);
-                      //Serial.printf("x_upscaled=%d y_upscaled=%d\n", x_upscaled, y_upscaled);
-                      if (!lastLine && repeat_y > 0)
-                        actualPixel = avarage(actualPixel,bottomPixel);
+                      if (smoothUpscale) {
+                        if (!lastCol)
+                          actualPixel = avarage(actualPixel,lastPixel);
+                        //Serial.printf("lastLine=%s repeat_y=%d, repeat_x=%d\n", lastLine ? "T" : "F", repeat_y, repeat_x);
+                        //Serial.printf("x_upscaled=%d y_upscaled=%d\n", x_upscaled, y_upscaled);
+                        if (!lastLine && repeat_y > 0) {
+                          uint16_t bottomPixel = bbPixel ? colors[7] : colors[0];
+                          actualPixel = avarage(actualPixel,bottomPixel);
+                        }
+                      }
                       #ifdef TFT_S3
                         gfx->writePixelPreclipped(x_upscaled, y_upscaled, actualPixel);
                       #else

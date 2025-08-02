@@ -173,6 +173,7 @@ static const uint16_t screenWidth  = 240;
 static const uint16_t screenHeight = 320;
 static std::mutex page_lock;
 
+
 uint16_t tx = 0, ty = 0; // To store the touch coordinates
 
 
@@ -217,6 +218,7 @@ static bool paused = false;
 static bool sound = true;
 static bool dacSound = false;
 static bool upscale = false;
+static bool smoothUpscale = false;
 static bool AppleIIe = true;
 static bool OptionsWindow = false;
 static bool DebugWindow = false;
