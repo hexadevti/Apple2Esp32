@@ -439,8 +439,21 @@ void optionsScreenRender()
   print(" DAC ", dacSound);
   setCursor(8,18);
   print(" DIG ", !dacSound);
+  #else
+  setCursor(8,16);
+  print("< F7 >", fnSelected == 7);
+  setCursor(8,17);
+  print(" Upsc.", upscale);
+  setCursor(8,18);
+  print(" Regu.", !upscale);
   #endif
 
+  setCursor(16,16);
+  print("< F8 >", fnSelected == 8);
+  setCursor(16,17);
+  print(" Smooth", smoothUpscale);
+  setCursor(16,18);
+  print(" Regu.", !smoothUpscale);
   setCursor(0,20);
   print("<ESC> Exit from menu");
   setCursor(0,21);

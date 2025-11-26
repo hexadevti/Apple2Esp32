@@ -119,6 +119,10 @@ unsigned char read8(unsigned short address)
           return 0;
         }
       }
+      else if (address >= 0xc400 && address < 0xc500)
+      {
+        return mouse ? mousecardrom[address - 0xc400] : 0;
+      }
       else if (address >= 0xc600 && address < 0xc700)
       {
         return diskAttached ? diskiicardrom[address - 0xc600] : 0;

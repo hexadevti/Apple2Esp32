@@ -130,11 +130,10 @@ uint16_t last_x = 0;
 void renderLoop(void *pvParameters)
 {
   
-  
-
   while (running)
   {
-    unsigned long startTime = millis();
+    Vertical_blankingOn_Off = false;
+    //unsigned long startTime = millis();
     page_lock.lock();
 
     if (upscale) {
@@ -152,7 +151,9 @@ void renderLoop(void *pvParameters)
     last_x = margin_x;
 
     float coef192 = screen_height / 192;
+    float coef560 = screen_width / 560;
     float coef280 = screen_width / 280;
+    float coef140 = screen_width / 140;
 
     #ifdef TFT
     if (!OptionsWindow && AppleIIe && !Cols40_80 && !DHiResOn_Off)
@@ -169,7 +170,7 @@ void renderLoop(void *pvParameters)
     #ifdef TFT_S3
     gfx->startWrite();
     #endif
-    Vertical_blankingOn_Off = false; // IIe video problem with Total Replay
+    
 
     int x = margin_x;
     int y = margin_y;
@@ -365,16 +366,28 @@ void renderLoop(void *pvParameters)
             }
             else if (DHiResOn_Off)
             {
-              if (videoColor)
+              bool* line = (bool*)malloc(0x50 * 7 * sizeof(bool));
+              
+              for (int block = 0; block < 8; block++)
               {
-                for (int block = 0; block < 8; block++)
+                // Init Upscale
+                int repeat_y = 0;
+                uint16_t upscaleCoef_y = floor(coef192 * (float)(y+1));
+                //Serial.printf("upscaleCoef_y=%d screen_width=%f (float)(y+1)=%f last_y=%d\n",upscaleCoef_y, screen_width, (float)(y+1), last_y);
+                uint16_t repeatTimes_y = upscaleCoef_y - last_y;
+                //Serial.printf("y=%d repeatTimes_y=%d\n", y, repeatTimes_y);
+                last_y = upscaleCoef_y;
+                while (repeat_y < repeatTimes_y)
                 {
+                  int lineId = 0;
+                  x_upscaled = margin_x;
                   x = margin_x;
-                  uint8_t rep = 2;
-                  uint8_t val = 0;
-                  uint8_t prevVal = 0;
-                  uint8_t currVal = 0;
-                  uint8_t prevCount = 0;
+                  last_x = margin_x;
+                  uint16_t lastPixel = 0;
+                  bool lastLine = false;
+                  bool lastCol = false;
+                  char bottomChr;
+                  // End Upscale
                   for (ushort c = 0; c < 0x50; c++)
                   {
                     char chr;
@@ -387,156 +400,75 @@ void renderLoop(void *pvParameters)
                       chr = ram[(ushort)((0x2000 + (b * 0x28) + (l * 0x80) + (c - 1) / 2) + block * 0x400)];
                     }
 
-                    // if (prevCount == 0) {
-                    //   if (prevCont > 0) {
-                    //     val = prevVal | ((0b0000000 & chr) << 4);
-                    //     tft.writeColor(colors16[val], rep);
-                    //   }
-                    //   currVal = (0b0001111 & chr);
-                    //   tft.writeColor(colors16[currVal], rep);
-                    //   prevVal = (0b1110000 & chr) >> 4;
-                    //   prevCount = 1;
-                    // }
-                    // else if (prevCount == 1) {
-                    //   val = prevVal | ((0b0000001 & chr) << 3);
-                    //   tft.writeColor(colors16[val], rep);
-                    //   currVal = (0b0011110 & chr) >> 1;
-                    //   tft.writeColor(colors16[currVal], rep);
-                    //   prevVal = (0b1100000 & chr) >> 5;
-                    //   prevCount = 2;
-                    // }
-                    // else if (prevCount == 2) {
-                    //   val = prevVal | ((0b0000011 & chr) << 2);
-                    //   tft.writeColor(colors16[val], rep);
-                    //   currVal = (0b0111100 & chr) >> 2;
-                    //   tft.writeColor(colors16[currVal], rep);
-                    //   prevVal = (0b1000000 & chr) >> 6;
-                    //   prevCount = 3;
-                    // }
-                    // else if (prevCount == 3) {
-                    //   val = prevVal | ((0b0000111 & chr) << 1);
-                    //   tft.writeColor(colors16[val], rep);
-                    //   currVal = (0b1111000 & chr) >> 3;
-                    //   tft.writeColor(colors16[currVal], rep);
-                    //   prevVal = 0;
-                    //   prevCount = 0;
-                    // }
-
-                    val = prevVal | (((0xf >> (4 - prevCount)) & chr) << (4 - prevCount));
-                    if (prevCount > 0)
-                    {
-                      #ifdef TFT
-                      tft.writeColor(colors16[val], rep);
-                      x++;
-                      #else
-                        #ifdef TFT_S3
-                          gfx->writePixelPreclipped(x, y, colors16[val]);
-                          x++;
-                        #else
-                          vga.dotFast(x, y, colors16[val]);  
-                          x++;
-                          vga.dotFast(x, y, colors16[val]);  
-                          x++;
-                          vga.dotFast(x, y, colors16[val]);  
-                          x++;
-                          vga.dotFast(x, y, colors16[val]);  
-                          x++;
-                        #endif
-                      #endif
-                    }
-                    currVal = ((0xf << prevCount) & chr) >> prevCount;
-                    #ifdef TFT
-                    tft.writeColor(colors16[currVal], rep);
-                    x++;
-                    #else
-                      #ifdef TFT_S3
-                        gfx->writePixelPreclipped(x, y, colors16[currVal]);
-                        x++;
-                      #else
-                        vga.dotFast(x, y, colors16[currVal]);  
-                        x++;
-                        vga.dotFast(x, y, colors16[currVal]);  
-                        x++;
-                        vga.dotFast(x, y, colors16[currVal]);  
-                        x++;
-                        vga.dotFast(x, y, colors16[currVal]);  
-                        x++;
-                      #endif
-                    #endif
-                    prevVal = ((0xf << (4 + prevCount)) & chr) >> (4 + prevCount);
-                    prevCount++;
-                    if (prevCount == 4)
-                      prevCount = 0;
-                  }
-                  y++;
-                }
-              }
-              else // monochrome
-              {
-                for (int block = 0; block < 8; block++)
-                {
-                  x = margin_x;
-                  bool last7bits = false;
-                  for (ushort c = 0; c < 0x50; c++)
-                  {
-                    char chr;
-                    if (c % 2 == 0)
-                    {
-                      chr = auxram[(ushort)((0x2000 + (b * 0x28) + (l * 0x80) + c / 2) + block * 0x400)];
-                    }
-                    else
-                    {
-                      chr = ram[(ushort)((0x2000 + (b * 0x28) + (l * 0x80) + (c - 1) / 2) + block * 0x400)];
-                    }
                     bool blockline[8];
                     for (int i = 0; i < 8; i++)
                       blockline[7 - i] = (chr & (1 << i)) != 0;
 
-                    for (int i = 7; i > 0; i--)
+                    if (videoColor)
                     {
-                      #ifdef TFT
-                      uint16_t color = 0;
-                      if (i % 2 != 0)
+                      for (int i = 7; i > 0; i--)
                       {
-                        if (i == 7)
+                        *(line + lineId) = blockline[i];
+                        lineId++;
+                      }
+                    }
+                    else
+                    {
+                      for (int i = 7; i > 0; i--)
+                      {
+                        // Init Upscale
+                        int repeat_x = 0;
+                        uint16_t upscaleCoef_x = floor(coef560 * (float)(x+1));
+                        //Serial.printf("upscaleCoef_x=%d screen_width=%f (float)(x+1)=%f last_x=%d\n",upscaleCoef_x, screen_width, (float)(x+1), last_x);
+                        bool downScale = upscaleCoef_x < last_x;
+                        uint8_t repeatTimes_x = upscaleCoef_x - last_x;
+                        //Serial.printf("x=%d repeatTimes_x=%d\n", x, repeatTimes_x);
+                        last_x = upscaleCoef_x;
+                        while (repeat_x < repeatTimes_x)
                         {
-                          if (blockline[i] && last7bits)
-                            color = tft.color565(255, 255, 255);
-                          else if (blockline[i] != last7bits)
-                            color = tft.color565(127, 127, 127);
-                          else
-                            color = tft.color565(0, 0, 0);
+                          uint16_t actualPixel = blockline[i] ? gfx->color565(255, 255, 255) : gfx->color565(0, 0, 0);
+                          if (downScale)
+                            break;  
+                          gfx->writePixelPreclipped(x_upscaled, y_upscaled, actualPixel);
+                          x_upscaled++;
+                          repeat_x++;
                         }
-                        else
-                        {
-                          if (blockline[i] && blockline[i + 1])
-                            color = tft.color565(255, 255, 255);
-                          else if (blockline[i] != blockline[i + 1])
-                            color = tft.color565(127, 127, 127);
-                          else
-                            color = tft.color565(0, 0, 0);
-                        }
-
-                        tft.writeColor(color, 1);
-
-                        if (i == 1)
-                          last7bits = blockline[i];
                         x++;
                       }
-                      #else
-                        #ifdef TFT_S3
-                          gfx->writePixelPreclipped(x, y, blockline[i] ? colors[7] : colors[0]);
-                          x++;
-                        #else
-                          vga.dotFast(x, y, blockline[i] ? colors[7] : colors[0]);
-                          x++;
-                        #endif
-                      #endif
                     }
                   }
-                  y++;
+                  if (videoColor) {
+                    for (int i = 0; i < 0x50 * 7; i = i + 4)
+                    {
+                      int color = (line[i] ? 8 : 0) + (line[i + 1] ? 4 : 0) + (line[i + 2] ? 2 : 0) + (line[i + 3] ? 1 : 0);
+
+                      // Init Upscale
+                        int repeat_x = 0;
+                        uint16_t upscaleCoef_x = floor(coef140 * (float)(x+1));
+                        //Serial.printf("upscaleCoef_x=%d screen_width=%f (float)(x+1)=%f last_x=%d\n",upscaleCoef_x, screen_width, (float)(x+1), last_x);
+                        uint8_t repeatTimes_x = upscaleCoef_x - last_x;
+                        if (repeatTimes_x > 10)
+                          repeatTimes_x = 1;
+                        //Serial.printf("x=%d repeatTimes_x=%d\n", x, repeatTimes_x);
+                        last_x = upscaleCoef_x;
+                        while (repeat_x < repeatTimes_x)
+                        {
+                          uint16_t actualPixel = colors16[color];
+                          //Serial.printf("x=%d, y=%d\n", x_upscaled, y_upscaled);
+                          gfx->writePixelPreclipped(x_upscaled, y_upscaled, actualPixel);
+                          x_upscaled++;
+                          repeat_x++;
+                        }
+                        x++;
+                    }
+                  }
+                  repeat_y++;
+                  y_upscaled++;
                 }
+                y++;
               }
+              delete line;
+            
             }
             else // hires
             {
@@ -887,7 +819,7 @@ void renderLoop(void *pvParameters)
 
                     // Init Upscale
                     int repeat_x = 0;
-                    uint16_t upscaleCoef_x = floor(screen_width / 560 * (float)(x+1));
+                    uint16_t upscaleCoef_x = floor(coef560 * (float)(x+1));
                     //Serial.printf("upscaleCoef_x=%d screen_width=%f (float)(x+1)=%f last_x=%d\n",upscaleCoef_x, screen_width, (float)(x+1), last_x);
                     bool downScale = upscaleCoef_x < last_x;
                     uint8_t repeatTimes_x = upscaleCoef_x - last_x;
@@ -962,6 +894,7 @@ void renderLoop(void *pvParameters)
     unsigned long duration3 = endTime3 - endTime2;
     unsigned long duration4 = endTime4 - endTime3;
     unsigned long duration5 = endTime5 - endTime4;
+    
     unsigned long duration = endTime5 - startTime;
 
   Serial.printf("Execution time: %d %d %d %d %d total: %d\n", duration1, duration2, duration3, duration4, duration5, duration);

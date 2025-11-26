@@ -161,6 +161,24 @@ class MyEspUsbHost : public EspUsbHost
     onKeyboardKeyLocal(ascii, keycode, modifier);
   }
 
+  
+  void onReceive(const usb_transfer_t *transfer) {
+    EspUsbHost *usbHost = (EspUsbHost *)transfer->context;
+    endpoint_data_t *endpoint_data = &usbHost->endpoint_data_list[(transfer->bEndpointAddress & USB_B_ENDPOINT_ADDRESS_EP_NUM_MASK)];
+    if (endpoint_data->bInterfaceProtocol == HID_ITF_PROTOCOL_MOUSE) {
+        static uint8_t last_buttons = 0;
+        hid_mouse_report_t report = {};
+        report.buttons = transfer->data_buffer[1];
+        report.x = (int8_t)transfer->data_buffer[2];
+        report.y = (int8_t)transfer->data_buffer[3];
+        
+        if (report.x != 0 || report.y != 0 || report.buttons != last_buttons) {
+          onMouseMoveLocal(report.x, report.y, report.buttons);
+          last_buttons = report.buttons;
+        }
+      }
+  };
+
 };
 MyEspUsbHost usbHost;
 
@@ -212,6 +230,13 @@ MyEspUsbHost usbHost;
         break;
       case 64: // F7
         upscale = !upscale;
+        optionsScreenRender();
+        clearScreen();
+        keymem = 0;
+        return;
+        break;
+      case 65: // F8
+        smoothUpscale = !smoothUpscale;
         optionsScreenRender();
         clearScreen();
         keymem = 0;
@@ -445,6 +470,26 @@ MyEspUsbHost usbHost;
     keymem_hold = keymem;
   };
 
+  void onMouseMoveLocal(int8_t x, int8_t y, uint8_t buttons) {
+    Serial.printf("buttons=0x%02x, x=%d, y=%d\n",
+                  buttons,
+                  x,
+                  y);
+    
+    mouseX += abs(x) > 1 ? x/2 : 1;
+    if (mouseX > 560) mouseX = 560;
+    if (mouseX < 0) mouseX = 0;
+    mouseY += abs(y) > 1 ? y/2 : 1;
+    if (mouseY > 192) mouseY = 192;
+    if (mouseY < 0) mouseY = 0;
+    mouseButton = (buttons & 0x01) != 0; // Left button pressed
+    Serial.printf("buttons=%s, x=%d, y=%d\n",
+                  mouseButton ? "Pressed" : "Released",
+                  mouseX,
+                  mouseY);
+  }
+
+  
 
 
 void keyboardSetup()

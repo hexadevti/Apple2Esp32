@@ -249,6 +249,13 @@ char processSoftSwitches(ushort address, char value, bool Read_Write = true)
           languagecardWrite(address, value);
       }
     }
+    else if (address >= 0xc0c0 && address < 0xc0d0) {// Slot 4 - Mouse
+      if (Read_Write)
+        return mouse ? mouseSoftSwitchesRead(address) : 0;
+      else
+        mouseSoftSwitchesWrite(address, value);
+      
+    }
     else if (address >= 0xc0e0 && address < 0xc0f0) // Slot 6 - Disk
       if (Read_Write)
         return diskAttached ? diskSoftSwitchesRead(address) : 0;

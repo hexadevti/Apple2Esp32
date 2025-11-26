@@ -227,6 +227,7 @@ static bool initializedHdDisk = false;
 static bool HdDisk = false;
 static bool Fast1MhzSpeed = true;
 static bool joystick = true;
+static bool mouse = true;
 static bool diskAttached = false;
 static bool hdAttached = false;
 static bool serialVideoAttached = false;
@@ -333,3 +334,7 @@ static bool Pb1 = false;
 static bool Pb2 = false;
 static bool Pb3 = false;
 
+// Mouse
+static int16_t mouseX = 0;
+static int16_t mouseY = 0;
+static bool mouseButton = false;
