@@ -21,14 +21,14 @@ void FSSetup()
         return;
       }
     #else
-      fspi->begin(SD_SCK_PIN, SD_MISO_PIN, SD_MOSI_PIN, SD_CS_PIN);
-      while (!FSTYPE.begin(*fspi) && sdMountRetry < 10) {
-        printLog("Little FS Failed");
+      hspi.begin(SD_SCK_PIN, SD_MISO_PIN, SD_MOSI_PIN, SD_CS_PIN);
+      while (!FSTYPE.begin(SD_CS_PIN, hspi) && sdMountRetry < 10) {
+        printLog("Card Mount Failed");
         delay(100);
         sdMountRetry++;
       }
 
-      if (sdMountRetry == 2) {
+      if (sdMountRetry == 10) {
         hdAttached = false;
         diskAttached = false;
         return;

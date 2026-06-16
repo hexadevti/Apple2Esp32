@@ -347,9 +347,9 @@ std::vector<uint8_t> getSectorData(int sector)
   return output;
 }
 
-std::vector<uint8_t> encodeByte(uint8_t data)
+std::array<uint8_t, 2> encodeByte(uint8_t data)
 {
-  std::vector<uint8_t> output(2, 0);
+  std::array<uint8_t, 2> output = {0, 0};
   std::bitset<16> bitsEncoded;
   std::bitset<8> bitsData(data);
 
@@ -374,9 +374,9 @@ std::vector<uint8_t> encodeByte(uint8_t data)
   return output;
 }
 
-std::vector<uint8_t> checksum(uint8_t volume, uint8_t sector, uint8_t track)
+std::array<uint8_t, 2> checksum(uint8_t volume, uint8_t sector, uint8_t track)
 {
-  std::vector<uint8_t> output(2, 0);
+  std::array<uint8_t, 2> output = {0, 0};
   std::bitset<16> checkedBits;
   std::bitset<16> checkedBitsInverted;
   std::bitset<16> bitsVolume(encodeByte(volume)[0] | (encodeByte(volume)[1] << 8));
@@ -405,86 +405,80 @@ std::vector<uint8_t> checksum(uint8_t volume, uint8_t sector, uint8_t track)
   return output;
 }
 
-std::vector<uint8_t> encode6_2(uint8_t sector)
+std::array<uint8_t, 343> encode6_2(uint8_t sector)
 {
-  std::vector<uint8_t> input = getSectorData(sector);
+  int offset = getSectorOffset(sector); // sector * 256, read straight from trackRawData
 
-  std::vector<uint8_t> outputData(256);
-  std::vector<uint8_t> outputlast2(0x56);
-  std::vector<uint8_t> outputlast2Encoded(0x56);
-  std::vector<uint8_t> outputDataEncoded(256);
+  uint8_t outputData[256];
+  uint8_t outputlast2[0x56] = {0};
+  std::array<uint8_t, 343> agregate;
 
-  for (size_t i = 0; i < input.size(); i++)
+  for (int i = 0; i < 256; i++)
   {
-    outputData[i] = static_cast<uint8_t>(input[i] >> 2);
+    uint8_t in = trackRawData[offset + i];
+    outputData[i] = static_cast<uint8_t>(in >> 2);
+    std::bitset<8> bitsData(in);
     if (i < 86)
-    {
-      std::bitset<8> bitsVolume(input[i]);
-      uint8_t last2bits = (bitsVolume[0] ? 2 : 0) + (bitsVolume[1] ? 1 : 0);
-      outputlast2[i] |= last2bits;
-    }
+      outputlast2[i] |= (bitsData[0] ? 2 : 0) + (bitsData[1] ? 1 : 0);
     else if (i < 172)
-    {
-      std::bitset<8> bitsVolume(input[i]);
-      uint8_t last2bits = ((bitsVolume[0] ? 2 : 0) + (bitsVolume[1] ? 1 : 0)) << 2;
-      outputlast2[i - 86] |= last2bits;
-    }
+      outputlast2[i - 86] |= ((bitsData[0] ? 2 : 0) + (bitsData[1] ? 1 : 0)) << 2;
     else
-    {
-      std::bitset<8> bitsVolume(input[i]);
-      uint8_t last2bits = ((bitsVolume[0] ? 2 : 0) + (bitsVolume[1] ? 1 : 0)) << 4;
-      outputlast2[i - 172] |= last2bits;
-    }
+      outputlast2[i - 172] |= ((bitsData[0] ? 2 : 0) + (bitsData[1] ? 1 : 0)) << 4;
   }
 
   uint8_t lastByte = 0;
-  for (size_t i = 0; i < 86; i++)
+  for (int i = 0; i < 86; i++)
   {
-    outputlast2Encoded[i] = translateTable[outputlast2[i] ^ lastByte];
+    agregate[i] = translateTable[outputlast2[i] ^ lastByte];
     lastByte = outputlast2[i];
   }
-
-  std::vector<uint8_t> agregate(outputlast2Encoded.begin(), outputlast2Encoded.end());
-
-  for (size_t i = 0; i < 256; i++)
+  for (int i = 0; i < 256; i++)
   {
-    outputDataEncoded[i] = translateTable[outputData[i] ^ lastByte];
+    agregate[86 + i] = translateTable[outputData[i] ^ lastByte];
     lastByte = outputData[i];
   }
-
-  agregate.insert(agregate.end(), outputDataEncoded.begin(), outputDataEncoded.end());
-  std::vector<uint8_t> checksum = {translateTable[lastByte]};
-  agregate.insert(agregate.end(), checksum.begin(), checksum.end());
+  agregate[342] = translateTable[lastByte];
 
   return agregate;
 }
 
 void trackRawDataEncode(int track)
 {
-  std::vector<uint8_t> selectedSector;
-  std::array<uint8_t, 16> sectors = {0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9}; // DOS
+  static const std::array<uint8_t, 16> sectors = {0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9}; // DOS
+  int pos = 0;
   for (uint8_t isec : sectors)
   {
-
-    std::vector<uint8_t> b;
-    selectedSector.insert(selectedSector.end(), {0xff, 0xff, 0xff});
-    selectedSector.insert(selectedSector.end(), {0xd5, 0xaa, 0x96}); // Prologue address
-    b = encodeByte(diskVolume);
-    selectedSector.insert(selectedSector.end(), b.begin(), b.end()); // Volume
-    b = encodeByte(static_cast<uint8_t>(track));
-    selectedSector.insert(selectedSector.end(), b.begin(), b.end()); // Track
-    b = encodeByte(isec);
-    selectedSector.insert(selectedSector.end(), b.begin(), b.end()); // Sector
-    b = checksum(diskVolume, static_cast<uint8_t>(track), isec);
-    selectedSector.insert(selectedSector.end(), b.begin(), b.end()); // checksum
-    selectedSector.insert(selectedSector.end(), {0xde, 0xaa, 0xeb}); // Epilogue address
-    selectedSector.insert(selectedSector.end(), {0xd5, 0xaa, 0xad}); // Prologue data
-    b = encode6_2(translateDOTrack[isec]);
-    selectedSector.insert(selectedSector.end(), b.begin(), b.end()); // Data field + checksum
-    selectedSector.insert(selectedSector.end(), {0xde, 0xaa, 0xeb}); // Epilogue
+    trackEncodedData[pos++] = 0xff;
+    trackEncodedData[pos++] = 0xff;
+    trackEncodedData[pos++] = 0xff;
+    trackEncodedData[pos++] = 0xd5; // Prologue address
+    trackEncodedData[pos++] = 0xaa;
+    trackEncodedData[pos++] = 0x96;
+    std::array<uint8_t, 2> b = encodeByte(diskVolume); // Volume
+    trackEncodedData[pos++] = b[0];
+    trackEncodedData[pos++] = b[1];
+    b = encodeByte(static_cast<uint8_t>(track)); // Track
+    trackEncodedData[pos++] = b[0];
+    trackEncodedData[pos++] = b[1];
+    b = encodeByte(isec); // Sector
+    trackEncodedData[pos++] = b[0];
+    trackEncodedData[pos++] = b[1];
+    b = checksum(diskVolume, static_cast<uint8_t>(track), isec); // checksum
+    trackEncodedData[pos++] = b[0];
+    trackEncodedData[pos++] = b[1];
+    trackEncodedData[pos++] = 0xde; // Epilogue address
+    trackEncodedData[pos++] = 0xaa;
+    trackEncodedData[pos++] = 0xeb;
+    trackEncodedData[pos++] = 0xd5; // Prologue data
+    trackEncodedData[pos++] = 0xaa;
+    trackEncodedData[pos++] = 0xad;
+    std::array<uint8_t, 343> data = encode6_2(translateDOTrack[isec]); // Data field + checksum
+    for (uint8_t v : data)
+      trackEncodedData[pos++] = v;
+    trackEncodedData[pos++] = 0xde; // Epilogue
+    trackEncodedData[pos++] = 0xaa;
+    trackEncodedData[pos++] = 0xeb;
   }
-
-  std::copy(selectedSector.begin(), selectedSector.end(), trackEncodedData);
   // printLog("Raw Data");
   // PrintHex(trackRawData, trackRawSize);
   // printLog("Raw Encoded");

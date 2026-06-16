@@ -1,7 +1,7 @@
-//#define TFT // Defines TFT display (ESP32) or VGA diplay (ESP32-S3)
+#define TFT // Defines TFT display (ESP32) or VGA diplay (ESP32-S3)
 //#define LITTLEFS //  SDFS or LITTLEFS
 //#define DAC
-#define TFT_S3
+//#define TFT_S3
 
 
 #include "FS.h"
@@ -25,7 +25,7 @@
 #include "SD.h"
 #include <EEPROM.h>
 #include "rom.h"
-#ifdef TFT && DAC
+#if defined(TFT) && defined(DAC)
 #include <driver/dac.h>
 #endif
 #include <string>

@@ -21,8 +21,8 @@ void setup() {
 
   speakerSetup();
   //wifiSetup();
-  
-  //joystickSetup();
+
+  joystickSetup();
   //bleSetup();
   printLog("Ready.");
 

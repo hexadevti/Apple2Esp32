@@ -1,4 +1,4 @@
-#define TFT_S3
+#define TFT
 
 #ifdef TFT
 
@@ -107,6 +107,8 @@ int green(int color) {
 int blue(int color) {
   return (color & 0x1f) << 3;
 }
+
+#ifdef TFT_S3
 int avarage(int color1, int color2) {
   return gfx->color565((red(color1)+red(color2))/2,(green(color1)+green(color2))/2,(blue(color1)+blue(color2))/2);
 }
@@ -120,7 +122,7 @@ void colorTest() {
     Serial.printf("reconverted color %04X\n",gfx->color565(red(color1),green(color1),blue(color1)));
   }
 }
-
+#endif
 bool inversed = false;
 float screen_width = 280;
 float screen_height = 192;
@@ -133,9 +135,16 @@ void renderLoop(void *pvParameters)
   while (running)
   {
     Vertical_blankingOn_Off = false;
-    //unsigned long startTime = millis();
+    unsigned long startTime = millis();
     page_lock.lock();
 
+#ifdef TFT
+    // 320x240 TFT: center the 280x192 raster (overriding the S3/VGA margins below).
+    margin_x = 20;
+    margin_y = 24;
+    screen_width = 280;
+    screen_height = 192;
+#else
     if (upscale) {
       margin_x = 0;
       margin_y = 0;
@@ -147,6 +156,7 @@ void renderLoop(void *pvParameters)
       screen_width = 280;
       screen_height = 192;
     }
+#endif
     last_y = margin_y;
     last_x = margin_x;
 
@@ -159,7 +169,7 @@ void renderLoop(void *pvParameters)
     if (!OptionsWindow && AppleIIe && !Cols40_80 && !DHiResOn_Off)
     tft.setAddrWindow(0, margin_y, 320, 192); // Set the area to draw
     else if (!OptionsWindow && AppleIIe && DHiResOn_Off && !videoColor)
-    tft.setAddrWindow(0, margin_y, 320, 192); // Set the area to draw
+    tft.setAddrWindow(margin_x, margin_y, 280, 192); // DHiRes mono (centered 280)
     else if (OptionsWindow || clearScr)
     tft.setAddrWindow(2, 0, 315, 240);
     else
@@ -366,8 +376,8 @@ void renderLoop(void *pvParameters)
             }
             else if (DHiResOn_Off)
             {
-              bool* line = (bool*)malloc(0x50 * 7 * sizeof(bool));
-              
+              static bool line[0x50 * 7]; // 560 DHGR bits; static avoids per-scanline malloc churn
+
               for (int block = 0; block < 8; block++)
               {
                 // Init Upscale
@@ -404,7 +414,11 @@ void renderLoop(void *pvParameters)
                     for (int i = 0; i < 8; i++)
                       blockline[7 - i] = (chr & (1 << i)) != 0;
 
-                    if (videoColor)
+                    bool fillLine = videoColor;
+                    #ifdef TFT
+                    fillLine = true; // TFT renders both color & mono from line[] after the row
+                    #endif
+                    if (fillLine)
                     {
                       for (int i = 7; i > 0; i--)
                       {
@@ -426,17 +440,32 @@ void renderLoop(void *pvParameters)
                         last_x = upscaleCoef_x;
                         while (repeat_x < repeatTimes_x)
                         {
+                        #ifdef TFT_S3
                           uint16_t actualPixel = blockline[i] ? gfx->color565(255, 255, 255) : gfx->color565(0, 0, 0);
                           if (downScale)
-                            break;  
+                            break;
                           gfx->writePixelPreclipped(x_upscaled, y_upscaled, actualPixel);
                           x_upscaled++;
+                        #endif
                           repeat_x++;
                         }
                         x++;
                       }
                     }
                   }
+                  #ifdef TFT
+                  if (videoColor) {
+                    // 140 DHGR color pixels (4 bits each) x2 = 280 px to match the window
+                    for (int i = 0; i < 0x50 * 7; i += 4) {
+                      int color = (line[i] ? 8 : 0) + (line[i + 1] ? 4 : 0) + (line[i + 2] ? 2 : 0) + (line[i + 3] ? 1 : 0);
+                      tft.writeColor(colors16[color], 2);
+                    }
+                  } else {
+                    // 560 mono DHGR bits downsampled 2:1 = 280 px to match the window
+                    for (int i = 0; i < 0x50 * 7; i += 2)
+                      tft.writeColor(line[i] ? TFT_WHITE : TFT_BLACK, 1);
+                  }
+                  #else
                   if (videoColor) {
                     for (int i = 0; i < 0x50 * 7; i = i + 4)
                     {
@@ -453,22 +482,24 @@ void renderLoop(void *pvParameters)
                         last_x = upscaleCoef_x;
                         while (repeat_x < repeatTimes_x)
                         {
+                        #ifdef TFT_S3
                           uint16_t actualPixel = colors16[color];
                           //Serial.printf("x=%d, y=%d\n", x_upscaled, y_upscaled);
                           gfx->writePixelPreclipped(x_upscaled, y_upscaled, actualPixel);
                           x_upscaled++;
+                        #endif
                           repeat_x++;
                         }
                         x++;
                     }
                   }
+                  #endif
                   repeat_y++;
                   y_upscaled++;
                 }
                 y++;
               }
-              delete line;
-            
+
             }
             else // hires
             {
@@ -608,6 +639,9 @@ void renderLoop(void *pvParameters)
                     }
                     else
                     {
+                      bool blockline[8];
+                      for (int i = 0; i < 8; i++)
+                        blockline[7 - i] = (chr & (1 << i)) != 0;
                       for (int i = 7; i > 0; i--)
                       {
                         #ifdef TFT
