@@ -75,7 +75,7 @@ void joystickSetup()
     pPb2 = Pb2;
     pPb3 = Pb3;
 #endif
-    xTaskCreate(analogJoystickTask, "analogJoystickTask", 4096, NULL, 3, NULL);
+    xTaskCreatePinnedToCore(analogJoystickTask, "analogJoystickTask", 4096, NULL, 3, NULL, 0); // core 0; keep core 1 for the CPU
 }
 
 static void buttonDown(uint8_t btn)
@@ -113,7 +113,7 @@ static void buttonDown(uint8_t btn)
     {
         if (!joystick)
         {
-            if (btn == 0)
+            if (btn == 0 && !mouse) // when the mouse is active, button 0 is the click, not a keystroke
             {
                 keymem = 0xa0;
             }
@@ -218,6 +218,7 @@ static void changeDirection(bool x, uint8_t dir)
                         break;
                     case 2:
                         AppleIIe = !AppleIIe;
+                        activeFlags = AppleIIe ? flagsIIe : flagsIIplus;
                         break;
                     case 3:
                         Fast1MhzSpeed = !Fast1MhzSpeed;
@@ -425,6 +426,23 @@ static void analogJoystickTask(void *pvParameters)
             Pb3 = true;
         }
 
+        // Debounce the resistor-ladder buttons: a decoded reading is only accepted
+        // once it repeats on the next poll. This rejects the brief mid-sweep values
+        // the ADC passes through during a press/release (which otherwise register as
+        // spurious other-button presses, e.g. opening the options menu / pausing when
+        // clicking button 0).
+        {
+            uint8_t curBtns = (Pb0 ? 1 : 0) | (Pb1 ? 2 : 0) | (Pb2 ? 4 : 0) | (Pb3 ? 8 : 0);
+            static uint8_t lastBtns = 0, stableBtns = 0;
+            if (curBtns == lastBtns)
+                stableBtns = curBtns;
+            lastBtns = curBtns;
+            Pb0 = stableBtns & 1;
+            Pb1 = stableBtns & 2;
+            Pb2 = stableBtns & 4;
+            Pb3 = stableBtns & 8;
+        }
+
         if (pPb0 != Pb0)
             if (Pb0)
                 buttonDown(0);
@@ -451,6 +469,35 @@ static void analogJoystickTask(void *pvParameters)
         pPb2 = Pb2;
         pPb3 = Pb3;
 
+        // DEBUG: report the button ADC value + decoded buttons on a change (edge), not every poll.
+        {
+            static uint8_t dbgPrev = 0;
+            uint8_t nowBtns = (Pb0 ? 1 : 0) | (Pb1 ? 2 : 0) | (Pb2 ? 4 : 0) | (Pb3 ? 8 : 0);
+            if (nowBtns != dbgPrev)
+            {
+                Serial.printf("BTN raw=%d Pb0=%d Pb1=%d Pb2=%d Pb3=%d\n", digital_button1, Pb0, Pb1, Pb2, Pb3);
+                dbgPrev = nowBtns;
+            }
+        }
+
+        // Joystick-controlled mouse pointer: stick deflection moves the AppleMouse II
+        // cursor (velocity proportional to deflection); button 0 is the mouse click.
+        // Active only when the mouse card is on and the options menu is closed.
+        if (mouse && !OptionsWindow)
+        {
+            int dx = analogX - joyCenterX;
+            int dy = analogY - joyCenterY;
+            const int deadzone = 300; // ignore small drift around center
+            const int sensitivity = 700; // larger = slower pointer
+            if (abs(dx) > deadzone)
+                mouseX += dx / sensitivity;
+            if (abs(dy) > deadzone)
+                mouseY += dy / sensitivity; // up = toward top of screen
+            if (mouseX < 0) mouseX = 0; else if (mouseX > 560) mouseX = 560;
+            if (mouseY < 0) mouseY = 0; else if (mouseY > 192) mouseY = 192;
+            mouseButton = Pb0; // button 0 = select / click
+        }
+
         if (analogY >= 4095)
             joyX = 2; // Up
         else if (analogY > 0 && analogY < 4095)
@@ -474,6 +521,6 @@ static void analogJoystickTask(void *pvParameters)
         pJoyY = joyY;
         #endif
     
-        vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(30)); // ~33 Hz for responsive mouse/joystick polling
     }
 }

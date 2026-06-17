@@ -40,9 +40,9 @@ void showFreeMem() {
   Serial.println(" floats)");
 }
 
-unsigned char read8(unsigned short address)
+IRAM_ATTR unsigned char read8(unsigned short address)
 {
-  
+
   if (address < 0x0200)
   {
     if (AltZPOn_Off)
@@ -182,12 +182,18 @@ unsigned char read8(unsigned short address)
         return rom[address - 0xd000];
     }
   }
-  
+
+  // Unmapped $C100-$CFFF: on the IIe these fall back to internal ROM (matches real
+  // hardware and is what the IIe boot path expects); II+ tolerates 0. Returning a
+  // defined value also avoids undefined behavior under -O2.
+  if (AppleIIe)
+    return appleiieenhancedc0ff[address - 0xc000];
+  return 0;
 }
 
-void write8(unsigned short address, unsigned char value)
+IRAM_ATTR void write8(unsigned short address, unsigned char value)
 {
-  
+
   if (address < 0x0200)
   {
     if (AltZPOn_Off)
@@ -280,7 +286,7 @@ void write8(unsigned short address, unsigned char value)
   }
 }
 
-unsigned short read16(unsigned short address)
+IRAM_ATTR unsigned short read16(unsigned short address)
 {
   return (unsigned short)read8(address) | (((unsigned short)read8(address + 1)) << 8);
 }

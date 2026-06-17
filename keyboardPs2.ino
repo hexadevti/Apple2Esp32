@@ -148,6 +148,7 @@ void keyboard_bit()
                 else if (keyboard_data[2] == 0x06) // F2
                 {
                   AppleIIe = !AppleIIe;
+                  activeFlags = AppleIIe ? flagsIIe : flagsIIplus;
                   optionsScreenRender();
                 }
                 else if (keyboard_data[2] == 0x04) // F3

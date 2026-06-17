@@ -209,6 +209,7 @@ MyEspUsbHost usbHost;
         break;
       case 59: // F2
         AppleIIe = !AppleIIe;
+        activeFlags = AppleIIe ? flagsIIe : flagsIIplus;
         optionsScreenRender();
         // Serial.println("f2");
         break;

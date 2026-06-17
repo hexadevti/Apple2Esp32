@@ -55,6 +55,11 @@ uint32_t cpuCycleCount = 0;
 uint32_t lastCpuCycleCount = 0;
 uint32_t diffCpuCycleCount = 0;
 
+// Throughput meter (effective 6502 clock). Set false to silence.
+bool perfMeter = true;
+// Cached active flags table (avoids the AppleIIe ternary + table base load per instruction).
+const unsigned char* activeFlags;
+
 //high nibble SR flags, low nibble address mode
 const unsigned char flagsIIe[] = {
 	//X0               X1                X2                    X3    X4                    X5                X6                X7    X8              X9                 XA                  XB    XC                    XD                XE                XF   
@@ -138,7 +143,7 @@ void cpuReset()
   STP = 0xFD;
 }
 
-void setflags() {
+IRAM_ATTR void setflags() {
   // Mask out affected flags
   switch (opflags & 0xF0) {
     case  FL_ZN: SR &= 0x7D; break; // 1010 0000   0111 1101
@@ -182,16 +187,40 @@ void cpuLoop() {
   // Load the reset vector
   PC = read16(0xFFFC);
   STP = 0xFD;
-  
-  while (running) 
+  activeFlags = AppleIIe ? flagsIIe : flagsIIplus;
+
+  while (running)
   {
     lastPC = PC;
-    while (paused) 
+    while (paused)
     {
       delay(100);
     }
-    
+
     opcode = read8(PC++);
+
+    // Throughput meter: report effective MHz / instr-per-sec every ~256K instructions.
+    if (perfMeter)
+    {
+      static uint32_t mInstr = 0;
+      static uint64_t mCyc = 0;
+      static uint32_t mLast = 0;
+      mInstr++;
+      mCyc += cycles[opcode];
+      if ((mInstr & 0x3FFFF) == 0)
+      {
+        uint32_t now = millis();
+        if (mLast != 0)
+        {
+          float secs = (now - mLast) / 1000.0f;
+          if (secs > 0)
+            Serial.printf("PERF: %.2f MHz, %lu instr/s\n", (mCyc / 1e6) / secs, (unsigned long)(mInstr / secs));
+        }
+        mLast = now;
+        mInstr = 0;
+        mCyc = 0;
+      }
+    }
 
     if (!Fast1MhzSpeed)
     {
@@ -216,9 +245,12 @@ void cpuLoop() {
     // }
     // else
     //   joyCount++;
-    processJoystick(1);
+    // Only advance paddle timers when a paddle read is in progress (PTRIG/C070).
+    // Avoids a function call + branch tests on every instruction.
+    if (CgReset0 || CgReset1 || CgReset2 || CgReset3)
+      processJoystick(1);
 
-    opflags = AppleIIe ? flagsIIe[opcode] : flagsIIplus[opcode];
+    opflags = activeFlags[opcode];
     
     
     // Addressing modes

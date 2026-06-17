@@ -95,7 +95,7 @@ void videoSetup()
   vga.fillRect(0,0,320,240,0);
   #endif
 #endif
-  xTaskCreate(renderLoop, "renderLoop", 4096, NULL, 1, NULL);
+  xTaskCreatePinnedToCore(renderLoop, "renderLoop", 4096, NULL, 1, NULL, 0); // core 0; keep core 1 for the CPU
 }
 
 int red(int color) {
@@ -136,7 +136,6 @@ void renderLoop(void *pvParameters)
   {
     Vertical_blankingOn_Off = false;
     unsigned long startTime = millis();
-    page_lock.lock();
 
 #ifdef TFT
     // 320x240 TFT: center the 280x192 raster (overriding the S3/VGA margins below).
@@ -186,8 +185,12 @@ void renderLoop(void *pvParameters)
     int y = margin_y;
     int x_upscaled = margin_x;
     int y_upscaled = margin_y;
+    // Snapshot the page selection under a brief lock so a CPU page-flip (C054/C055)
+    // can't block for a whole frame; the rest of the frame renders from these locals.
+    page_lock.lock();
     ushort textPage = Page1_Page2 ? 0x400 : 0x800;
     ushort graphicsPage = Page1_Page2 ? 0x2000 : 0x4000;
+    page_lock.unlock();
     unsigned long endTime1 = millis();
     // if (demo) {
     // y=0;
@@ -505,6 +508,11 @@ void renderLoop(void *pvParameters)
             {
               for (int block = 0; block < 8; block++)
               {
+                // Track the displayed page live (C054/C055) instead of latching it once
+                // per frame: with a slow free-running renderer the latched page can be the
+                // one the CPU is redrawing during page-flip animation, which flickers.
+                // Reading it per scanline keeps us on the currently-shown (completed) page.
+                graphicsPage = Page1_Page2 ? 0x2000 : 0x4000;
                 // Init Upscale
                 int repeat_y = 0;
                 uint16_t repeatTimes_y = 1;
@@ -905,7 +913,6 @@ void renderLoop(void *pvParameters)
     gfx->endWrite();
     #endif
     Vertical_blankingOn_Off = true;
-    page_lock.unlock();
     unsigned long endTime3 = millis();
     vTaskDelay(pdMS_TO_TICKS(5));
     unsigned long endTime4 = millis();
@@ -931,7 +938,7 @@ void renderLoop(void *pvParameters)
     
     unsigned long duration = endTime5 - startTime;
 
-  Serial.printf("Execution time: %d %d %d %d %d total: %d\n", duration1, duration2, duration3, duration4, duration5, duration);
-  
+  // Serial.printf("Execution time: %d %d %d %d %d total: %d\n", duration1, duration2, duration3, duration4, duration5, duration);
+
   }
 }
